@@ -17,8 +17,14 @@ import Cart from "./pages/Cart";
 import Admin from "./pages/Admin";
 import AdminLogin from "./pages/AdminLogin";
 import NotFound from "./pages/NotFound";
+import { Auth0Provider } from "@auth0/auth0-react";
+import ProtectedRoute from "./components/Auth/ProtectedRoute";
 
 const queryClient = new QueryClient();
+
+const domain = import.meta.env.VITE_AUTH0_DOMAIN!;
+const clientId = import.meta.env.VITE_AUTH0_CLIENT_ID!;
+const audience = import.meta.env.VITE_AUTH0_AUDIENCE; // optional, if you use API
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -28,26 +34,43 @@ const App = () => (
           <TooltipProvider>
             <Toaster />
             <Sonner />
-            <BrowserRouter>
-              <div className="min-h-screen flex flex-col">
-                <Header />
-                <main className="flex-1">
-                  <Routes>
-                    <Route path="/" element={<Index />} />
-                    <Route path="/about" element={<About />} />
-                    <Route path="/contact" element={<Contact />} />
-                    <Route path="/products" element={<Products />} />
-                    <Route path="/product/:id" element={<ProductDetail />} />
-                    <Route path="/cart" element={<Cart />} />
-                    <Route path="/admin" element={<Admin />} />
-                    <Route path="/admin-login" element={<AdminLogin />} />
-                    {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-                    <Route path="*" element={<NotFound />} />
-                  </Routes>
-                </main>
-                <Footer />
-              </div>
-            </BrowserRouter>
+            <Auth0Provider
+              domain={domain}
+              clientId={clientId}
+              authorizationParams={{
+                redirect_uri: window.location.origin,
+                audience: audience, // only if you have an API configured
+                // scope: 'openid profile email', // default scopes
+              }}
+              cacheLocation="localstorage" // optional, for persistent login across tabs/refresh
+              useRefreshTokens={true} // recommended for silent refresh
+            >
+              <BrowserRouter>
+                <div className="min-h-screen flex flex-col">
+                  <Header />
+                  <main className="flex-1">
+                    <Routes>
+                      <Route path="/" element={<Index />} />
+                      <Route path="/about" element={<About />} />
+                      <Route path="/contact" element={<Contact />} />
+                      <Route path="/products" element={<Products />} />
+                      <Route path="/product/:id" element={<ProductDetail />} />
+                      <Route path="/cart" element={<Cart />} />
+                      <Route path="/admin"
+                        element={
+                          <ProtectedRoute>
+                            <Admin />
+                          </ProtectedRoute>
+                        } 
+                      />
+                      <Route path="/admin-login" element={<AdminLogin />} />
+                      <Route path="*" element={<NotFound />} />
+                    </Routes>
+                  </main>
+                  <Footer />
+                </div>
+              </BrowserRouter>
+            </Auth0Provider>
           </TooltipProvider>
         </CartProvider>
       </LanguageProvider>

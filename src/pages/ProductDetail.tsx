@@ -1,150 +1,143 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Card, CardContent } from '@/components/ui/card';
+import { useQuery } from '@tanstack/react-query';
+import { fetchProductById } from '../api/products'; // Corrected path
+import { useLanguage } from '../contexts/LanguageContext'; // Corrected path
+import { useCart } from '../contexts/CartContext';     // Corrected path
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Card, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { useLanguage } from '@/contexts/LanguageContext';
-import { useCart } from '@/contexts/CartContext';
-import { mockProducts } from '@/lib/mockData';
-import { ArrowLeft, Heart, Share2, Check, X } from 'lucide-react';
+import { ArrowLeft, Check, Heart, Share2, X } from 'lucide-react';
+import { Product, Variant } from '@/types';
+import { useToast } from '@/hooks/use-toast'; // Import useToast
 
 const ProductDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { t } = useLanguage();
   const { addToCart } = useCart();
-  
-  const product = mockProducts.find(p => p.id === id);
-  const [selectedSize, setSelectedSize] = useState<string>('');
-  const [selectedColor, setSelectedColor] = useState<string>('');
+  const { toast } = useToast(); // Initialize useToast
+
+  const [selectedSize, setSelectedSize] = useState('');
+  const [selectedColor, setSelectedColor] = useState('');
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
-  if (!product) {
+  const { data: product, isLoading, isError } = useQuery<Product>({
+    queryKey: ['product', id],
+    queryFn: () => fetchProductById(id!),
+    enabled: !!id,
+  });
+
+  if (isLoading) {
+    return <div className="p-8 text-center text-lg">Loading product details...</div>;
+  }
+
+  if (isError || !product) {
     return (
-      <div className="container mx-auto px-4 py-16 text-center">
-        <h1 className="text-2xl font-bold text-foreground mb-4">Product Not Found</h1>
-        <Button onClick={() => navigate('/products')} variant="outline">
-          Back to Products
-        </Button>
+      <div className="p-8 text-center">
+        <h2 className="text-xl font-bold mb-4">Product not found</h2>
+        <Button onClick={() => navigate('/products')}>Back to Products</Button>
       </div>
     );
   }
 
-  // Mock variant availability - in real app this would come from backend
-  const getVariantAvailability = (size: string, color: string) => {
-    // Simulate some variants being out of stock based on deterministic logic
-    if (size === 'XS' && color === 'Black') return false;
-    if (size === 'XXL' && color === 'Brown') return false;
-    if (size === 'S' && color === 'Red') return false;
-    // Use a simple hash to make availability deterministic but varied
-    const hash = (size + color).split('').reduce((a, b) => {
-      a = ((a << 5) - a) + b.charCodeAt(0);
-      return a & a;
-    }, 0);
-    return Math.abs(hash) % 10 !== 0; // 90% chance of being in stock, but consistent
+  const allSizes = Array.from(new Set(product.variants.map((v) => v.size)));
+  const allColors = Array.from(new Set(product.variants.map((v) => v.color)));
+
+  const getSelectedVariant = (): Variant | undefined => {
+    return product.variants.find((v) => v.size === selectedSize && v.color === selectedColor);
   };
 
-  const handleAddToCart = () => {
-    if (product.sizes.length > 1 && !selectedSize) {
-      alert('Please select a size');
+  const variant = getSelectedVariant();
+  const isVariantSelected = !!variant;
+  const isInStock = variant ? variant.stock > 0 : false;
+  const variantImages = variant?.images.length ? variant.images : product.images;
+
+  // Ensure currentImageIndex is within bounds if variantImages change
+  React.useEffect(() => {
+    if (currentImageIndex >= variantImages.length) {
+      setCurrentImageIndex(0);
+    }
+  }, [variantImages, currentImageIndex]);
+
+
+  const basePrice = parseFloat(product.price);
+  const finalPrice = variant ? variant.actual_price : basePrice;
+  const discountedPrice = product.discount
+    ? (finalPrice * (1 - product.discount / 100)).toFixed(2) // Format to 2 decimal places
+    : finalPrice.toFixed(2); // Format to 2 decimal places
+
+  const handleAddToCart = async () => { // Made async to await addToCart
+    if (!variant) {
+      toast({ 
+        title: 'Selection Needed', 
+        description: 'Please select both size and color.', 
+        variant: 'destructive' 
+      });
       return;
     }
-    if (product.colors.length > 1 && !selectedColor) {
-      alert('Please select a color');
+
+    if (variant.stock === 0) {
+      toast({ 
+        title: 'Out of Stock', 
+        description: 'Selected variant is out of stock.', 
+        variant: 'destructive' 
+      });
       return;
     }
 
-    const size = product.sizes.length === 1 ? product.sizes[0] : selectedSize;
-    const color = product.colors.length === 1 ? product.colors[0] : selectedColor;
-
-    if (!getVariantAvailability(size, color)) {
-      alert('This variant is currently out of stock');
-      return;
+    try {
+      // Pass variant.id and quantity (1) directly to addToCart
+      await addToCart(variant.id, 1);
+      toast({ title: 'Item added to cart', description: `${product.name} (${variant.size}, ${variant.color}) added.`, className: "bg-green-500 text-white" });
+    } catch (error) {
+      console.error("Failed to add to cart:", error);
+      toast({ title: 'Error', description: 'Failed to add item to cart. Please try again.', variant: 'destructive' });
     }
-
-    addToCart(product, 1, size, color);
-  };
-
-  const isVariantSelected = () => {
-    if (product.sizes.length > 1 && !selectedSize) return false;
-    if (product.colors.length > 1 && !selectedColor) return false;
-    return true;
-  };
-
-  const isVariantInStock = () => {
-    const size = product.sizes.length === 1 ? product.sizes[0] : selectedSize;
-    const color = product.colors.length === 1 ? product.colors[0] : selectedColor;
-    return getVariantAvailability(size, color);
   };
 
   return (
     <div className="container mx-auto px-4 py-8">
-      {/* Back Button */}
-      <Button 
-        variant="ghost" 
-        onClick={() => navigate('/products')}
-        className="mb-6 hover:bg-accent transition-all duration-300"
-      >
+      <Button variant="ghost" onClick={() => navigate('/products')} className="mb-6 hover:bg-accent">
         <ArrowLeft className="h-4 w-4 mr-2" />
         Back to Products
       </Button>
 
       <div className="grid lg:grid-cols-2 gap-12">
-        {/* Product Images */}
+        {/* Image Gallery */}
         <div className="space-y-4">
-          <div className="aspect-square bg-gradient-to-br from-muted to-muted/50 rounded-lg overflow-hidden relative shadow-lg">
-            {product.isNew && (
-              <Badge className="absolute top-4 left-4 bg-primary text-primary-foreground z-10">
-                New
-              </Badge>
-            )}
+          <div className="aspect-square rounded-lg overflow-hidden shadow-lg relative bg-muted flex items-center justify-center">
             {product.discount && (
-              <Badge className="absolute top-4 right-4 bg-red-500 text-white z-10">
+              <Badge className="absolute top-4 right-4 z-10 bg-red-500 text-white">
                 -{product.discount}%
               </Badge>
             )}
-            {product.images && product.images.length > 0 ? (
-              <img 
-                src={product.images[currentImageIndex] || product.images[0]}
-                alt={product.name}
+            {variantImages.length > 0 ? (
+              <img
+                src={variantImages[currentImageIndex]?.url || `https://placehold.co/500x500/EFEFEF/AAAAAA?text=No+Image`}
+                alt={variantImages[currentImageIndex]?.alt_text || 'Product Image'}
                 className="w-full h-full object-cover"
-                onError={(e) => {
-                  e.currentTarget.style.display = 'none';
-                  e.currentTarget.parentElement?.classList.add('flex', 'items-center', 'justify-center');
-                  if (!e.currentTarget.parentElement?.querySelector('.placeholder-content')) {
-                    const placeholder = document.createElement('div');
-                    placeholder.className = 'placeholder-content text-6xl text-muted-foreground';
-                    placeholder.textContent = '📷';
-                    e.currentTarget.parentElement?.appendChild(placeholder);
-                  }
-                }}
+                onError={(e) => { e.currentTarget.src = 'https://placehold.co/500x500/EFEFEF/AAAAAA?text=No+Image'; }}
               />
             ) : (
-              <div className="w-full h-full flex items-center justify-center">
-                <span className="text-6xl text-muted-foreground">📷</span>
+              <div className="w-full h-full flex items-center justify-center text-6xl text-muted-foreground">
+                📷
               </div>
             )}
           </div>
-          
-          {/* Image Thumbnails */}
-          {product.images && product.images.length > 1 && (
-            <div className="flex gap-2">
-              {product.images.map((image, index) => (
+
+          {variantImages.length > 1 && (
+            <div className="flex gap-2 justify-center"> {/* Added justify-center for better layout */}
+              {variantImages.map((img, i) => (
                 <button
-                  key={index}
-                  onClick={() => setCurrentImageIndex(index)}
+                  key={img.id || i} // Use image ID if available, fallback to index
+                  onClick={() => setCurrentImageIndex(i)}
                   className={`w-20 h-20 rounded-lg overflow-hidden border-2 ${
-                    currentImageIndex === index 
-                      ? 'border-primary' 
-                      : 'border-transparent hover:border-primary/50'
+                    i === currentImageIndex ? 'border-primary' : 'border-transparent hover:border-primary/50'
                   }`}
                 >
-                  <img 
-                    src={image} 
-                    alt={`${product.name} ${index + 1}`}
-                    className="w-full h-full object-cover"
-                  />
+                  <img src={img.url} alt={img.alt_text} className="w-full h-full object-cover" />
                 </button>
               ))}
             </div>
@@ -154,61 +147,53 @@ const ProductDetail = () => {
         {/* Product Info */}
         <div className="space-y-6">
           <div>
-            <h1 className="text-3xl font-bold text-foreground mb-2">{product.name}</h1>
-            <p className="text-lg text-muted-foreground capitalize">{product.category}</p>
+            <h1 className="text-3xl font-bold">{product.name}</h1>
+            <p className="text-muted-foreground capitalize">{product.category.name}</p>
           </div>
 
-          {/* Price */}
           <div className="flex items-center gap-4">
-            {product.discount ? (
+            <span className="text-3xl font-bold text-primary">€{discountedPrice}</span>
+            {product.discount && (
               <>
-                <span className="text-3xl font-bold text-primary">
-                  €{Math.round(product.price * (1 - product.discount / 100))}
-                </span>
-                <span className="text-xl text-muted-foreground line-through">
-                  €{product.price}
-                </span>
+                <span className="text-xl line-through text-muted-foreground">€{finalPrice.toFixed(2)}</span>
                 <Badge className="bg-red-500 text-white">
-                  Save €{Math.round(product.price * (product.discount / 100))}
+                  Save €{Math.round(finalPrice * (product.discount / 100)).toFixed(2)}
                 </Badge>
               </>
-            ) : (
-              <span className="text-3xl font-bold text-primary">
-                €{product.price}
-              </span>
             )}
           </div>
 
           <Separator />
 
-          {/* Description */}
           <div>
-            <h3 className="text-lg font-semibold text-foreground mb-2">Description</h3>
-            <p className="text-muted-foreground leading-relaxed">{product.description}</p>
+            <h3 className="text-lg font-semibold mb-2">Description</h3>
+            <p className="text-muted-foreground">{product.description}</p>
           </div>
 
-          {/* Size Selection */}
-          {product.sizes.length > 1 && (
+          {/* Size Selector */}
+          {allSizes.length > 0 && (
             <div>
-              <h3 className="text-lg font-semibold text-foreground mb-3">Size</h3>
+              <h3 className="text-lg font-semibold mb-3">Size</h3>
               <div className="flex flex-wrap gap-2">
-                {product.sizes.map((size) => {
-                  const sizeInStock = selectedColor ? getVariantAvailability(size, selectedColor) : true;
+                {allSizes.map((size) => {
+                  // Check if a variant exists with the current size and selected color, and is in stock
+                  const hasStock = product.variants.some((v) => 
+                    v.size === size && (selectedColor === '' || v.color === selectedColor) && v.stock > 0
+                  );
                   return (
                     <button
                       key={size}
                       onClick={() => setSelectedSize(size)}
-                      disabled={!sizeInStock}
-                      className={`px-4 py-2 border rounded-lg transition-colors ${
+                      className={`px-4 py-2 border rounded-lg ${
                         selectedSize === size
                           ? 'border-primary bg-primary/10 text-primary'
-                          : sizeInStock
-                          ? 'border-border hover:border-primary/50 text-foreground'
+                          : hasStock
+                          ? 'border-border hover:border-primary/50'
                           : 'border-border text-muted-foreground opacity-50 cursor-not-allowed'
                       }`}
+                      disabled={!hasStock && selectedSize !== size} // Disable if out of stock AND not currently selected
                     >
-                      <span>{size}</span>
-                      {!sizeInStock && <X className="inline ml-1 h-3 w-3" />}
+                      {size}
                     </button>
                   );
                 })}
@@ -216,32 +201,30 @@ const ProductDetail = () => {
             </div>
           )}
 
-          {/* Color Selection */}
-          {product.colors.length > 1 && (
+          {/* Color Selector */}
+          {allColors.length > 0 && (
             <div>
-              <h3 className="text-lg font-semibold text-foreground mb-3">Color</h3>
+              <h3 className="text-lg font-semibold mb-3">Color</h3>
               <div className="flex flex-wrap gap-2">
-                {product.colors.map((color) => {
-                  const colorInStock = selectedSize ? getVariantAvailability(selectedSize, color) : true;
+                {allColors.map((color) => {
+                  // Check if a variant exists with the current color and selected size, and is in stock
+                  const hasStock = product.variants.some((v) => 
+                    v.color === color && (selectedSize === '' || v.size === selectedSize) && v.stock > 0
+                  );
                   return (
                     <button
                       key={color}
                       onClick={() => setSelectedColor(color)}
-                      disabled={!colorInStock}
-                      className={`px-4 py-2 border rounded-lg transition-colors flex items-center gap-2 ${
+                      className={`px-4 py-2 border rounded-lg flex items-center gap-2 ${
                         selectedColor === color
                           ? 'border-primary bg-primary/10 text-primary'
-                          : colorInStock
-                          ? 'border-border hover:border-primary/50 text-foreground'
+                          : hasStock
+                          ? 'border-border hover:border-primary/50'
                           : 'border-border text-muted-foreground opacity-50 cursor-not-allowed'
                       }`}
+                      disabled={!hasStock && selectedColor !== color} // Disable if out of stock AND not currently selected
                     >
-                      <span>{color}</span>
-                      {colorInStock ? (
-                        <Check className="h-3 w-3" />
-                      ) : (
-                        <X className="h-3 w-3" />
-                      )}
+                      {color} {hasStock ? <Check className="h-3 w-3" /> : <X className="h-3 w-3" />}
                     </button>
                   );
                 })}
@@ -249,72 +232,67 @@ const ProductDetail = () => {
             </div>
           )}
 
-          {/* Availability Status */}
-          <Card className="bg-card border-border shadow-md">
+          {/* Stock Info */}
+          <Card className="rounded-lg shadow-sm">
             <CardContent className="p-4">
               <div className="flex items-center gap-2">
-                {isVariantSelected() && isVariantInStock() ? (
-                  <>
-                    <Check className="h-5 w-5 text-green-500" />
-                    <span className="text-green-600 dark:text-green-400 font-medium">In Stock</span>
-                  </>
-                ) : isVariantSelected() && !isVariantInStock() ? (
-                  <>
-                    <X className="h-5 w-5 text-red-500" />
-                    <span className="text-red-600 dark:text-red-400 font-medium">Out of Stock</span>
-                  </>
+                {isVariantSelected ? (
+                  isInStock ? (
+                    <>
+                      <Check className="text-green-500 h-5 w-5" />
+                      <span className="text-green-600 font-medium">In Stock</span>
+                    </>
+                  ) : (
+                    <>
+                      <X className="text-red-500 h-5 w-5" />
+                      <span className="text-red-600 font-medium">Out of Stock</span>
+                    </>
+                  )
                 ) : (
-                  <>
-                    <span className="text-muted-foreground">Select variant to check availability</span>
-                  </>
+                  <span className="text-muted-foreground">Select variant to check availability</span>
                 )}
               </div>
             </CardContent>
           </Card>
 
-          {/* Action Buttons */}
+          {/* Actions */}
           <div className="space-y-4">
-            <Button 
+            <Button
               onClick={handleAddToCart}
-              disabled={!isVariantSelected() || !isVariantInStock()}
-              className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl transition-all duration-300 text-lg py-6"
-              size="lg"
+              disabled={!isVariantSelected || !isInStock}
+              className="w-full py-6 text-lg font-bold disabled:opacity-50 rounded-md bg-gold-500 hover:bg-gold-600 text-leather-900"
             >
-              {!isVariantSelected() ? 'Select Options' : !isVariantInStock() ? 'Out of Stock' : 'Add to Cart'}
+              {!isVariantSelected ? 'Select Options' : !isInStock ? 'Out of Stock' : 'Add to Cart'}
             </Button>
-            
+
             <div className="flex gap-4">
-               <Button variant="outline" className="flex-1 gap-2 border-primary text-primary hover:bg-primary hover:text-primary-foreground transition-all duration-300">
+              <Button variant="outline" className="flex-1 gap-2 border-primary text-primary rounded-md">
                 <Heart className="h-4 w-4" />
                 Add to Wishlist
               </Button>
-              <Button variant="outline" className="flex-1 gap-2 border-primary text-primary hover:bg-primary hover:text-primary-foreground transition-all duration-300">
+              <Button variant="outline" className="flex-1 gap-2 border-primary text-primary rounded-md">
                 <Share2 className="h-4 w-4" />
                 Share
               </Button>
             </div>
           </div>
 
-          {/* Product Features */}
           <Separator />
+
           <div className="space-y-3">
-            <h3 className="text-lg font-semibold text-foreground">Features</h3>
-            <div className="grid grid-cols-2 gap-4 text-sm">
+            <h3 className="text-lg font-semibold">Features</h3>
+            <div className="grid grid-cols-2 gap-4 text-sm text-muted-foreground">
               <div className="flex items-center gap-2">
-                <Check className="h-4 w-4 text-green-500" />
-                <span className="text-muted-foreground">Handcrafted</span>
+                <Check className="h-4 w-4 text-green-500" /> Handcrafted
               </div>
               <div className="flex items-center gap-2">
-                <Check className="h-4 w-4 text-green-500" />
-                <span className="text-muted-foreground">Premium Leather</span>
+                <Check className="h-4 w-4 text-green-500" /> Premium Leather
               </div>
               <div className="flex items-center gap-2">
-                <Check className="h-4 w-4 text-green-500" />
-                <span className="text-muted-foreground">30-Day Returns</span>
+                <Check className="h-4 w-4 text-green-500" /> 30-Day Returns
               </div>
               <div className="flex items-center gap-2">
-                <Check className="h-4 w-4 text-green-500" />
-                <span className="text-muted-foreground">Free Shipping</span>
+                <Check className="h-4 w-4 text-green-500" /> Free Shipping
               </div>
             </div>
           </div>

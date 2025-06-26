@@ -1,5 +1,5 @@
 # Dependencies
-/node_modules
+/node-modules
 /.pnp
 .pnp.js
 
@@ -11,7 +11,7 @@
 /dist
 
 # Misc
-.DS_Store
+.DS-Store
 .env.local
 .env.development.local
 .env.test.local
@@ -33,3 +33,4 @@ yarn-error.log*
 # Lock files
 package-lock.json
 yarn.lock
+node_modules

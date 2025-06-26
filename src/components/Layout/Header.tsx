@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ShoppingCart, Menu, User, Settings, X, Search, Heart, Phone, Mail } from 'lucide-react';
+import { ShoppingCart, Menu, User, Settings, Search, Heart, Phone, Mail } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -15,6 +15,7 @@ import { Separator } from '@/components/ui/separator';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useLanguage, Language } from '@/contexts/LanguageContext';
 import { useCart } from '@/contexts/CartContext';
+import { useAuth0 } from '@auth0/auth0-react';
 
 const languages: { code: Language; name: string; flag: string }[] = [
   { code: 'en', name: 'English', flag: '🇬🇧' },
@@ -31,6 +32,8 @@ export const Header: React.FC = () => {
   const { getCartItemsCount } = useCart();
   const [searchQuery, setSearchQuery] = useState('');
 
+  const { loginWithRedirect, logout, isAuthenticated, user, isLoading } = useAuth0();
+
   const currentLanguage = languages.find(lang => lang.code === language);
 
   const categories = [
@@ -44,7 +47,6 @@ export const Header: React.FC = () => {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
-      // Navigate to products page with search query
       window.location.href = `/products?search=${encodeURIComponent(searchQuery.trim())}`;
     }
   };
@@ -177,8 +179,8 @@ export const Header: React.FC = () => {
                 <Button variant="ghost" size="sm" className="relative h-9 w-9 p-0">
                   <ShoppingCart className="h-4 w-4" />
                   {getCartItemsCount() > 0 && (
-                    <Badge 
-                      variant="destructive" 
+                    <Badge
+                      variant="destructive"
                       className="absolute -top-2 -right-2 h-5 w-5 rounded-full p-0 text-xs flex items-center justify-center bg-primary text-primary-foreground"
                     >
                       {getCartItemsCount()}
@@ -195,6 +197,28 @@ export const Header: React.FC = () => {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="bg-popover border border-border">
+                  {isLoading ? (
+                    <div className="p-2">{t('auth.loading')}</div>
+                  ) : isAuthenticated ? (
+                    <>
+                      <div className="px-4 py-2 text-sm">
+                        {t('auth.hello')}, {user?.name ?? user?.email}
+                      </div>
+                      <DropdownMenuItem
+                        onClick={() => logout({ returnTo: window.location.origin })}
+                        className="hover:bg-accent cursor-pointer"
+                      >
+                        {t('auth.logout')}
+                      </DropdownMenuItem>
+                    </>
+                  ) : (
+                    <DropdownMenuItem
+                      onClick={() => loginWithRedirect()}
+                      className="hover:bg-accent cursor-pointer"
+                    >
+                      {t('auth.login')}
+                    </DropdownMenuItem>
+                  )}
                   <DropdownMenuItem asChild>
                     <Link to="/admin" className="flex items-center hover:bg-accent">
                       <Settings className="mr-2 h-4 w-4" />
@@ -204,141 +228,42 @@ export const Header: React.FC = () => {
                 </DropdownMenuContent>
               </DropdownMenu>
 
-              {/* Mobile Menu */}
+              {/* Mobile Hamburger Menu */}
               <Sheet>
                 <SheetTrigger asChild>
-                  <Button variant="ghost" size="sm" className="h-9 w-9 p-0">
-                    <Menu className="h-4 w-4" />
+                  <Button variant="ghost" size="sm" className="h-9 w-9 p-0 md:hidden">
+                    <Menu className="h-5 w-5" />
                   </Button>
                 </SheetTrigger>
-                <SheetContent side="right" className="w-[280px] sm:w-[350px]">
+                <SheetContent side="left" className="w-64 p-0">
                   <SheetHeader>
-                    <SheetTitle className="text-left">Menu</SheetTitle>
+                    <SheetTitle>{t('nav.menu')}</SheetTitle>
                   </SheetHeader>
-                  <div className="flex flex-col py-4">
-                    {/* Mobile Navigation */}
-                    <div className="space-y-2 mb-6">
-                      <Link 
-                        to="/" 
-                        className="flex items-center px-4 py-3 text-sm font-medium hover:bg-muted rounded-md transition-colors"
+
+                  <nav className="flex flex-col gap-1 px-4">
+                    {categories.map((category) => (
+                      <Link
+                        key={category.name}
+                        to={category.path}
+                        className="block rounded-md px-2 py-1 text-sm font-medium text-muted-foreground hover:bg-accent"
                       >
-                        {t('nav.home')}
+                        {category.name}
                       </Link>
-                      <Link 
-                        to="/products" 
-                        className="flex items-center px-4 py-3 text-sm font-medium hover:bg-muted rounded-md transition-colors"
-                      >
-                        {t('nav.products')}
-                      </Link>
-                      <Link 
-                        to="/about" 
-                        className="flex items-center px-4 py-3 text-sm font-medium hover:bg-muted rounded-md transition-colors"
-                      >
-                        {t('nav.about')}
-                      </Link>
-                      <Link 
-                        to="/contact" 
-                        className="flex items-center px-4 py-3 text-sm font-medium hover:bg-muted rounded-md transition-colors"
-                      >
-                        {t('nav.contact')}
-                      </Link>
-                    </div>
+                    ))}
 
-                    <Separator className="my-4" />
+                    <Separator className="my-2" />
 
-                    {/* Categories */}
-                    <div className="space-y-2 mb-6">
-                      <h3 className="px-4 text-sm font-semibold text-muted-foreground">{t('nav.categories')}</h3>
-                      {categories.map((category) => (
-                        <Link
-                          key={category.name}
-                          to={category.path}
-                          className="flex items-center px-4 py-2 text-sm hover:bg-muted rounded-md transition-colors"
-                        >
-                          {category.name}
-                        </Link>
-                      ))}
-                    </div>
-
-                    <Separator className="my-4" />
-
-                    {/* Mobile Settings */}
-                    <div className="space-y-2">
-                      <h3 className="px-4 text-sm font-semibold text-muted-foreground">{t('nav.settings')}</h3>
-                      
-                      {/* Language Selector */}
-                      <div className="px-4">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" className="w-full justify-start h-auto p-2">
-                              <span className="mr-2">{currentLanguage?.flag}</span>
-                              {currentLanguage?.name}
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="start" className="bg-popover border border-border">
-                            {languages.map((lang) => (
-                              <DropdownMenuItem
-                                key={lang.code}
-                                onClick={() => setLanguage(lang.code)}
-                                className="hover:bg-accent"
-                              >
-                                <span className="mr-2">{lang.flag}</span>
-                                {lang.name}
-                              </DropdownMenuItem>
-                            ))}
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </div>
-
-                      {/* Theme Toggle */}
-                      <Button
-                        variant="ghost"
-                        onClick={toggleTheme}
-                        className="w-full justify-start h-auto p-2 mx-4"
-                      >
-                        <span className="mr-2">{theme === 'light' ? '🌙' : '☀️'}</span>
-                        {theme === 'light' ? t('theme.dark') : t('theme.light')}
-                      </Button>
-
-                      {/* Wishlist */}
-                      <Button
-                        variant="ghost"
-                        className="w-full justify-start h-auto p-2 mx-4"
-                      >
-                        <Heart className="mr-2 h-4 w-4" />
-                        {t('nav.wishlist')}
-                      </Button>
-
-                      {/* Admin */}
-                      <Link 
-                        to="/admin" 
-                        className="flex items-center px-4 py-2 text-sm hover:bg-muted rounded-md transition-colors mx-4"
-                      >
-                        <Settings className="mr-2 h-4 w-4" />
-                        {t('nav.admin')}
-                      </Link>
-                    </div>
-                  </div>
+                    <Link
+                      to="/admin"
+                      className="flex items-center rounded-md px-2 py-1 text-sm font-medium text-muted-foreground hover:bg-accent"
+                    >
+                      <Settings className="mr-2 h-4 w-4" />
+                      {t('nav.admin')}
+                    </Link>
+                  </nav>
                 </SheetContent>
               </Sheet>
             </div>
-          </div>
-        </div>
-
-        {/* Desktop Category Navigation */}
-        <div className="border-t border-border/50 hidden lg:block">
-          <div className="container mx-auto px-4">
-            <nav className="flex items-center space-x-8 py-3">
-              {categories.map((category) => (
-                <Link
-                  key={category.name}
-                  to={category.path}
-                  className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
-                >
-                  {category.name}
-                </Link>
-              ))}
-            </nav>
           </div>
         </div>
       </header>
