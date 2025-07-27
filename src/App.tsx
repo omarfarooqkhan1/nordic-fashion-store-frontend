@@ -1,81 +1,155 @@
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { ThemeProvider } from "@/contexts/ThemeContext";
-import { LanguageProvider } from "@/contexts/LanguageContext";
-import { CartProvider } from "@/contexts/CartContext";
-import { Header } from "@/components/Layout/Header";
-import { Footer } from "@/components/Layout/Footer";
-import Index from "./pages/Index";
-import About from "./pages/About";
-import Contact from "./pages/Contact";
-import Products from "./pages/Products";
-import ProductDetail from "./pages/ProductDetail";
-import Cart from "./pages/Cart";
-import Admin from "./pages/Admin";
-import AdminLogin from "./pages/AdminLogin";
-import NotFound from "./pages/NotFound";
-import { Auth0Provider } from "@auth0/auth0-react";
-import ProtectedRoute from "./components/Auth/ProtectedRoute";
+"use client"
 
-const queryClient = new QueryClient();
+import type React from "react"
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom"
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
+import { Auth0Provider } from "@auth0/auth0-react"
+import { Toaster } from "@/components/ui/toaster"
+import { Toaster as Sonner } from "@/components/ui/sonner"
+import { TooltipProvider } from "@/components/ui/tooltip"
+import { Header } from "@/components/Layout/Header"
+import { Footer } from "@/components/Layout/Footer"
+import ErrorBoundary from "./components/ErrorBoundary"
 
-const domain = import.meta.env.VITE_AUTH0_DOMAIN!;
-const clientId = import.meta.env.VITE_AUTH0_CLIENT_ID!;
-const audience = import.meta.env.VITE_AUTH0_AUDIENCE; // optional, if you use API
+// Context Providers
+import { AuthProvider } from "./contexts/AuthContext"
+import { ThemeProvider } from "./contexts/ThemeContext"
+import { LanguageProvider } from "./contexts/LanguageContext"
+import { CartProvider } from "./contexts/CartContext"
+import ProtectedRoute from "./components/Auth/ProtectedRoute"
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <ThemeProvider>
-      <LanguageProvider>
-        <CartProvider>
-          <TooltipProvider>
-            <Toaster />
-            <Sonner />
-            <Auth0Provider
-              domain={domain}
-              clientId={clientId}
-              authorizationParams={{
-                redirect_uri: window.location.origin,
-                audience: audience, // only if you have an API configured
-                // scope: 'openid profile email', // default scopes
-              }}
-              cacheLocation="localstorage" // optional, for persistent login across tabs/refresh
-              useRefreshTokens={true} // recommended for silent refresh
-            >
-              <BrowserRouter>
-                <div className="min-h-screen flex flex-col">
-                  <Header />
-                  <main className="flex-1">
-                    <Routes>
-                      <Route path="/" element={<Index />} />
-                      <Route path="/about" element={<About />} />
-                      <Route path="/contact" element={<Contact />} />
-                      <Route path="/products" element={<Products />} />
-                      <Route path="/product/:id" element={<ProductDetail />} />
-                      <Route path="/cart" element={<Cart />} />
-                      <Route path="/admin"
-                        element={
-                          <ProtectedRoute>
-                            <Admin />
-                          </ProtectedRoute>
-                        } 
-                      />
-                      <Route path="/admin-login" element={<AdminLogin />} />
-                      <Route path="*" element={<NotFound />} />
-                    </Routes>
-                  </main>
-                  <Footer />
-                </div>
-              </BrowserRouter>
-            </Auth0Provider>
-          </TooltipProvider>
-        </CartProvider>
-      </LanguageProvider>
-    </ThemeProvider>
-  </QueryClientProvider>
-);
+// Existing Pages
+import Index from "./pages/Index"
+import About from "./pages/About"
+import Contact from "./pages/Contact"
+import Products from "./pages/Products"
+import ProductDetail from "./pages/ProductDetail"
+import Cart from "./pages/Cart"
+import AdminDashboard from "./pages/AdminDashboard"
+import AdminLogin from "./pages/AdminLogin"
+import NotFound from "./pages/NotFound"
 
-export default App;
+// New Auth Pages
+import CustomerLogin from "./pages/auth/CustomerLogin"
+import CustomerSignup from "./pages/auth/CustomerSignup"
+import Auth0Callback from "./pages/auth/Auth0Callback"
+
+// Customer Pages
+import Profile from "./pages/Profile"
+import Orders from "./pages/Orders"
+import CheckoutFixed from "./pages/CheckoutFixed"
+
+// Create a client
+const queryClient = new QueryClient()
+
+// Auth0 configuration
+const auth0Domain = import.meta.env.VITE_AUTH0_DOMAIN
+const auth0ClientId = import.meta.env.VITE_AUTH0_CLIENT_ID
+const auth0Audience = import.meta.env.VITE_AUTH0_AUDIENCE
+
+const App: React.FC = () => {
+  return (
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <ThemeProvider>
+          <LanguageProvider>
+            <TooltipProvider>
+              <Toaster />
+              <Sonner />                <Auth0Provider
+                  domain={auth0Domain}
+                  clientId={auth0ClientId}
+                  authorizationParams={{
+                    redirect_uri: `${window.location.origin}/auth/callback`,
+                    audience: auth0Audience,
+                  }}
+                  cacheLocation="localstorage"
+                  useRefreshTokens={true}
+                  onRedirectCallback={(appState) => {
+                    // Handle the callback and redirect to intended page
+                    const returnTo = appState?.returnTo || window.location.pathname;
+                    window.location.replace(returnTo);
+                  }}
+                >
+                <AuthProvider>
+                  <CartProvider>
+                    <Router>
+                      <div className="min-h-screen flex flex-col">
+                        <Header />
+                        <main className="flex-1">
+                          <ErrorBoundary>
+                            <Routes>
+                              {/* Existing Public Routes */}
+                              <Route path="/" element={<Index />} />
+                              <Route path="/about" element={<About />} />
+                              <Route path="/contact" element={<Contact />} />
+                              <Route path="/products" element={<Products />} />
+                              <Route path="/product/:id" element={<ProductDetail />} />
+
+                              {/* New Auth Routes */}
+                              <Route path="/login" element={<CustomerLogin />} />
+                              <Route path="/signup" element={<CustomerSignup />} />
+                              <Route path="/admin/login" element={<AdminLogin />} />
+                              <Route path="/auth/callback" element={<Auth0Callback />} />
+
+                              {/* Cart Route - Can be accessed by customers or guests */}
+                              <Route path="/cart" element={<Cart />} />
+
+                              {/* Checkout Route - Can be accessed by customers or guests */}
+                              <Route path="/checkout" element={<CheckoutFixed />} />
+
+                              {/* Customer Protected Routes */}
+                              <Route
+                                path="/profile"
+                                element={
+                                  <ProtectedRoute requireCustomer>
+                                    <Profile />
+                                  </ProtectedRoute>
+                                }
+                              />
+                              <Route
+                                path="/orders"
+                                element={
+                                  <ProtectedRoute requireCustomer>
+                                    <Orders />
+                                  </ProtectedRoute>
+                                }
+                              />
+                              <Route
+                                path="/orders/:id"
+                                element={
+                                  <ProtectedRoute requireCustomer>
+                                    <Orders />
+                                  </ProtectedRoute>
+                                }
+                              />
+
+                              {/* Admin Routes */}
+                              <Route
+                                path="/admin"
+                                element={
+                                  <ProtectedRoute>
+                                    <AdminDashboard />
+                                  </ProtectedRoute>
+                                }
+                              />
+
+                              {/* Fallback Routes */}
+                              <Route path="*" element={<NotFound />} />
+                            </Routes>
+                          </ErrorBoundary>
+                        </main>
+                        <Footer />
+                      </div>
+                    </Router>
+                  </CartProvider>
+                </AuthProvider>
+              </Auth0Provider>
+            </TooltipProvider>
+          </LanguageProvider>
+        </ThemeProvider>
+      </QueryClientProvider>
+    </ErrorBoundary>
+  )
+}
+
+export default App

@@ -10,10 +10,12 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { useCart } from '@/contexts/CartContext';
 import type { Product } from '@/types/Product';
 import { fetchProducts } from '@/api/products';
+import { useToast } from '@/hooks/use-toast';
 
 const Products = () => {
   const { t } = useLanguage();
   const { addToCart } = useCart();
+  const { toast } = useToast();
   const [searchParams, setSearchParams] = useSearchParams();
 
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
@@ -70,7 +72,27 @@ const Products = () => {
   });
 
   const handleAddToCart = (product: Product) => {
-    addToCart(product, 1);
+    // Get the first available variant ID or use direct product ID if no variants
+    if (product.variants && product.variants.length > 0) {
+      // Use the first available variant that has stock > 0
+      const availableVariant = product.variants.find(variant => variant.stock > 0);
+      
+      if (availableVariant) {
+        addToCart(availableVariant.id, 1);
+      } else {
+        // If no variant has stock, use the first variant anyway but add error handling in the cart context
+        addToCart(product.variants[0].id, 1);
+      }
+    } else {
+      // Fallback to product ID (should be handled by backend)
+      console.error('No variants found for product:', product.id);
+      // We should not reach here in a well-structured product, but handle it gracefully
+      toast({
+        title: t('toast.error'),
+        description: t('product.selectVariant') || 'Please select a product variant',
+        variant: 'destructive'
+      });
+    }
   };
 
   return (
@@ -181,19 +203,16 @@ const Products = () => {
                           alt={product.images[0].alt_text || product.name}
                           className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                           onError={(e) => {
-                            e.currentTarget.style.display = 'none';
-                            e.currentTarget.parentElement?.classList.add('flex', 'items-center', 'justify-center');
-                            if (!e.currentTarget.parentElement?.querySelector('.placeholder-content')) {
-                              const placeholder = document.createElement('div');
-                              placeholder.className = 'placeholder-content text-6xl text-muted-foreground';
-                              placeholder.textContent = '📷';
-                              e.currentTarget.parentElement?.appendChild(placeholder);
-                            }
+                            e.currentTarget.src = '/placeholder.svg';
                           }}
                         />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center">
-                          <span className="text-6xl text-muted-foreground">📷</span>
+                          <img 
+                            src="/placeholder.svg" 
+                            alt="No image available" 
+                            className="w-full h-full object-cover opacity-50"
+                          />
                         </div>
                       )}
                     </div>
@@ -223,7 +242,7 @@ const Products = () => {
                       </div>
                       <Button
                         onClick={() => handleAddToCart(product)}
-                        className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold shadow-md hover:shadow-lg transition-all duration-300"
+                        className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold shadow-md hover:shadow-lg transition-all duration-300 border border-primary/20 hover:border-primary/40"
                       >
                         {t('product.addToCart')}
                       </Button>

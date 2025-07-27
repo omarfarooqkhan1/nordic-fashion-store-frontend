@@ -1,30 +1,47 @@
-import React, { useEffect, ReactNode } from "react";
-import { useAuth0 } from "@auth0/auth0-react";
-import { Navigate } from "react-router-dom";
+"use client"
+
+import type React from "react"
+import { Navigate, useLocation } from "react-router-dom"
+import { useAuth } from "@/contexts/AuthContext"
+import { Card, CardContent } from "@/components/ui/card"
+import { Loader2 } from "lucide-react"
 
 interface ProtectedRouteProps {
-  children: ReactNode;
+  children: React.ReactNode
+  requireAdmin?: boolean
+  requireCustomer?: boolean
 }
 
-const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
-  const { isAuthenticated, isLoading, loginWithRedirect, getAccessTokenSilently } = useAuth0();
+const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requireAdmin = false, requireCustomer = false }) => {
+  const { isAuthenticated, isAdmin, isCustomer, loading } = useAuth()
+  const location = useLocation()
 
-  useEffect(() => {
-    if (isAuthenticated) {
-      getAccessTokenSilently()
-        .then((token: string) => localStorage.setItem("access_token", token))
-        .catch((err) => console.error(err));
-    }
-  }, [isAuthenticated, getAccessTokenSilently]);
-
-  if (isLoading) return <div>Loading...</div>;
-
-  if (!isAuthenticated) {
-    loginWithRedirect();
-    return <div>Redirecting...</div>;
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100">
+        <Card className="w-full max-w-sm">
+          <CardContent className="flex flex-col items-center justify-center p-6">
+            <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
+            <p className="text-sm text-muted-foreground">Loading...</p>
+          </CardContent>
+        </Card>
+      </div>
+    )
   }
 
-  return <>{children}</>;
-};
+  if (!isAuthenticated) {
+    return <Navigate to="/login" state={{ from: location }} replace />
+  }
 
-export default ProtectedRoute;
+  if (requireAdmin && !isAdmin) {
+    return <Navigate to="/unauthorized" replace />
+  }
+
+  if (requireCustomer && !isCustomer) {
+    return <Navigate to="/unauthorized" replace />
+  }
+
+  return <>{children}</>
+}
+
+export default ProtectedRoute

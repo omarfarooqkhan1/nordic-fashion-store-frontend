@@ -62,7 +62,7 @@ const Contact = () => {
               </div>
                <Button 
                  type="submit" 
-                 className="w-full bg-gradient-to-r from-gold-500 to-gold-600 hover:from-gold-400 hover:to-gold-500 text-leather-900 font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
+                 className="w-full bg-gradient-to-r from-gold-500 to-gold-600 hover:from-gold-400 hover:to-gold-500 text-leather-900 font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 border border-gold-400 hover:border-gold-300"
                >
                 {t('contact.form.send')}
               </Button>

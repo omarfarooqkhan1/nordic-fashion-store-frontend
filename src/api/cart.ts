@@ -25,6 +25,10 @@ export const fetchCart = async (sessionId?: string, bearerToken?: string): Promi
             const response = await api.get('/cart', {
         headers: getHeaders(sessionId, bearerToken),
     });
+        
+    // Debug the raw cart data from API
+    console.log('Raw cart data from API:', JSON.stringify(response.data, null, 2));
+            
     return response.data;
     } catch (error) {
         console.error('Error fetching cart:', error);

@@ -156,7 +156,7 @@ const Admin = () => {
             <div className="flex gap-4 pt-4">
               <Button 
                 type="submit"
-                className="bg-gold-500 hover:bg-gold-600 text-leather-900 font-semibold"
+                className="bg-gold-500 hover:bg-gold-600 text-leather-900 font-semibold border border-gold-400 hover:border-gold-500"
               >
                 {product ? 'Update Product' : 'Add Product'}
               </Button>
@@ -273,7 +273,7 @@ const Admin = () => {
             <h2 className="text-2xl font-semibold text-foreground">Manage Products</h2>
             <Button 
               onClick={() => setIsAddingProduct(true)}
-              className="bg-gold-500 hover:bg-gold-600 text-leather-900 font-semibold"
+              className="bg-gold-500 hover:bg-gold-600 text-leather-900 font-semibold border border-gold-400 hover:border-gold-500"
             >
               <Plus className="h-4 w-4 mr-2" />
               Add Product

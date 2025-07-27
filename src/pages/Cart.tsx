@@ -9,35 +9,51 @@ import { Minus, Plus, Trash2 } from 'lucide-react';
 
 const Cart = () => {
   const { t } = useLanguage();
-  // Destructure the `clearCartItems` function from the context, 
-  // as defined in CartContext.tsx
-  const { items, updateQuantity, removeFromCart, clearCartItems, getCartTotal } = useCart();
-
-  // Handle checkout action - replaced alert() with console.log()
+  // Destructure functions from the cart context
+  const { items, isLoading, updateQuantity, removeFromCart, clearCartItems, getCartTotal, getItemPrice } = useCart();
+  
+  // Debug logs
+  console.log('Cart component - items:', items);
+  console.log('Cart component - getCartTotal():', getCartTotal());
+  
+  // Handle checkout action
   const handleCheckout = () => {
-    console.log('Checkout functionality would be implemented here!');
-    // In a real application, this would typically navigate to a checkout page
-    // or trigger a checkout process.
+    // Navigate to checkout page
+    window.location.href = '/checkout';
   };
 
-  // Display message if cart is empty
-  if (items.length === 0) {
+  // Display loading state
+  if (isLoading) {
     return (
       <div className="container mx-auto px-4 py-16">
         <div className="text-center space-y-6">
           <h1 className="text-4xl font-bold text-leather-900 dark:text-leather-100">
-            {t('Your Cart')} {/* Using translation function */}
+            {t('cart.title')}
+          </h1>
+          <p className="text-xl text-muted-foreground">{t('common.loading')}</p>
+        </div>
+      </div>
+    );
+  }
+  
+  // Display message if cart is empty
+  if (!items || items.length === 0) {
+    return (
+      <div className="container mx-auto px-4 py-16">
+        <div className="text-center space-y-6">
+          <h1 className="text-4xl font-bold text-leather-900 dark:text-leather-100">
+            {t('cart.title')}
           </h1>
           <div className="max-w-md mx-auto space-y-4">
             <div className="aspect-square bg-leather-200 dark:bg-leather-700 rounded-lg flex items-center justify-center">
               <span className="text-6xl">🛒</span>
             </div>
-            <p className="text-xl text-muted-foreground">{t('Your cart is empty')}</p> {/* Using translation function */}
+            <p className="text-xl text-muted-foreground">{t('cart.empty')}</p>
             <Button 
               onClick={() => window.location.href = '/products'}
-              className="bg-gold-500 hover:bg-gold-600 text-leather-900 font-semibold"
+              className="bg-gold-500 hover:bg-gold-600 text-leather-900 font-semibold border border-gold-400 hover:border-gold-500"
             >
-              {t('Continue Shopping')} {/* Using translation function */}
+              {t('cart.continue')}
             </Button>
           </div>
         </div>
@@ -48,7 +64,7 @@ const Cart = () => {
   return (
     <div className="container mx-auto px-4 py-16">
       <h1 className="text-4xl font-bold text-leather-900 dark:text-leather-100 mb-8">
-        {t('Your Cart')} {/* Using translation function */}
+        {t('cart.title')}
       </h1>
 
       <div className="grid lg:grid-cols-3 gap-8">
@@ -79,12 +95,12 @@ const Cart = () => {
                         {/* Display size and color from item.variant */}
                         {item.variant.size && (
                           <Badge variant="outline" className="mt-2 text-xs">
-                            {t('Size')}: {item.variant.size}
+                            {t('product.size')}: {item.variant.size}
                           </Badge>
                         )}
                         {item.variant.color && (
                           <Badge variant="outline" className="mt-2 ml-2 text-xs">
-                            {t('Color')}: {item.variant.color}
+                            {t('product.color')}: {item.variant.color}
                           </Badge>
                         )}
                       </div>
@@ -125,10 +141,10 @@ const Cart = () => {
                       <div className="text-right">
                         {/* Access price from item.variant.actual_price */}
                         <p className="font-semibold text-lg text-gold-500">
-                          €{(item.variant.actual_price * item.quantity).toFixed(2)}
+                          €{((getItemPrice(item) ?? 0) * (item.quantity ?? 0)).toFixed(2)}
                         </p>
                         <p className="text-sm text-muted-foreground">
-                          €{item.variant.actual_price.toFixed(2)} {t('each')} {/* Using translation function */}
+                          €{(getItemPrice(item) ?? 0).toFixed(2)} {t('common.each') || 'each'}
                         </p>
                       </div>
                     </div>
@@ -145,14 +161,14 @@ const Cart = () => {
               onClick={clearCartItems}
               className="w-full sm:w-auto text-red-500 border-red-500 hover:bg-red-50 dark:hover:bg-red-950 rounded-md"
             >
-              {t('Clear Cart')} {/* Using translation function */}
+              {t('cart.remove') || 'Remove All'}
             </Button>
             <Button 
               variant="outline"
               onClick={() => window.location.href = '/products'}
               className="w-full sm:w-auto rounded-md"
             >
-              {t('Continue Shopping')} {/* Using translation function */}
+              {t('cart.continue') || 'Continue Shopping'}
             </Button>
           </div>
         </div>
@@ -161,42 +177,42 @@ const Cart = () => {
         <div className="lg:col-span-1">
           <Card className="bg-card border-border rounded-lg shadow-md sticky top-4">
             <CardHeader>
-              <CardTitle className="text-xl text-foreground">{t('Order Summary')}</CardTitle> {/* Using translation function */}
+              <CardTitle className="text-xl text-foreground">{t('cart.total')}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
                 <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">{t('Subtotal')}</span> {/* Using translation function */}
-                  <span className="text-foreground">€{getCartTotal().toFixed(2)}</span>
+                  <span className="text-muted-foreground">{t('cart.subtotal')}</span>
+                  <span className="text-foreground">€{(getCartTotal() ?? 0).toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">{t('Shipping')}</span> {/* Using translation function */}
+                  <span className="text-muted-foreground">{t('cart.shipping')}</span>
                   <span className="text-foreground">€9.99</span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">{t('Tax')}</span> {/* Using translation function */}
-                  <span className="text-foreground">€{(getCartTotal() * 0.25).toFixed(2)}</span>
+                  <span className="text-muted-foreground">{t('cart.tax')}</span>
+                  <span className="text-foreground">€{((getCartTotal() ?? 0) * 0.25).toFixed(2)}</span>
                 </div>
                 <Separator className="my-4" />
                 <div className="flex justify-between font-semibold text-lg">
-                  <span className="text-foreground">{t('Total')}</span> {/* Using translation function */}
+                  <span className="text-foreground">{t('cart.total')}</span>
                   <span className="text-gold-500">
-                    €{(getCartTotal() + 9.99 + (getCartTotal() * 0.25)).toFixed(2)}
+                    €{((getCartTotal() ?? 0) + 9.99 + ((getCartTotal() ?? 0) * 0.25)).toFixed(2)}
                   </span>
                 </div>
               </div>
 
               <Button 
-                className="w-full bg-gold-500 hover:bg-gold-600 text-leather-900 font-semibold rounded-md py-3"
+                className="w-full bg-gold-500 hover:bg-gold-600 text-leather-900 font-semibold rounded-md py-3 border border-gold-400 hover:border-gold-500"
                 onClick={handleCheckout}
               >
-                {t('Proceed to Checkout')} {/* Using translation function */}
+                {t('cart.checkout')}
               </Button>
 
               <div className="text-xs text-muted-foreground space-y-1">
-                <p>• {t('Free shipping on orders over €100')}</p> {/* Using translation function */}
-                <p>• {t('30-day return policy')}</p> {/* Using translation function */}
-                <p>• {t('Secure payment processing')}</p> {/* Using translation function */}
+                <p>• {t('cart.freeShipping') || 'Free shipping on orders over €100'}</p>
+                <p>• {t('cart.returnPolicy') || '30-day return policy'}</p>
+                <p>• {t('cart.securePayment') || 'Secure payment processing'}</p>
               </div>
             </CardContent>
           </Card>

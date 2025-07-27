@@ -9,41 +9,55 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { ArrowLeft, Check, Heart, Share2, X } from 'lucide-react';
-import { Product, Variant } from '@/types';
+import { Product, Variant } from '@/types/Product';
 import { useToast } from '@/hooks/use-toast'; // Import useToast
+import ProductImage from '@/components/ui/ProductImage';
 
 const ProductDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { t } = useLanguage();
   const { addToCart } = useCart();
-  const { toast } = useToast(); // Initialize useToast
+  const { toast } = useToast(); // Initialize useToast at the top level
 
   const [selectedSize, setSelectedSize] = useState('');
   const [selectedColor, setSelectedColor] = useState('');
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
-  const { data: product, isLoading, isError } = useQuery<Product>({
+  const { data: product, isLoading, isError, error } = useQuery<Product>({
     queryKey: ['product', id],
     queryFn: () => fetchProductById(id!),
     enabled: !!id,
+    retry: 3,
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
   });
 
+  // Ensure currentImageIndex is within bounds if variantImages change
+  React.useEffect(() => {
+    if (product && product.variants.length > 0) {
+      const variant = product.variants.find((v) => v.size === selectedSize && v.color === selectedColor);
+      const variantImages = variant?.images.length ? variant.images : product.images;
+      if (currentImageIndex >= variantImages.length) {
+        setCurrentImageIndex(0);
+      }
+    }
+  }, [product, selectedSize, selectedColor, currentImageIndex]);
+
   if (isLoading) {
-    return <div className="p-8 text-center text-lg">Loading product details...</div>;
+    return <div className="p-8 text-center text-lg">{t('common.loading')}</div>;
   }
 
   if (isError || !product) {
     return (
       <div className="p-8 text-center">
-        <h2 className="text-xl font-bold mb-4">Product not found</h2>
-        <Button onClick={() => navigate('/products')}>Back to Products</Button>
+        <h2 className="text-xl font-bold mb-4">{t('error.notFound')}</h2>
+        <Button onClick={() => navigate('/products')}>{t('common.back')} {t('nav.products')}</Button>
       </div>
     );
   }
 
-  const allSizes = Array.from(new Set(product.variants.map((v) => v.size)));
-  const allColors = Array.from(new Set(product.variants.map((v) => v.color)));
+  const allSizes = Array.from(new Set(product.variants.map((v) => v.size))) as string[];
+  const allColors = Array.from(new Set(product.variants.map((v) => v.color))) as string[];
 
   const getSelectedVariant = (): Variant | undefined => {
     return product.variants.find((v) => v.size === selectedSize && v.color === selectedColor);
@@ -54,14 +68,6 @@ const ProductDetail = () => {
   const isInStock = variant ? variant.stock > 0 : false;
   const variantImages = variant?.images.length ? variant.images : product.images;
 
-  // Ensure currentImageIndex is within bounds if variantImages change
-  React.useEffect(() => {
-    if (currentImageIndex >= variantImages.length) {
-      setCurrentImageIndex(0);
-    }
-  }, [variantImages, currentImageIndex]);
-
-
   const basePrice = parseFloat(product.price);
   const finalPrice = variant ? variant.actual_price : basePrice;
   const discountedPrice = product.discount
@@ -71,8 +77,8 @@ const ProductDetail = () => {
   const handleAddToCart = async () => { // Made async to await addToCart
     if (!variant) {
       toast({ 
-        title: 'Selection Needed', 
-        description: 'Please select both size and color.', 
+        title: t('product.selectSize'), 
+        description: t('product.selectSize') + ' ' + t('product.selectColor'), 
         variant: 'destructive' 
       });
       return;
@@ -80,8 +86,8 @@ const ProductDetail = () => {
 
     if (variant.stock === 0) {
       toast({ 
-        title: 'Out of Stock', 
-        description: 'Selected variant is out of stock.', 
+        title: t('product.outOfStock'), 
+        description: t('product.outOfStock'), 
         variant: 'destructive' 
       });
       return;
@@ -90,10 +96,10 @@ const ProductDetail = () => {
     try {
       // Pass variant.id and quantity (1) directly to addToCart
       await addToCart(variant.id, 1);
-      toast({ title: 'Item added to cart', description: `${product.name} (${variant.size}, ${variant.color}) added.`, className: "bg-green-500 text-white" });
+      toast({ title: t('toast.addedToCart'), description: `${product.name} (${variant.size}, ${variant.color})`, className: "bg-green-500 text-white" });
     } catch (error) {
       console.error("Failed to add to cart:", error);
-      toast({ title: 'Error', description: 'Failed to add item to cart. Please try again.', variant: 'destructive' });
+      toast({ title: t('toast.error'), description: t('toast.cartError'), variant: 'destructive' });
     }
   };
 
@@ -101,7 +107,7 @@ const ProductDetail = () => {
     <div className="container mx-auto px-4 py-8">
       <Button variant="ghost" onClick={() => navigate('/products')} className="mb-6 hover:bg-accent">
         <ArrowLeft className="h-4 w-4 mr-2" />
-        Back to Products
+        {t('common.back')} {t('nav.products')}
       </Button>
 
       <div className="grid lg:grid-cols-2 gap-12">
@@ -114,16 +120,17 @@ const ProductDetail = () => {
               </Badge>
             )}
             {variantImages.length > 0 ? (
-              <img
-                src={variantImages[currentImageIndex]?.url || `https://placehold.co/500x500/EFEFEF/AAAAAA?text=No+Image`}
+              <ProductImage
+                src={variantImages[currentImageIndex]?.url}
                 alt={variantImages[currentImageIndex]?.alt_text || 'Product Image'}
                 className="w-full h-full object-cover"
-                onError={(e) => { e.currentTarget.src = 'https://placehold.co/500x500/EFEFEF/AAAAAA?text=No+Image'; }}
               />
             ) : (
-              <div className="w-full h-full flex items-center justify-center text-6xl text-muted-foreground">
-                📷
-              </div>
+              <ProductImage
+                src=""
+                alt="No product image available"
+                className="w-full h-full object-cover"
+              />
             )}
           </div>
 
@@ -137,7 +144,11 @@ const ProductDetail = () => {
                     i === currentImageIndex ? 'border-primary' : 'border-transparent hover:border-primary/50'
                   }`}
                 >
-                  <img src={img.url} alt={img.alt_text} className="w-full h-full object-cover" />
+                  <ProductImage
+                    src={img.url}
+                    alt={img.alt_text}
+                    className="w-full h-full object-cover"
+                  />
                 </button>
               ))}
             </div>
@@ -157,7 +168,7 @@ const ProductDetail = () => {
               <>
                 <span className="text-xl line-through text-muted-foreground">€{finalPrice.toFixed(2)}</span>
                 <Badge className="bg-red-500 text-white">
-                  Save €{Math.round(finalPrice * (product.discount / 100)).toFixed(2)}
+                  {t('common.save')} €{Math.round(finalPrice * (product.discount / 100)).toFixed(2)}
                 </Badge>
               </>
             )}
@@ -166,14 +177,14 @@ const ProductDetail = () => {
           <Separator />
 
           <div>
-            <h3 className="text-lg font-semibold mb-2">Description</h3>
+            <h3 className="text-lg font-semibold mb-2">{t('product.description')}</h3>
             <p className="text-muted-foreground">{product.description}</p>
           </div>
 
           {/* Size Selector */}
           {allSizes.length > 0 && (
             <div>
-              <h3 className="text-lg font-semibold mb-3">Size</h3>
+              <h3 className="text-lg font-semibold mb-3">{t('product.size')}</h3>
               <div className="flex flex-wrap gap-2">
                 {allSizes.map((size) => {
                   // Check if a variant exists with the current size and selected color, and is in stock
@@ -204,7 +215,7 @@ const ProductDetail = () => {
           {/* Color Selector */}
           {allColors.length > 0 && (
             <div>
-              <h3 className="text-lg font-semibold mb-3">Color</h3>
+              <h3 className="text-lg font-semibold mb-3">{t('product.color')}</h3>
               <div className="flex flex-wrap gap-2">
                 {allColors.map((color) => {
                   // Check if a variant exists with the current color and selected size, and is in stock
@@ -240,16 +251,16 @@ const ProductDetail = () => {
                   isInStock ? (
                     <>
                       <Check className="text-green-500 h-5 w-5" />
-                      <span className="text-green-600 font-medium">In Stock</span>
+                      <span className="text-green-600 font-medium">{t('product.inStock')}</span>
                     </>
                   ) : (
                     <>
                       <X className="text-red-500 h-5 w-5" />
-                      <span className="text-red-600 font-medium">Out of Stock</span>
+                      <span className="text-red-600 font-medium">{t('product.outOfStock')}</span>
                     </>
                   )
                 ) : (
-                  <span className="text-muted-foreground">Select variant to check availability</span>
+                  <span className="text-muted-foreground">{t('product.selectSize')} {t('product.selectColor')}</span>
                 )}
               </div>
             </CardContent>
@@ -260,19 +271,19 @@ const ProductDetail = () => {
             <Button
               onClick={handleAddToCart}
               disabled={!isVariantSelected || !isInStock}
-              className="w-full py-6 text-lg font-bold disabled:opacity-50 rounded-md bg-gold-500 hover:bg-gold-600 text-leather-900"
+              className="w-full py-6 text-lg font-bold disabled:opacity-50 rounded-md bg-gold-500 hover:bg-gold-600 text-leather-900 border border-gold-400 hover:border-gold-500"
             >
-              {!isVariantSelected ? 'Select Options' : !isInStock ? 'Out of Stock' : 'Add to Cart'}
+              {!isVariantSelected ? t('product.selectSize') : !isInStock ? t('product.outOfStock') : t('product.addToCart')}
             </Button>
 
             <div className="flex gap-4">
               <Button variant="outline" className="flex-1 gap-2 border-primary text-primary rounded-md">
                 <Heart className="h-4 w-4" />
-                Add to Wishlist
+                {t('nav.wishlist')}
               </Button>
               <Button variant="outline" className="flex-1 gap-2 border-primary text-primary rounded-md">
                 <Share2 className="h-4 w-4" />
-                Share
+                {t('common.share')}
               </Button>
             </div>
           </div>

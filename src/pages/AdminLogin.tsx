@@ -6,27 +6,30 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Shield, AlertCircle } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 const AdminLogin = () => {
-  const [credentials, setCredentials] = useState({ username: '', password: '' });
+  const [credentials, setCredentials] = useState({ 
+    username: '', 
+    password: '' 
+  });
   const [error, setError] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+  const { loginAdmin, loading } = useAuth();
+  const { t } = useLanguage();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
     setError('');
 
-    // Simple demo authentication - in production, use proper authentication
-    if (credentials.username === 'admin' && credentials.password === 'admin123') {
-      localStorage.setItem('adminAuthenticated', 'true');
+    try {
+      await loginAdmin(credentials.username, credentials.password);
       navigate('/admin');
-    } else {
-      setError('Invalid credentials. Use username: admin, password: admin123');
+    } catch (err: any) {
+      // Error toast is now handled in AuthContext, but keep local error for form display
+      setError(t('toast.loginError'));
     }
-    
-    setIsLoading(false);
   };
 
   return (
@@ -36,29 +39,29 @@ const AdminLogin = () => {
           <div className="mx-auto w-16 h-16 bg-gradient-to-r from-gold-500 to-gold-600 rounded-full flex items-center justify-center">
             <Shield className="h-8 w-8 text-leather-900" />
           </div>
-          <CardTitle className="text-2xl font-bold text-foreground">Admin Login</CardTitle>
+          <CardTitle className="text-2xl font-bold text-foreground">{t('auth.loginAdmin')}</CardTitle>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleLogin} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="username">Username</Label>
+              <Label htmlFor="username">{t('auth.email')}</Label>
               <Input
                 id="username"
                 type="text"
                 value={credentials.username}
                 onChange={(e) => setCredentials({ ...credentials, username: e.target.value })}
-                placeholder="Enter username"
+                placeholder={t('auth.email')}
                 required
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password">{t('auth.password')}</Label>
               <Input
                 id="password"
                 type="password"
                 value={credentials.password}
                 onChange={(e) => setCredentials({ ...credentials, password: e.target.value })}
-                placeholder="Enter password"
+                placeholder={t('auth.password')}
                 required
               />
             </div>
@@ -74,18 +77,16 @@ const AdminLogin = () => {
 
             <Button 
               type="submit" 
-              disabled={isLoading}
+              disabled={loading}
               className="w-full bg-gradient-to-r from-gold-500 to-gold-600 hover:from-gold-400 hover:to-gold-500 text-leather-900 font-semibold shadow-lg hover:shadow-xl transition-all duration-300"
             >
-              {isLoading ? 'Signing in...' : 'Sign In'}
+              {loading ? t('common.loading') : t('auth.login')}
             </Button>
           </form>
           
           <div className="mt-6 p-4 bg-leather-100/50 dark:bg-leather-800/50 rounded-lg">
             <p className="text-sm text-muted-foreground text-center">
-              Demo credentials:<br />
-              Username: <span className="font-mono">admin</span><br />
-              Password: <span className="font-mono">admin123</span>
+              {t('auth.loginAdmin')}
             </p>
           </div>
         </CardContent>

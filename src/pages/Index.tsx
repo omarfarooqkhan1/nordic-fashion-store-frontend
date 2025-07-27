@@ -71,22 +71,22 @@ const Index = () => {
             <div className="max-w-4xl mx-auto text-center text-white">
               <div className="mb-6">
                 <span className="inline-block px-4 py-2 bg-white/20 backdrop-blur-sm rounded-full text-sm font-medium tracking-wider uppercase mb-4">
-                  Authentic Nordic Craftsmanship
+                  {t('hero.authentic')}
                 </span>
               </div>
               <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold mb-6 leading-tight">
-                Premium Leather Goods
+                {t('hero.title')}
                 <span className="block text-3xl md:text-5xl lg:text-6xl mt-2 opacity-90">
-                  From the Heart of Scandinavia
+                  {t('hero.from')}
                 </span>
               </h1>
               <p className="text-lg md:text-xl lg:text-2xl mb-8 max-w-3xl mx-auto opacity-90 leading-relaxed">
-                Handcrafted with centuries-old techniques, our leather goods embody the Nordic spirit of quality, durability, and timeless design.
+                {t('hero.description')}
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Link to="/products">
-                  <Button size="lg" className="bg-white text-black hover:bg-white/90 font-semibold px-8 py-4 text-lg shadow-lg hover:shadow-xl transition-all duration-300">
-                    Explore Collection
+                  <Button size="lg" className="bg-white text-black hover:bg-white/90 font-semibold px-8 py-4 text-lg shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-200 hover:border-gray-300">
+                    {t('hero.explore')}
                   </Button>
                 </Link>
                 <Link to="/about">
@@ -95,7 +95,7 @@ const Index = () => {
                     size="lg"
                     className="border-2 border-white text-white bg-black/20 hover:bg-white hover:text-black font-semibold px-8 py-4 text-lg backdrop-blur-sm transition-all duration-300"
                   >
-                    Our Story
+                    {t('hero.story')}
                   </Button>
                 </Link>
               </div>
@@ -126,11 +126,11 @@ const Index = () => {
           </h2>
 
           {isLoading ? (
-            <p className="text-center text-lg">Loading products...</p>
+            <p className="text-center text-lg">{t('common.loading')}</p>
           ) : isError ? (
-            <p className="text-center text-red-600 text-lg">Error: {(error as Error).message}</p>
+            <p className="text-center text-red-600 text-lg">{t('toast.error')}: {(error as Error).message}</p>
           ) : featuredProducts.length === 0 ? (
-            <p className="text-center text-lg">No products found.</p>
+            <p className="text-center text-lg">{t('products.all')} - {t('cart.empty')}</p>
           ) : (
             <Carousel className="w-full max-w-5xl mx-auto" opts={{ align: 'start', loop: true }}>
               <CarouselContent className="-ml-2 md:-ml-4">
@@ -139,12 +139,23 @@ const Index = () => {
                     <Card className="bg-card border-border overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 group">
                       <Link to={`/product/${product.id}`}>
                         <div className="aspect-square bg-muted relative overflow-hidden">
-                          {product.images.length > 0 && (
+                          {product.images.length > 0 ? (
                             <img
                               src={product.images[0].url}
                               alt={product.images[0].alt_text || product.name}
                               className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                              onError={(e) => {
+                                e.currentTarget.src = '/placeholder.svg';
+                              }}
                             />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center">
+                              <img 
+                                src="/placeholder.svg" 
+                                alt="No image available" 
+                                className="w-full h-full object-cover opacity-50"
+                              />
+                            </div>
                           )}
                         </div>
                       </Link>
@@ -162,9 +173,12 @@ const Index = () => {
                           </div>
                           <Button
                             variant="outline"
+                            asChild
                             className="border-primary text-primary hover:bg-primary hover:text-primary-foreground transition-all duration-300"
                           >
-                            {t('common.viewDetails')}
+                            <Link to={`/product/${product.id}`}>
+                              {t('common.viewDetails')}
+                            </Link>
                           </Button>
                         </div>
                       </CardContent>
