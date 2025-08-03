@@ -80,9 +80,9 @@ const Contact = () => {
               <div>
                 <h3 className="font-semibold text-foreground mb-2">Address</h3>
                 <p className="text-muted-foreground">
-                  Nordic Leather Co.<br />
-                  Gamla Stan 15<br />
-                  111 29 Stockholm, Sweden
+                  Nordic Skin Co.<br />
+                  Yliopistonkatu 25<br />
+                  20100 Turku, Finland
                 </p>
               </div>
               <div>
@@ -103,15 +103,15 @@ const Contact = () => {
             <CardContent className="space-y-4">
               <div>
                 <h3 className="font-semibold text-foreground mb-2">Phone</h3>
-                <p className="text-muted-foreground">+46 8 123 456 789</p>
+                <p className="text-muted-foreground">+358 2 123 456 789</p>
               </div>
               <div>
                 <h3 className="font-semibold text-foreground mb-2">Email</h3>
-                <p className="text-muted-foreground">info@nordicleather.com</p>
+                <p className="text-muted-foreground">info@nordicskin.com</p>
               </div>
               <div>
                 <h3 className="font-semibold text-foreground mb-2">Customer Service</h3>
-                <p className="text-muted-foreground">support@nordicleather.com</p>
+                <p className="text-muted-foreground">support@nordicskin.com</p>
               </div>
             </CardContent>
           </Card>

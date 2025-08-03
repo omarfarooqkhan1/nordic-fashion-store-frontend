@@ -1,21 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import axios from 'axios';
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { useCart } from '@/contexts/CartContext';
 import type { Product } from '@/types/Product';
 import { fetchProducts } from '@/api/products';
-import { useToast } from '@/hooks/use-toast';
 
 const Products = () => {
   const { t } = useLanguage();
-  const { addToCart } = useCart();
-  const { toast } = useToast();
   const [searchParams, setSearchParams] = useSearchParams();
 
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
@@ -70,30 +65,6 @@ const Products = () => {
     if (sortBy === 'name') return a.name.localeCompare(b.name);
     return 0;
   });
-
-  const handleAddToCart = (product: Product) => {
-    // Get the first available variant ID or use direct product ID if no variants
-    if (product.variants && product.variants.length > 0) {
-      // Use the first available variant that has stock > 0
-      const availableVariant = product.variants.find(variant => variant.stock > 0);
-      
-      if (availableVariant) {
-        addToCart(availableVariant.id, 1);
-      } else {
-        // If no variant has stock, use the first variant anyway but add error handling in the cart context
-        addToCart(product.variants[0].id, 1);
-      }
-    } else {
-      // Fallback to product ID (should be handled by backend)
-      console.error('No variants found for product:', product.id);
-      // We should not reach here in a well-structured product, but handle it gracefully
-      toast({
-        title: t('toast.error'),
-        description: t('product.selectVariant') || 'Please select a product variant',
-        variant: 'destructive'
-      });
-    }
-  };
 
   return (
     <div className="container mx-auto px-4 py-16 space-y-8">
@@ -241,10 +212,13 @@ const Products = () => {
                         )}
                       </div>
                       <Button
-                        onClick={() => handleAddToCart(product)}
-                        className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold shadow-md hover:shadow-lg transition-all duration-300 border border-primary/20 hover:border-primary/40"
+                        variant="outline"
+                        asChild
+                        className="border-primary text-primary hover:bg-primary hover:text-primary-foreground transition-all duration-300 font-semibold shadow-md hover:shadow-lg hover:border-primary/40"
                       >
-                        {t('product.addToCart')}
+                        <Link to={`/product/${product.id}`}>
+                          {t('common.viewDetails')}
+                        </Link>
                       </Button>
                     </div>
                   </CardContent>
