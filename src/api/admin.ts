@@ -22,6 +22,16 @@ export interface ProductImageFormData {
   url: string;
   alt_text?: string;
   sort_order?: number;
+  type?: 'product' | 'variant';
+  belongs_to?: string;
+  variant_id?: number;
+  variant_sku?: string;
+  variant_info?: {
+    color?: string;
+    size?: string;
+    sku?: string;
+  };
+  category?: string;
 }
 
 export interface Category {
@@ -44,12 +54,16 @@ export interface Product {
 
 export interface ProductVariant {
   id: number;
+  product_id?: number;
   sku: string;
   color?: string;
   size?: string;
   price_difference?: number;
   stock: number;
   actual_price: number;
+  created_at?: string;
+  updated_at?: string;
+  images?: ProductImage[];
 }
 
 export interface ProductImage {
@@ -138,6 +152,7 @@ export const bulkUploadProducts = async (
   total_rows: number;
   successful: number;
   failed: number;
+  unique_products?: number;
   errors: Array<{
     row: number;
     data: any;
@@ -146,7 +161,7 @@ export const bulkUploadProducts = async (
 }> => {
   try {
     const formData = new FormData();
-    formData.append('csv_file', file);
+    formData.append('upload_file', file); // Changed from 'csv_file' to 'upload_file'
     formData.append('update_existing', updateExisting ? '1' : '0');
 
     const response = await api.post(
@@ -213,5 +228,239 @@ export const createCategory = async (
   } catch (error: any) {
     console.error('Error creating category:', error);
     throw new Error(error.response?.data?.message || 'Failed to create category');
+  }
+};
+
+export const updateCategory = async (
+  categoryId: number,
+  categoryData: { name: string; description?: string },
+  token: string
+): Promise<Category> => {
+  try {
+    const response = await api.put(
+      `/categories/${categoryId}`,
+      categoryData,
+      {
+        headers: getAuthHeaders(token),
+      }
+    );
+    
+    return response.data;
+  } catch (error: any) {
+    console.error('Error updating category:', error);
+    throw new Error(error.response?.data?.message || 'Failed to update category');
+  }
+};
+
+export const deleteCategory = async (
+  categoryId: number,
+  token: string
+): Promise<{ message: string }> => {
+  try {
+    const response = await api.delete(
+      `/categories/${categoryId}`,
+      {
+        headers: getAuthHeaders(token),
+      }
+    );
+    
+    return response.data;
+  } catch (error: any) {
+    console.error('Error deleting category:', error);
+    throw new Error(error.response?.data?.message || 'Failed to delete category');
+  }
+};
+
+// Image management functions
+export const uploadProductImage = async (
+  productId: number,
+  imageFile: File,
+  token: string
+): Promise<ProductImage> => {
+  try {
+    const formData = new FormData();
+    formData.append('image', imageFile);
+    formData.append('alt_text', imageFile.name);
+
+    const response = await api.post(
+      `/products/${productId}/images`,
+      formData,
+      {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'multipart/form-data',
+        },
+      }
+    );
+    
+    return response.data;
+  } catch (error: any) {
+    console.error('Error uploading image:', error);
+    throw new Error(error.response?.data?.message || 'Failed to upload image');
+  }
+};
+
+export const deleteProductImage = async (
+  productId: number,
+  imageId: number,
+  token: string
+): Promise<{ message: string; variant_info?: any; warning?: string }> => {
+  try {
+    const response = await api.delete(
+      `/products/${productId}/images/${imageId}`,
+      {
+        headers: getAuthHeaders(token),
+      }
+    );
+    return response.data;
+  } catch (error: any) {
+    console.error('Error deleting image:', error);
+    throw new Error(error.response?.data?.message || 'Failed to delete image');
+  }
+};
+
+export const getCategorizedImages = async (
+  productId: number,
+  token: string
+): Promise<{
+  product_images: ProductImage[];
+  variant_images: ProductImage[];
+  total_images: number;
+  summary: {
+    product_image_count: number;
+    variant_image_count: number;
+    variants_with_images: number;
+  };
+}> => {
+  try {
+    const response = await api.get(
+      `/products/${productId}/images/categorized`,
+      {
+        headers: getAuthHeaders(token),
+      }
+    );
+    return response.data;
+  } catch (error: any) {
+    console.error('Error getting categorized images:', error);
+    throw new Error(error.response?.data?.message || 'Failed to get categorized images');
+  }
+};
+
+export const updateProductImageOrder = async (
+  productId: number,
+  imageUpdates: { id: number; sort_order: number }[],
+  token: string
+): Promise<ProductImage[]> => {
+  try {
+    const response = await api.put(
+      `/products/${productId}/images/reorder`,
+      { images: imageUpdates },
+      {
+        headers: getAuthHeaders(token),
+      }
+    );
+    
+    return response.data;
+  } catch (error: any) {
+    console.error('Error updating image order:', error);
+    throw new Error(error.response?.data?.message || 'Failed to update image order');
+  }
+};
+
+// Variant Management Functions
+export interface VariantFormData {
+  size: string;
+  color: string;
+  sku?: string;
+  actual_price: number;
+  stock: number;
+}
+
+export const createProductVariant = async (
+  productId: number,
+  variantData: VariantFormData,
+  token: string
+): Promise<{ message: string; variant: ProductVariant }> => {
+  try {
+    const response = await api.post(
+      `/products/${productId}/variants`,
+      variantData,
+      {
+        headers: getAuthHeaders(token),
+      }
+    );
+    
+    return response.data;
+  } catch (error: any) {
+    console.error('Error creating variant:', error);
+    throw new Error(error.response?.data?.message || 'Failed to create variant');
+  }
+};
+
+export const updateProductVariant = async (
+  productId: number,
+  variantId: number,
+  variantData: VariantFormData,
+  token: string
+): Promise<{ message: string; variant: ProductVariant }> => {
+  try {
+    const response = await api.put(
+      `/products/${productId}/variants/${variantId}`,
+      variantData,
+      {
+        headers: getAuthHeaders(token),
+      }
+    );
+    
+    return response.data;
+  } catch (error: any) {
+    console.error('Error updating variant:', error);
+    throw new Error(error.response?.data?.message || 'Failed to update variant');
+  }
+};
+
+export const deleteProductVariant = async (
+  variantId: number,
+  token: string
+): Promise<{ message: string }> => {
+  try {
+    const response = await api.delete(
+      `/variants/${variantId}`,
+      {
+        headers: getAuthHeaders(token),
+      }
+    );
+    
+    return response.data;
+  } catch (error: any) {
+    console.error('Error deleting variant:', error);
+    throw new Error(error.response?.data?.message || 'Failed to delete variant');
+  }
+};
+
+export const updateProductBasicInfo = async (
+  productId: number,
+  productData: {
+    name: string;
+    description: string;
+    price: number;
+    discount?: number;
+    category_id: number;
+  },
+  token: string
+): Promise<{ message: string; product: any }> => {
+  try {
+    const response = await api.put(
+      `/products/${productId}`,
+      productData,
+      {
+        headers: getAuthHeaders(token),
+      }
+    );
+    
+    return response.data;
+  } catch (error: any) {
+    console.error('Error updating product:', error);
+    throw new Error(error.response?.data?.message || 'Failed to update product');
   }
 };

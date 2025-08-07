@@ -3,7 +3,7 @@
 import type React from "react"
 import { useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
-import { ShoppingCart, Menu, User, Settings, Search, Heart, Phone, Mail, LogIn, UserPlus, Shield } from "lucide-react"
+import { ShoppingCart, Menu, User, Settings, Search, Heart, Phone, Mail, LogIn, UserPlus, Shield, LayoutDashboard } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import {
@@ -99,7 +99,7 @@ export const Header: React.FC = () => {
                 NORDIC
               </div>
               <div className="text-lg md:text-2xl font-bold text-primary group-hover:text-primary/80 transition-colors duration-300">
-                LEATHER
+                SKIN
               </div>
             </Link>
 
@@ -181,25 +181,38 @@ export const Header: React.FC = () => {
                 </SheetContent>
               </Sheet>
 
-              {/* Wishlist */}
-              <Button variant="ghost" size="sm" className="h-9 w-9 p-0 hidden sm:flex">
-                <Heart className="h-4 w-4" />
-              </Button>
-
-              {/* Cart */}
-              <Link to="/cart">
-                <Button variant="ghost" size="sm" className="relative h-9 w-9 p-0">
-                  <ShoppingCart className="h-4 w-4" />
-                  {getCartItemsCount() > 0 && (
-                    <Badge
-                      variant="destructive"
-                      className="absolute -top-2 -right-2 h-5 w-5 rounded-full p-0 text-xs flex items-center justify-center bg-primary text-primary-foreground"
-                    >
-                      {getCartItemsCount()}
-                    </Badge>
-                  )}
+              {/* Wishlist - Only show for customers */}
+              {!isAdmin && (
+                <Button variant="ghost" size="sm" className="h-9 w-9 p-0 hidden sm:flex">
+                  <Heart className="h-4 w-4" />
                 </Button>
-              </Link>
+              )}
+
+              {/* Cart - Only show for customers */}
+              {!isAdmin && (
+                <Link to="/cart">
+                  <Button variant="ghost" size="sm" className="relative h-9 w-9 p-0">
+                    <ShoppingCart className="h-4 w-4" />
+                    {getCartItemsCount() > 0 && (
+                      <Badge
+                        variant="destructive"
+                        className="absolute -top-2 -right-2 h-5 w-5 rounded-full p-0 text-xs flex items-center justify-center bg-primary text-primary-foreground"
+                      >
+                        {getCartItemsCount()}
+                      </Badge>
+                    )}
+                  </Button>
+                </Link>
+              )}
+
+              {/* Admin Dashboard - Only show if user is admin */}
+              {isAdmin && (
+                <Link to="/admin/dashboard">
+                  <Button variant="ghost" size="sm" className="h-9 w-9 p-0" title="Admin Dashboard">
+                    <LayoutDashboard className="h-4 w-4 text-blue-600" />
+                  </Button>
+                </Link>
+              )}
 
               {/* User Menu */}
               <DropdownMenu>
@@ -246,23 +259,6 @@ export const Header: React.FC = () => {
                         </>
                       )}
 
-                      {isAdmin && (
-                        <>
-                          <DropdownMenuItem asChild>
-                            <Link to="/admin/dashboard" className="flex items-center">
-                              <Settings className="mr-2 h-4 w-4" />
-                              Admin Dashboard
-                            </Link>
-                          </DropdownMenuItem>
-                          <DropdownMenuItem asChild>
-                            <Link to="/admin/products" className="flex items-center">
-                              <Settings className="mr-2 h-4 w-4" />
-                              Manage Products
-                            </Link>
-                          </DropdownMenuItem>
-                        </>
-                      )}
-
                       <DropdownMenuSeparator />
                       <DropdownMenuItem onClick={handleLogout} className="hover:bg-accent cursor-pointer text-red-600">
                         <LogIn className="mr-2 h-4 w-4" />
@@ -304,13 +300,6 @@ export const Header: React.FC = () => {
                         </svg>
                         Sign in with Google
                       </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem asChild>
-                        <Link to="/admin/login" className="flex items-center hover:bg-accent text-blue-600">
-                          <Shield className="mr-2 h-4 w-4" />
-                          Admin Login
-                        </Link>
-                      </DropdownMenuItem>
                     </>
                   )}
                 </DropdownMenuContent>
@@ -346,6 +335,18 @@ export const Header: React.FC = () => {
                             <span className="text-green-600">Customer</span>
                           )}
                         </div>
+                        {isAdmin && (
+                          <Link to="/admin/dashboard">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="mt-2 w-full text-blue-600 border-blue-200 hover:bg-blue-50"
+                            >
+                              <LayoutDashboard className="mr-2 h-4 w-4" />
+                              Admin Dashboard
+                            </Button>
+                          </Link>
+                        )}
                         <Button
                           onClick={handleLogout}
                           variant="outline"
@@ -378,12 +379,6 @@ export const Header: React.FC = () => {
                           </svg>
                           Google
                         </Button>
-                        <Link to="/admin/login">
-                          <Button variant="outline" size="sm" className="w-full text-blue-600 border-blue-200">
-                            <Shield className="mr-2 h-4 w-4" />
-                            Admin Login
-                          </Button>
-                        </Link>
                       </div>
                     )}
 
@@ -400,19 +395,6 @@ export const Header: React.FC = () => {
                           {category.name}
                         </Link>
                       ))}
-
-                      {isAdmin && (
-                        <>
-                          <Separator className="my-2" />
-                          <Link
-                            to="/admin/dashboard"
-                            className="flex items-center rounded-md px-2 py-1 text-sm font-medium text-blue-600 hover:bg-accent"
-                          >
-                            <Settings className="mr-2 h-4 w-4" />
-                            Admin Dashboard
-                          </Link>
-                        </>
-                      )}
                     </nav>
                   </div>
                 </SheetContent>

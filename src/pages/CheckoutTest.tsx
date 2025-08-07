@@ -52,7 +52,7 @@ const CheckoutTest: React.FC = () => {
           {!isLoading && items && items.length > 0 ? (
             <div className="space-y-2">
               {items.map((item, index) => (
-                <div key={item.id} className="p-3 bg-gray-50 rounded">
+                <div key={item.id} className="p-3 bg-gray-50 dark:bg-gray-800 rounded">
                   <p><strong>Item {index + 1}:</strong> {item.variant?.product?.name}</p>
                   <p><strong>Size:</strong> {item.variant?.size} | <strong>Color:</strong> {item.variant?.color}</p>
                   <p><strong>Quantity:</strong> {item.quantity} | <strong>Price:</strong> €{item.variant?.product?.price}</p>
@@ -80,7 +80,7 @@ const CheckoutTest: React.FC = () => {
 
         <div className="mt-6">
           <h3 className="text-lg font-semibold mb-2">Debug Info:</h3>
-          <pre className="bg-gray-100 p-4 rounded text-xs overflow-auto max-h-64">
+          <pre className="bg-gray-100 dark:bg-gray-800 p-4 rounded text-xs overflow-auto max-h-64">
             {JSON.stringify({
               isLoading,
               itemsLength: items?.length,

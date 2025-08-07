@@ -3,7 +3,7 @@
 import type React from "react"
 import { useState, useEffect } from "react"
 import { useParams, useLocation } from "react-router-dom"
-import { Package, Calendar, Truck, CheckCircle, Clock, XCircle, Eye, ArrowLeft } from "lucide-react"
+import { Package, Calendar, Truck, CheckCircle, Clock, XCircle, Eye, ArrowLeft, ExternalLink } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -140,11 +140,11 @@ const Orders: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 py-8">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 py-8">
         <div className="container mx-auto px-4 max-w-4xl">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-            <p className="mt-4 text-gray-600">Loading your orders...</p>
+            <p className="mt-4 text-gray-600 dark:text-gray-300">Loading your orders...</p>
           </div>
         </div>
       </div>
@@ -154,7 +154,7 @@ const Orders: React.FC = () => {
   // Single order detail view
   if (isOrderDetail && singleOrder) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 py-8">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 py-8">
         <div className="container mx-auto px-4 max-w-4xl">
           <Button 
             variant="ghost" 
@@ -167,8 +167,8 @@ const Orders: React.FC = () => {
 
           <div className="space-y-6">
             <div className="text-center">
-              <h1 className="text-3xl font-bold text-gray-900">Order Confirmation</h1>
-              <p className="text-gray-600 mt-2">Order #{singleOrder.order_number}</p>
+              <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Order Confirmation</h1>
+              <p className="text-gray-600 dark:text-gray-300 mt-2">Order #{singleOrder.order_number}</p>
             </div>
 
             <Card>
@@ -194,8 +194,8 @@ const Orders: React.FC = () => {
                   <div className="space-y-3">
                     {singleOrder.items.map((item) => (
                       <div key={item.id} className="flex items-center gap-3 p-3 border rounded-lg">
-                        <div className="w-16 h-16 bg-gray-200 rounded flex items-center justify-center">
-                          <Package className="h-8 w-8 text-gray-400" />
+                        <div className="w-16 h-16 bg-gray-200 dark:bg-gray-700 rounded flex items-center justify-center">
+                          <Package className="h-8 w-8 text-gray-400 dark:text-gray-500" />
                         </div>
                         <div className="flex-1">
                           <p className="font-medium">{item.product_name}</p>
@@ -214,7 +214,7 @@ const Orders: React.FC = () => {
                 <Separator />
 
                 {/* Order Summary */}
-                <div className="bg-gray-50 p-4 rounded-lg">
+                <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
                   <h4 className="font-medium mb-3">Order Summary</h4>
                   <div className="space-y-2 text-sm">
                     <div className="flex justify-between">
@@ -236,6 +236,40 @@ const Orders: React.FC = () => {
                     </div>
                   </div>
                 </div>
+
+                {/* Tracking Information */}
+                {singleOrder.tracking_number && (
+                  <div>
+                    <h4 className="font-medium mb-3 flex items-center gap-2">
+                      <Truck className="h-4 w-4" />
+                      Package Tracking
+                    </h4>
+                    <div className="p-4 bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm text-blue-600 dark:text-blue-400 mb-1">Tracking Number</p>
+                          <code className="font-mono text-lg font-semibold text-blue-900 dark:text-blue-100">
+                            {singleOrder.tracking_number}
+                          </code>
+                        </div>
+                        <Button variant="outline" size="sm" asChild>
+                          <a 
+                            href={`https://www.google.com/search?q=track+package+${singleOrder.tracking_number}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-2"
+                          >
+                            <ExternalLink className="h-4 w-4" />
+                            Track Package
+                          </a>
+                        </Button>
+                      </div>
+                      <p className="text-sm text-blue-600 dark:text-blue-400 mt-2">
+                        📦 Your package is on its way! Use this tracking number to monitor delivery progress.
+                      </p>
+                    </div>
+                  </div>
+                )}
 
                 {/* Shipping Address */}
                 <div>
@@ -266,13 +300,13 @@ const Orders: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 py-8">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 py-8">
       <div className="container mx-auto px-4 max-w-4xl">
         <div className="space-y-6">
           {/* Header */}
           <div className="text-center">
-            <h1 className="text-3xl font-bold text-gray-900">My Orders</h1>
-            <p className="text-gray-600 mt-2">Track and manage your order history</p>
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">My Orders</h1>
+            <p className="text-gray-600 dark:text-gray-300 mt-2">Track and manage your order history</p>
           </div>
 
           {/* Orders List */}
@@ -280,8 +314,8 @@ const Orders: React.FC = () => {
             <Card>
               <CardContent className="text-center py-12">
                 <Package className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">No orders yet</h3>
-                <p className="text-gray-600 mb-4">
+                <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">No orders yet</h3>
+                <p className="text-gray-600 dark:text-gray-300 mb-4">
                   You haven't placed any orders yet. Start shopping to see your orders here!
                 </p>
                 <Button asChild>
@@ -322,8 +356,8 @@ const Orders: React.FC = () => {
                               key={item.id}
                               className="flex-shrink-0 flex items-center gap-2 p-2 bg-muted rounded-lg"
                             >
-                              <div className="w-12 h-12 bg-gray-200 rounded flex items-center justify-center">
-                                <Package className="h-6 w-6 text-gray-400" />
+                              <div className="w-12 h-12 bg-gray-200 dark:bg-gray-700 rounded flex items-center justify-center">
+                                <Package className="h-6 w-6 text-gray-400 dark:text-gray-500" />
                               </div>
                               <div className="min-w-0">
                                 <p className="text-sm font-medium truncate">{item.product_name}</p>
@@ -357,10 +391,24 @@ const Orders: React.FC = () => {
                             <Eye className="h-4 w-4 mr-1" />
                             View Details
                           </Button>
-                          {order.status === "shipped" && (
-                            <Button size="sm">
+                          {(order.status === "shipped" || order.status === "delivered") && order.tracking_number && (
+                            <Button size="sm" variant="outline" asChild>
+                              <a 
+                                href={`https://www.google.com/search?q=track+package+${order.tracking_number}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center gap-1"
+                              >
+                                <Truck className="h-4 w-4" />
+                                Track Package
+                                <ExternalLink className="h-3 w-3" />
+                              </a>
+                            </Button>
+                          )}
+                          {(order.status === "shipped" || order.status === "delivered") && !order.tracking_number && (
+                            <Button size="sm" variant="outline" disabled>
                               <Truck className="h-4 w-4 mr-1" />
-                              Track Package
+                              Tracking Pending
                             </Button>
                           )}
                         </div>

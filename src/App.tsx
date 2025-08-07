@@ -26,6 +26,7 @@ import Products from "./pages/Products"
 import ProductDetail from "./pages/ProductDetail"
 import Cart from "./pages/Cart"
 import AdminDashboard from "./pages/AdminDashboard"
+import AdminProductEdit from "./pages/AdminProductEdit"
 import AdminLogin from "./pages/AdminLogin"
 import NotFound from "./pages/NotFound"
 
@@ -127,8 +128,32 @@ const App: React.FC = () => {
                               <Route
                                 path="/admin"
                                 element={
-                                  <ProtectedRoute>
+                                  <ProtectedRoute requireAdmin>
                                     <AdminDashboard />
+                                  </ProtectedRoute>
+                                }
+                              />
+                              <Route
+                                path="/admin/dashboard"
+                                element={
+                                  <ProtectedRoute requireAdmin>
+                                    <AdminDashboard />
+                                  </ProtectedRoute>
+                                }
+                              />
+                              <Route
+                                path="/admin/products"
+                                element={
+                                  <ProtectedRoute requireAdmin>
+                                    <AdminDashboard />
+                                  </ProtectedRoute>
+                                }
+                              />
+                              <Route
+                                path="/admin/products/:id/edit"
+                                element={
+                                  <ProtectedRoute requireAdmin>
+                                    <AdminProductEdit />
                                   </ProtectedRoute>
                                 }
                               />

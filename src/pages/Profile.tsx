@@ -326,13 +326,13 @@ const Profile: React.FC = () => {
   const isAuth0User = user?.auth_type === "auth0"
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 py-8">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 py-8">
       <div className="container mx-auto px-4 max-w-2xl">
         <div className="space-y-6">
           {/* Header */}
           <div className="text-center">
-            <h1 className="text-3xl font-bold text-gray-900">{t('auth.profile')}</h1>
-            <p className="text-gray-600 mt-2">{t('auth.updateProfile')}</p>
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">{t('auth.profile')}</h1>
+            <p className="text-gray-600 dark:text-gray-300 mt-2">{t('auth.updateProfile')}</p>
           </div>
 
           {/* User Info Card */}

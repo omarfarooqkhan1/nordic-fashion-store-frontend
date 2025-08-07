@@ -12,9 +12,11 @@ import { Separator } from '@/components/ui/separator';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Switch } from '@/components/ui/switch';
-import { CreditCard, Truck, Shield, ArrowLeft, MapPin } from 'lucide-react';
+import { CreditCard, Truck, Shield, ArrowLeft, MapPin, User } from 'lucide-react';
 import { createOrder } from '@/api/orders';
 import { fetchUserAddresses, createAddress, type Address, type CreateAddressData } from '@/api/addresses';
+import { CardInput } from '@/components/common';
+import { validateCardNumber, validateExpiryDate, validateCVV } from '@/utils/cardFormatting';
 
 // Nordic countries for selection
 const NORDIC_COUNTRIES = [
@@ -92,12 +94,13 @@ const CheckoutFixed: React.FC = () => {
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [isGuestMode, setIsGuestMode] = useState(!isAuthenticated);
 
   // Load user's default address on component mount
   useEffect(() => {
     const loadDefaultAddress = async () => {
-      if (!isAuthenticated || !token) {
-        console.log('🔒 User not authenticated, skipping address load');
+      if (!isAuthenticated || !token || isGuestMode) {
+        console.log('🔒 User not authenticated or in guest mode, skipping address load');
         return;
       }
       
@@ -299,9 +302,24 @@ const CheckoutFixed: React.FC = () => {
 
     // Payment validation (for demo purposes)
     if (formData.payment_method === 'credit_card') {
-      if (!formData.card_number) newErrors.card_number = 'Card number is required';
-      if (!formData.card_expiry) newErrors.card_expiry = 'Expiry date is required';
-      if (!formData.card_cvv) newErrors.card_cvv = 'CVV is required';
+      if (!formData.card_number) {
+        newErrors.card_number = 'Card number is required';
+      } else if (!validateCardNumber(formData.card_number)) {
+        newErrors.card_number = 'Please enter a valid card number';
+      }
+      
+      if (!formData.card_expiry) {
+        newErrors.card_expiry = 'Expiry date is required';
+      } else if (!validateExpiryDate(formData.card_expiry)) {
+        newErrors.card_expiry = 'Please enter a valid expiry date (MM/YY)';
+      }
+      
+      if (!formData.card_cvv) {
+        newErrors.card_cvv = 'CVV is required';
+      } else if (!validateCVV(formData.card_cvv)) {
+        newErrors.card_cvv = 'Please enter a valid CVV';
+      }
+      
       if (!formData.card_name) newErrors.card_name = 'Cardholder name is required';
     }
 
@@ -429,7 +447,7 @@ const CheckoutFixed: React.FC = () => {
       });
 
       // Save address if this is the user's first checkout (no existing addresses)
-      if (!hasExistingAddresses && isAuthenticated) {
+      if (!hasExistingAddresses && isAuthenticated && !isGuestMode) {
         console.log('🏠 User has no saved addresses, saving this address for future use...');
         await saveFirstAddress(formData);
       }
@@ -528,6 +546,58 @@ const CheckoutFixed: React.FC = () => {
             <p className="text-muted-foreground">Complete your order information</p>
           </div>
 
+          {/* Guest Mode Toggle */}
+          {!isAuthenticated && (
+            <Card className="border-amber-200 bg-amber-50">
+              <CardContent className="pt-6">
+                <div className="flex items-center gap-3">
+                  <User className="h-5 w-5 text-amber-600" />
+                  <div className="flex-1">
+                    <h3 className="font-medium text-amber-800">Guest Checkout</h3>
+                    <p className="text-sm text-amber-700">
+                      You're checking out as a guest. No account required!
+                    </p>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => navigate('/login', { state: { returnTo: '/checkout' } })}
+                    className="border-amber-300 text-amber-700 hover:bg-amber-100"
+                  >
+                    Sign In
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Account Mode Info */}
+          {isAuthenticated && !isGuestMode && (
+            <Card className="border-green-200 bg-green-50">
+              <CardContent className="pt-6">
+                <div className="flex items-center gap-3">
+                  <User className="h-5 w-5 text-green-600" />
+                  <div className="flex-1">
+                    <h3 className="font-medium text-green-800">
+                      Signed in as {user?.name || user?.email}
+                    </h3>
+                    <p className="text-sm text-green-700">
+                      Your address and order details will be saved to your account.
+                    </p>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setIsGuestMode(true)}
+                    className="border-green-300 text-green-700 hover:bg-green-100"
+                  >
+                    Switch to Guest
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           <div className="space-y-6">
             {/* Shipping Information */}
             <Card>
@@ -539,7 +609,7 @@ const CheckoutFixed: React.FC = () => {
               </CardHeader>
               <CardContent className="space-y-4">
                 {/* Info about saving address for first-time users */}
-                {!hasExistingAddresses && isAuthenticated && (
+                {!hasExistingAddresses && isAuthenticated && !isGuestMode && (
                   <div className="bg-blue-50 p-3 rounded-lg border border-blue-200 mb-4">
                     <div className="flex items-center gap-2 text-blue-800">
                       <MapPin className="h-4 w-4" />
@@ -551,8 +621,8 @@ const CheckoutFixed: React.FC = () => {
                   </div>
                 )}
 
-                {/* Address Toggle - Only show if user has a default address */}
-                {defaultAddress && (
+                {/* Address Toggle - Only show if user has a default address and is not in guest mode */}
+                {defaultAddress && !isGuestMode && (
                   <div className="border rounded-lg p-4 bg-muted/50">
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-2">
@@ -836,40 +906,37 @@ const CheckoutFixed: React.FC = () => {
                     </div>
                     
                     <div>
-                      <Label htmlFor="card_number">Card Number * (Demo: 4242424242424242)</Label>
-                      <Input
+                      <CardInput
                         id="card_number"
+                        label="Card Number *"
+                        type="cardNumber"
                         value={formData.card_number}
-                        onChange={(e) => handleInputChange('card_number', e.target.value)}
-                        className={errors.card_number ? 'border-red-500' : ''}
+                        onChange={(value) => handleInputChange('card_number', value)}
+                        error={errors.card_number}
                         placeholder="4242 4242 4242 4242"
                       />
-                      {errors.card_number && <p className="text-sm text-red-500">{errors.card_number}</p>}
+                      <p className="text-xs text-muted-foreground mt-1">Demo: 4242424242424242</p>
                     </div>
                     
                     <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <Label htmlFor="card_expiry">Expiry Date * (MM/YY)</Label>
-                        <Input
-                          id="card_expiry"
-                          value={formData.card_expiry}
-                          onChange={(e) => handleInputChange('card_expiry', e.target.value)}
-                          className={errors.card_expiry ? 'border-red-500' : ''}
-                          placeholder="12/25"
-                        />
-                        {errors.card_expiry && <p className="text-sm text-red-500">{errors.card_expiry}</p>}
-                      </div>
-                      <div>
-                        <Label htmlFor="card_cvv">CVV * (123)</Label>
-                        <Input
-                          id="card_cvv"
-                          value={formData.card_cvv}
-                          onChange={(e) => handleInputChange('card_cvv', e.target.value)}
-                          className={errors.card_cvv ? 'border-red-500' : ''}
-                          placeholder="123"
-                        />
-                        {errors.card_cvv && <p className="text-sm text-red-500">{errors.card_cvv}</p>}
-                      </div>
+                      <CardInput
+                        id="card_expiry"
+                        label="Expiry Date *"
+                        type="expiry"
+                        value={formData.card_expiry}
+                        onChange={(value) => handleInputChange('card_expiry', value)}
+                        error={errors.card_expiry}
+                        placeholder="MM/YY"
+                      />
+                      <CardInput
+                        id="card_cvv"
+                        label="CVV *"
+                        type="cvv"
+                        value={formData.card_cvv}
+                        onChange={(value) => handleInputChange('card_cvv', value)}
+                        error={errors.card_cvv}
+                        placeholder="123"
+                      />
                     </div>
                   </div>
                 )}

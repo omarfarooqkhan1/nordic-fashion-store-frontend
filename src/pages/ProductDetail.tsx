@@ -1,24 +1,29 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { fetchProductById } from '../api/products'; // Corrected path
-import { useLanguage } from '../contexts/LanguageContext'; // Corrected path
-import { useCart } from '../contexts/CartContext';     // Corrected path
+import { fetchProductById } from '../api/products';
+import { useAuth } from '../contexts/AuthContext';
+import { useCart } from '../contexts/CartContext';
+import { useLanguage } from '../contexts/LanguageContext';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { ArrowLeft, Check, Heart, Share2, X } from 'lucide-react';
+import { Heart, Share2, ShoppingCart, Edit, Star, ArrowLeft, Check, X } from 'lucide-react';
 import { Product, Variant } from '@/types/Product';
-import { useToast } from '@/hooks/use-toast'; // Import useToast
+import { useToast } from '@/hooks/use-toast';
 import ProductImage from '@/components/ui/ProductImage';
+import { LoadingState, ErrorState } from '@/components/common';
 
 const ProductDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { t } = useLanguage();
   const { addToCart } = useCart();
+  const { user } = useAuth(); // Add auth context
   const { toast } = useToast(); // Initialize useToast at the top level
+
+  const isAdmin = user?.role === 'admin'; // Check if user is admin
 
   const [selectedSize, setSelectedSize] = useState('');
   const [selectedColor, setSelectedColor] = useState('');
@@ -44,15 +49,18 @@ const ProductDetail = () => {
   }, [product, selectedSize, selectedColor, currentImageIndex]);
 
   if (isLoading) {
-    return <div className="p-8 text-center text-lg">{t('common.loading')}</div>;
+    return <LoadingState message={t('common.loading')} />;
   }
 
   if (isError || !product) {
     return (
-      <div className="p-8 text-center">
-        <h2 className="text-xl font-bold mb-4">{t('error.notFound')}</h2>
-        <Button onClick={() => navigate('/products')}>{t('common.back')} {t('nav.products')}</Button>
-      </div>
+      <ErrorState 
+        title={t('error.notFound')}
+        backButton={{
+          text: `${t('common.back')} ${t('nav.products')}`,
+          path: "/products"
+        }}
+      />
     );
   }
 
@@ -77,8 +85,8 @@ const ProductDetail = () => {
   const handleAddToCart = async () => { // Made async to await addToCart
     if (!variant) {
       toast({ 
-        title: t('product.selectSize'), 
-        description: t('product.selectSize') + ' ' + t('product.selectColor'), 
+        title: t('product.chooseVariant'), 
+        description: t('product.selectSizeAndColor'), 
         variant: 'destructive' 
       });
       return;
@@ -243,6 +251,23 @@ const ProductDetail = () => {
             </div>
           )}
 
+          {/* Clear Selection Button */}
+          {(selectedSize || selectedColor) && (
+            <div className="flex justify-center">
+              <Button 
+                variant="outline" 
+                onClick={() => {
+                  setSelectedSize('');
+                  setSelectedColor('');
+                }}
+                className="border-muted-foreground text-muted-foreground hover:border-primary hover:text-primary"
+              >
+                <X className="h-4 w-4 mr-2" />
+                Clear Selection
+              </Button>
+            </div>
+          )}
+
           {/* Stock Info */}
           <Card className="rounded-lg shadow-sm">
             <CardContent className="p-4">
@@ -260,7 +285,7 @@ const ProductDetail = () => {
                     </>
                   )
                 ) : (
-                  <span className="text-muted-foreground">{t('product.selectSize')} {t('product.selectColor')}</span>
+                  <span className="text-muted-foreground">{t('product.selectSizeAndColor')}</span>
                 )}
               </div>
             </CardContent>
@@ -268,24 +293,38 @@ const ProductDetail = () => {
 
           {/* Actions */}
           <div className="space-y-4">
-            <Button
-              onClick={handleAddToCart}
-              disabled={!isVariantSelected || !isInStock}
-              className="w-full py-6 text-lg font-bold disabled:opacity-50 rounded-md bg-gold-500 hover:bg-gold-600 text-leather-900 border border-gold-400 hover:border-gold-500"
-            >
-              {!isVariantSelected ? t('product.selectSize') : !isInStock ? t('product.outOfStock') : t('product.addToCart')}
-            </Button>
+            {isAdmin ? (
+              // Admin Actions
+              <Button
+                onClick={() => navigate(`/admin/products/${product.id}/edit`)}
+                className="w-full py-6 text-lg font-bold rounded-md bg-blue-500 hover:bg-blue-600 text-white border border-blue-400 hover:border-blue-500"
+              >
+                <Edit className="h-5 w-5 mr-2" />
+                Edit Product
+              </Button>
+            ) : (
+              // Customer Actions
+              <>
+                <Button
+                  onClick={handleAddToCart}
+                  disabled={!isVariantSelected || !isInStock}
+                  className="w-full py-6 text-lg font-bold disabled:opacity-50 rounded-md bg-gold-500 hover:bg-gold-600 text-leather-900 border border-gold-400 hover:border-gold-500"
+                >
+                  {!isVariantSelected ? t('product.chooseVariant') : !isInStock ? t('product.outOfStock') : t('product.addToCart')}
+                </Button>
 
-            <div className="flex gap-4">
-              <Button variant="outline" className="flex-1 gap-2 border-primary text-primary rounded-md">
-                <Heart className="h-4 w-4" />
-                {t('nav.wishlist')}
-              </Button>
-              <Button variant="outline" className="flex-1 gap-2 border-primary text-primary rounded-md">
-                <Share2 className="h-4 w-4" />
-                {t('common.share')}
-              </Button>
-            </div>
+                <div className="flex gap-4">
+                  <Button variant="outline" className="flex-1 gap-2 border-primary text-primary rounded-md">
+                    <Heart className="h-4 w-4" />
+                    {t('nav.wishlist')}
+                  </Button>
+                  <Button variant="outline" className="flex-1 gap-2 border-primary text-primary rounded-md">
+                    <Share2 className="h-4 w-4" />
+                    {t('common.share')}
+                  </Button>
+                </div>
+              </>
+            )}
           </div>
 
           <Separator />

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -16,6 +16,7 @@ const AdminLogin = () => {
   });
   const [error, setError] = useState('');
   const navigate = useNavigate();
+  const location = useLocation();
   const { loginAdmin, loading } = useAuth();
   const { t } = useLanguage();
 
@@ -25,7 +26,9 @@ const AdminLogin = () => {
 
     try {
       await loginAdmin(credentials.username, credentials.password);
-      navigate('/admin');
+      // Redirect to the originally requested page or default to /admin
+      const from = location.state?.from?.pathname || '/admin';
+      navigate(from, { replace: true });
     } catch (err: any) {
       // Error toast is now handled in AuthContext, but keep local error for form display
       setError(t('toast.loginError'));

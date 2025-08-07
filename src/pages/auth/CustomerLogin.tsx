@@ -173,13 +173,6 @@ const CustomerLogin: React.FC = () => {
               {t('auth.signup')}
             </Link>
           </div>
-
-          <div className="text-center text-sm">
-            <span className="text-muted-foreground">{t('auth.loginAdmin')}? </span>
-            <Link to="/admin/login" className="text-primary hover:underline font-medium">
-              {t('auth.loginAdmin')}
-            </Link>
-          </div>
         </CardContent>
       </Card>
     </div>

@@ -16,7 +16,7 @@ export const Footer: React.FC = () => {
                 NORDIC
               </div>
               <div className="text-xl font-bold text-gold-500">
-                LEATHER
+                SKIN
               </div>
             </div>
             <p className="text-sm text-muted-foreground">

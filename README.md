@@ -1,23 +1,63 @@
-# E-commerce Frontend Application
+# Nordic Fashion Store - Frontend
 
-This repository contains the frontend application for the e-commerce platform, built with modern web technologies. It provides a rich user interface for browsing products, managing a shopping cart, and includes a placeholder admin panel for product stock management.
+Modern React frontend for Nordic Fashion Store e-commerce platform.
 
-## 🚀 Features
+## 🚀 Quick Start
 
-* **Product Catalog Display:** Browse a list of dummy products with essential details.
-* **Product Variant Selection:** Select different variants (e.g., color, size) for products.
-* **Dummy Stock Availability Check:** Basic simulation of checking product variant stock.
-* **Add to Cart Flow:** Dummy functionality for adding products to a shopping cart.
-* **Responsive Design:** Optimized for various screen sizes (desktop, tablet, mobile) using Tailwind CSS.
-* **Dummy Admin Panel:** A basic interface to simulate maintaining and updating product stock (currently using dummy data).
+```bash
+# Install dependencies
+npm install
 
-## 🛠️ Technologies Used
+# Start development server
+npm run dev
+# Runs on http://localhost:3001
+```
 
-* **React.js:** A JavaScript library for building user interfaces.
-* **TypeScript:** A typed superset of JavaScript that compiles to plain JavaScript, enhancing code quality and maintainability.
-* **Shadcn/ui:** A collection of re-usable components built with Radix UI and Tailwind CSS, providing a clean and accessible UI foundation.
-* **Tailwind CSS:** A utility-first CSS framework for rapidly building custom designs.
-* **Vite:** A fast build tool for modern web projects (used for development server and bundling).
+## 📦 Scripts
+
+```bash
+npm run dev          # Development server with HMR
+npm run build        # Production build
+npm run preview      # Preview production build
+npm run type-check   # TypeScript type checking
+```
+
+## �️ Tech Stack
+
+- **React 18** with TypeScript
+- **Vite** for fast development and building
+- **TanStack Query** for server state management
+- **Tailwind CSS** with shadcn/ui components
+- **React Router** v6 for routing
+
+## 🧩 Key Features
+
+- **17 Reusable Components** with 75% code reduction
+- **Dark Mode Support** with proper contrast
+- **Guest Checkout** functionality
+- **Order Tracking** integration
+- **Multi-language** support
+- **Responsive Design** mobile-first approach
+
+## 🔧 Configuration
+
+Backend API endpoint is configured to `http://localhost:8000` by default.
+No additional configuration needed for development.
+
+## � Project Structure
+
+```
+src/
+├── components/       # Reusable UI components
+├── pages/           # Route components
+├── hooks/           # Custom React hooks
+├── contexts/        # React context providers
+├── api/            # API integration
+├── lib/            # Utilities and helpers
+└── types/          # TypeScript type definitions
+```
+
+For full project documentation, see the main README.md in the parent directory.
 
 ## 📦 Getting Started
 

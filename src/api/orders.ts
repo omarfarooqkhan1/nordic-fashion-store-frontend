@@ -31,6 +31,7 @@ export interface Order {
   shipping: number;
   total: number;
   payment_status: string;
+  tracking_number?: string;
   shipping_name: string;
   shipping_email: string;
   shipping_phone?: string;
@@ -163,5 +164,51 @@ export const fetchOrder = async (
   } catch (error: any) {
     console.error('Error fetching order:', error);
     throw new Error(error.response?.data?.message || 'Failed to fetch order');
+  }
+};
+
+// Admin-specific functions
+export const fetchAllOrders = async (
+  bearerToken: string
+): Promise<Order[]> => {
+  try {
+    const response = await api.get(
+      '/admin/orders',
+      {
+        headers: getHeaders(undefined, bearerToken),
+      }
+    );
+    
+    return response.data;
+  } catch (error: any) {
+    console.error('Error fetching all orders:', error);
+    throw new Error(error.response?.data?.message || 'Failed to fetch orders');
+  }
+};
+
+export interface OrderUpdateData {
+  status?: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
+  tracking_number?: string;
+  notes?: string;
+}
+
+export const updateOrderStatus = async (
+  orderId: number | string,
+  updateData: OrderUpdateData,
+  bearerToken: string
+): Promise<Order> => {
+  try {
+    const response = await api.put(
+      `/admin/orders/${orderId}`,
+      updateData,
+      {
+        headers: getHeaders(undefined, bearerToken),
+      }
+    );
+    
+    return response.data;
+  } catch (error: any) {
+    console.error('Error updating order:', error);
+    throw new Error(error.response?.data?.message || 'Failed to update order');
   }
 };
