@@ -103,6 +103,12 @@ export const Header: React.FC = () => {
               </div>
             </Link>
 
+            {/* Custom Jacket Button */}
+            <Link to="/custom-jacket" className="ml-6">
+              <Button variant="default" size="lg" className="font-semibold bg-yellow-400 text-leather-900 shadow-gold-200/40 shadow-md hover:scale-105 transition-transform border border-yellow-300">
+                {t('customJacket.title')}
+              </Button>
+            </Link>
             {/* Desktop Search */}
             <div className="hidden md:flex flex-1 max-w-md mx-8">
               <form onSubmit={handleSearch} className="relative w-full">

@@ -97,9 +97,9 @@ const CustomerLogin: React.FC = () => {
               {t('auth.signup')}
             </Link>
             <div className="mt-2">
-              <span className="text-muted-foreground">Forgot your password? </span>
+              <span className="text-muted-foreground">{t('auth.forgotPassword')} </span>
               <Link to="/forgot-password" className="text-primary hover:underline font-medium">
-                Reset Here
+                {t('auth.resetHere')}
               </Link>
             </div>
           </div>
