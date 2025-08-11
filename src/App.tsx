@@ -33,6 +33,9 @@ import NotFound from "./pages/NotFound"
 // New Auth Pages
 import CustomerLogin from "./pages/auth/CustomerLogin"
 import CustomerSignup from "./pages/auth/CustomerSignup"
+import VerifyEmail from "./pages/auth/VerifyEmail"
+import ForgotPassword from "./pages/auth/ForgotPassword"
+import ResetPassword from "./pages/auth/ResetPassword"
 import Auth0Callback from "./pages/auth/Auth0Callback"
 
 // Customer Pages
@@ -89,6 +92,9 @@ const App: React.FC = () => {
                               {/* New Auth Routes */}
                               <Route path="/login" element={<CustomerLogin />} />
                               <Route path="/signup" element={<CustomerSignup />} />
+                              <Route path="/verify-email" element={<VerifyEmail />} />
+                              <Route path="/forgot-password" element={<ForgotPassword />} />
+                              <Route path="/reset-password" element={<ResetPassword />} />
                               <Route path="/admin/login" element={<AdminLogin />} />
                               <Route path="/auth/callback" element={<Auth0Callback />} />
 

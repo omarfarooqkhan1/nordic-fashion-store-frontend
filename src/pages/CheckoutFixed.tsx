@@ -11,10 +11,9 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Separator } from '@/components/ui/separator';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Switch } from '@/components/ui/switch';
 import { CreditCard, Truck, Shield, ArrowLeft, MapPin, User } from 'lucide-react';
 import { createOrder } from '@/api/orders';
-import { fetchUserAddresses, createAddress, type Address, type CreateAddressData } from '@/api/addresses';
+import { fetchUserAddresses, type Address } from '@/api/addresses';
 import { CardInput } from '@/components/common';
 import { validateCardNumber, validateExpiryDate, validateCVV } from '@/utils/cardFormatting';
 
@@ -57,12 +56,12 @@ interface CheckoutFormData {
 const CheckoutFixed: React.FC = () => {
   const navigate = useNavigate();
   const { items, getCartTotal, getCartItemsCount, clearCartItems, isLoading } = useCart();
-  const { user, token, isAuthenticated } = useAuth();
+  const { user, token, isAuthenticated, loading: authLoading } = useAuth();
   const { toast } = useToast();
   const [isProcessing, setIsProcessing] = useState(false);
   const [isLoadingAddress, setIsLoadingAddress] = useState(false);
   const [defaultAddress, setDefaultAddress] = useState<Address | null>(null);
-  const [useDefaultAddress, setUseDefaultAddress] = useState(true);
+  const [useDefaultAddress, setUseDefaultAddress] = useState(false);
   const [hasExistingAddresses, setHasExistingAddresses] = useState(false);
   
   console.log('🏪 Checkout Fixed - Cart items:', items?.length || 0, 'isLoading:', isLoading);
@@ -94,13 +93,45 @@ const CheckoutFixed: React.FC = () => {
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [isGuestMode, setIsGuestMode] = useState(!isAuthenticated);
+  const [isGuestMode, setIsGuestMode] = useState(false); // Start with false, will be updated based on auth state
+
+  // Sync guest mode with authentication state
+  useEffect(() => {
+    if (authLoading) {
+      // Don't change guest mode while auth is loading
+      return;
+    }
+    
+    if (isAuthenticated) {
+      setIsGuestMode(false); // User is authenticated, not in guest mode
+    } else {
+      // User is not authenticated and auth loading is complete
+      setIsGuestMode(true);
+    }
+  }, [isAuthenticated, authLoading]);
 
   // Load user's default address on component mount
   useEffect(() => {
     const loadDefaultAddress = async () => {
+      console.log('🏠 Address loading effect triggered', {
+        authLoading,
+        isAuthenticated,
+        hasToken: !!token,
+        isGuestMode,
+        userEmail: user?.email
+      });
+      
+      if (authLoading) {
+        console.log('🔄 Auth still loading, waiting...');
+        return;
+      }
+      
       if (!isAuthenticated || !token || isGuestMode) {
-        console.log('🔒 User not authenticated or in guest mode, skipping address load');
+        console.log('🔒 User not authenticated or in guest mode, skipping address load', {
+          isAuthenticated,
+          hasToken: !!token,
+          isGuestMode
+        });
         return;
       }
       
@@ -116,6 +147,7 @@ const CheckoutFixed: React.FC = () => {
         if (defaultAddr) {
           console.log('✅ Found default address:', defaultAddr);
           setDefaultAddress(defaultAddr);
+          setUseDefaultAddress(true); // Enable using default address
           
           // Prefill form with default address
           setFormData(prev => {
@@ -145,19 +177,21 @@ const CheckoutFixed: React.FC = () => {
           });
         } else {
           console.log('ℹ️ No default address found');
-          setUseDefaultAddress(false); // No default address, so allow manual entry
+          setDefaultAddress(null);
+          setUseDefaultAddress(false); // Disable using default address since none exists
         }
       } catch (error) {
         console.error('❌ Error loading default address:', error);
         setHasExistingAddresses(false);
-        setUseDefaultAddress(false); // On error, allow manual entry
+        setDefaultAddress(null);
+        setUseDefaultAddress(false); // Disable using default address on error
       } finally {
         setIsLoadingAddress(false);
       }
     };
 
     loadDefaultAddress();
-  }, [isAuthenticated, token, user?.name]);
+  }, [isAuthenticated, token, user?.name, authLoading, isGuestMode]);
 
   // Update name fields when user data changes
   useEffect(() => {
@@ -238,41 +272,6 @@ const CheckoutFixed: React.FC = () => {
         
         return updated;
       });
-    }
-  };
-
-  // Function to save the checkout address as the user's first address
-  const saveFirstAddress = async (formData: CheckoutFormData): Promise<void> => {
-    try {
-      console.log('💾 Saving user\'s first address...');
-      
-      const addressData: CreateAddressData = {
-        type: 'home',
-        label: `${formData.shipping_name}'s Address`,
-        street: formData.shipping_address,
-        city: formData.shipping_city,
-        state: formData.shipping_state || '',
-        postal_code: formData.shipping_postal_code,
-        country: formData.shipping_country,
-      };
-      
-      const savedAddress = await createAddress(addressData);
-      console.log('✅ Address saved successfully:', savedAddress);
-      
-      // Set this as the default address for future use
-      setDefaultAddress(savedAddress);
-      setHasExistingAddresses(true);
-      
-      toast({
-        title: 'Address saved',
-        description: 'Your shipping address has been saved for future orders',
-        className: "bg-green-500 text-white"
-      });
-      
-    } catch (error: any) {
-      console.error('❌ Error saving address:', error);
-      // Don't show error toast for address saving failure as it shouldn't block checkout
-      // The order was successful, saving address is just a convenience feature
     }
   };
 
@@ -442,15 +441,9 @@ const CheckoutFixed: React.FC = () => {
       
       toast({
         title: 'Order placed successfully!',
-        description: `Order #${orderData.order.order_number} has been created`,
+        description: `Order #${orderData.order.order_number} has been created${isAuthenticated && !isGuestMode ? '. Your address has been saved for future orders.' : ''}`,
         className: "bg-green-500 text-white"
       });
-
-      // Save address if this is the user's first checkout (no existing addresses)
-      if (!hasExistingAddresses && isAuthenticated && !isGuestMode) {
-        console.log('🏠 User has no saved addresses, saving this address for future use...');
-        await saveFirstAddress(formData);
-      }
 
       console.log('🧭 Navigating to order page...');
       // Navigate to order confirmation
@@ -599,6 +592,24 @@ const CheckoutFixed: React.FC = () => {
           )}
 
           <div className="space-y-6">
+            {/* Debug Information (remove in production) */}
+            <Card className="bg-yellow-50 border-yellow-200">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm text-yellow-800">Debug Info</CardTitle>
+              </CardHeader>
+              <CardContent className="text-xs text-yellow-700">
+                <p>Auth Loading: {authLoading ? 'Yes' : 'No'}</p>
+                <p>Authenticated: {isAuthenticated ? 'Yes' : 'No'}</p>
+                <p>Has Token: {token ? 'Yes' : 'No'}</p>
+                <p>Guest Mode: {isGuestMode ? 'Yes' : 'No'}</p>
+                <p>Loading Address: {isLoadingAddress ? 'Yes' : 'No'}</p>
+                <p>Has Default Address: {defaultAddress ? 'Yes' : 'No'}</p>
+                <p>Use Default Address: {useDefaultAddress ? 'Yes' : 'No'}</p>
+                <p>Has Existing Addresses: {hasExistingAddresses ? 'Yes' : 'No'}</p>
+                <p>User Email: {user?.email || 'None'}</p>
+              </CardContent>
+            </Card>
+
             {/* Shipping Information */}
             <Card>
               <CardHeader>
@@ -608,12 +619,12 @@ const CheckoutFixed: React.FC = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                {/* Info about saving address for first-time users */}
-                {!hasExistingAddresses && isAuthenticated && !isGuestMode && (
+                {/* Info about no saved addresses for authenticated users */}
+                {!hasExistingAddresses && isAuthenticated && !isGuestMode && !isLoadingAddress && (
                   <div className="bg-blue-50 p-3 rounded-lg border border-blue-200 mb-4">
                     <div className="flex items-center gap-2 text-blue-800">
                       <MapPin className="h-4 w-4" />
-                      <span className="text-sm font-medium">Address will be saved</span>
+                      <span className="text-sm font-medium">First time checkout</span>
                     </div>
                     <p className="text-sm text-blue-700 mt-1">
                       This address will be saved to your profile for faster checkout in future orders.
@@ -621,33 +632,44 @@ const CheckoutFixed: React.FC = () => {
                   </div>
                 )}
 
+                {/* Loading state for addresses */}
+                {isLoadingAddress && !isGuestMode && isAuthenticated && (
+                  <div className="border rounded-lg p-4 bg-muted/30">
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gold-500"></div>
+                      <span className="text-sm">Loading your saved addresses...</span>
+                    </div>
+                  </div>
+                )}
+
                 {/* Address Toggle - Only show if user has a default address and is not in guest mode */}
-                {defaultAddress && !isGuestMode && (
+                {defaultAddress && !isGuestMode && !isLoadingAddress && (
                   <div className="border rounded-lg p-4 bg-muted/50">
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="flex items-center gap-2">
-                        <MapPin className="h-4 w-4 text-muted-foreground" />
-                        <span className="font-medium">Use saved address</span>
-                      </div>
-                      <Switch
+                    <div className="flex items-center space-x-3 mb-3">
+                      <Checkbox
+                        id="use_default_address"
                         checked={useDefaultAddress}
                         onCheckedChange={handleAddressToggle}
                         disabled={isLoadingAddress}
                       />
+                      <Label htmlFor="use_default_address" className="flex items-center gap-2 cursor-pointer">
+                        <MapPin className="h-4 w-4 text-muted-foreground" />
+                        <span className="font-medium">Use my saved address</span>
+                      </Label>
                     </div>
                     
                     {useDefaultAddress && (
-                      <div className="text-sm text-muted-foreground">
-                        <p className="font-medium">{defaultAddress.label}</p>
-                        <p>{defaultAddress.street}</p>
-                        <p>{defaultAddress.city}, {defaultAddress.state} {defaultAddress.postal_code}</p>
-                        <p>{defaultAddress.country}</p>
+                      <div className="ml-6 text-sm text-muted-foreground bg-blue-50 p-3 rounded border border-blue-200">
+                        <p className="font-medium text-blue-800">{defaultAddress.label}</p>
+                        <p className="text-blue-700">{defaultAddress.street}</p>
+                        <p className="text-blue-700">{defaultAddress.city}, {defaultAddress.state} {defaultAddress.postal_code}</p>
+                        <p className="text-blue-700">{defaultAddress.country}</p>
                       </div>
                     )}
                     
                     {!useDefaultAddress && (
-                      <p className="text-sm text-muted-foreground">
-                        Fill in a different shipping address below
+                      <p className="ml-6 text-sm text-muted-foreground">
+                        Uncheck to enter a different shipping address
                       </p>
                     )}
                   </div>
@@ -660,7 +682,7 @@ const CheckoutFixed: React.FC = () => {
                       id="shipping_name"
                       value={formData.shipping_name}
                       onChange={(e) => handleInputChange('shipping_name', e.target.value)}
-                      className={errors.shipping_name ? 'border-red-500' : ''}
+                      className={`${errors.shipping_name ? 'border-red-500' : ''} ${useDefaultAddress && defaultAddress ? 'bg-muted text-muted-foreground' : ''}`}
                       disabled={useDefaultAddress && !!defaultAddress}
                     />
                     {errors.shipping_name && <p className="text-sm text-red-500">{errors.shipping_name}</p>}
@@ -684,7 +706,7 @@ const CheckoutFixed: React.FC = () => {
                     id="shipping_address"
                     value={formData.shipping_address}
                     onChange={(e) => handleInputChange('shipping_address', e.target.value)}
-                    className={errors.shipping_address ? 'border-red-500' : ''}
+                    className={`${errors.shipping_address ? 'border-red-500' : ''} ${useDefaultAddress && defaultAddress ? 'bg-muted text-muted-foreground' : ''}`}
                     disabled={useDefaultAddress && !!defaultAddress}
                   />
                   {errors.shipping_address && <p className="text-sm text-red-500">{errors.shipping_address}</p>}
@@ -697,7 +719,7 @@ const CheckoutFixed: React.FC = () => {
                       id="shipping_city"
                       value={formData.shipping_city}
                       onChange={(e) => handleInputChange('shipping_city', e.target.value)}
-                      className={errors.shipping_city ? 'border-red-500' : ''}
+                      className={`${errors.shipping_city ? 'border-red-500' : ''} ${useDefaultAddress && defaultAddress ? 'bg-muted text-muted-foreground' : ''}`}
                       disabled={useDefaultAddress && !!defaultAddress}
                     />
                     {errors.shipping_city && <p className="text-sm text-red-500">{errors.shipping_city}</p>}
@@ -709,6 +731,7 @@ const CheckoutFixed: React.FC = () => {
                       value={formData.shipping_state}
                       onChange={(e) => handleInputChange('shipping_state', e.target.value)}
                       placeholder="Stockholm"
+                      className={useDefaultAddress && defaultAddress ? 'bg-muted text-muted-foreground' : ''}
                       disabled={useDefaultAddress && !!defaultAddress}
                     />
                   </div>
@@ -721,7 +744,7 @@ const CheckoutFixed: React.FC = () => {
                       id="shipping_postal_code"
                       value={formData.shipping_postal_code}
                       onChange={(e) => handleInputChange('shipping_postal_code', e.target.value)}
-                      className={errors.shipping_postal_code ? 'border-red-500' : ''}
+                      className={`${errors.shipping_postal_code ? 'border-red-500' : ''} ${useDefaultAddress && defaultAddress ? 'bg-muted text-muted-foreground' : ''}`}
                       disabled={useDefaultAddress && !!defaultAddress}
                     />
                     {errors.shipping_postal_code && <p className="text-sm text-red-500">{errors.shipping_postal_code}</p>}
@@ -733,7 +756,7 @@ const CheckoutFixed: React.FC = () => {
                       onValueChange={(value) => handleInputChange('shipping_country', value)}
                       disabled={useDefaultAddress && !!defaultAddress}
                     >
-                      <SelectTrigger id="shipping_country">
+                      <SelectTrigger id="shipping_country" className={useDefaultAddress && defaultAddress ? 'bg-muted text-muted-foreground' : ''}>
                         <SelectValue placeholder="Select country" />
                       </SelectTrigger>
                       <SelectContent>

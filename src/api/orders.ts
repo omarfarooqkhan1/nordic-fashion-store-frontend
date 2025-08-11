@@ -100,7 +100,7 @@ export const createOrder = async (
     
     console.log('📡 Making API request to /orders/test');
     const response = await api.post(
-      '/orders/test',
+      '/orders',
       orderData,
       {
         headers,
