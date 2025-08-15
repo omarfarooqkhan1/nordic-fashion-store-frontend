@@ -96,10 +96,10 @@ export const Header: React.FC = () => {
             {/* Logo */}
             <Link to="/" className="flex items-center space-x-1 group">
               <div className="text-lg md:text-2xl font-bold text-foreground group-hover:text-muted-foreground transition-colors duration-300">
-                NORDIC
+                NORD
               </div>
-              <div className="text-lg md:text-2xl font-bold text-primary group-hover:text-primary/80 transition-colors duration-300">
-                SKIN
+              <div className="text-lg md:text-2xl font-light text-primary group-hover:text-primary/80 transition-colors duration-300">
+              FLEX
               </div>
             </Link>
 

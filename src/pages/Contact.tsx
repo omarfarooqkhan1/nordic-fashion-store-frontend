@@ -80,7 +80,7 @@ const Contact = () => {
               <div>
                 <h3 className="font-semibold text-foreground mb-2">Address</h3>
                 <p className="text-muted-foreground">
-                  Nordic Skin Co.<br />
+                  Nord Flex Co.<br />
                   Yliopistonkatu 25<br />
                   20100 Turku, Finland
                 </p>
@@ -107,11 +107,11 @@ const Contact = () => {
               </div>
               <div>
                 <h3 className="font-semibold text-foreground mb-2">Email</h3>
-                <p className="text-muted-foreground">info@nordicskin.com</p>
+                <p className="text-muted-foreground">info@nordflex.shop</p>
               </div>
               <div>
                 <h3 className="font-semibold text-foreground mb-2">Customer Service</h3>
-                <p className="text-muted-foreground">support@nordicskin.com</p>
+                <p className="text-muted-foreground">support@nordflex.shop</p>
               </div>
             </CardContent>
           </Card>

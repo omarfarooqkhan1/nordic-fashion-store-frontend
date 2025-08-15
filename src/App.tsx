@@ -123,11 +123,7 @@ const App: React.FC = () => {
                               />
                               <Route
                                 path="/orders/:id"
-                                element={
-                                  <ProtectedRoute requireCustomer>
-                                    <Orders />
-                                  </ProtectedRoute>
-                                }
+                                element={<Orders />}
                               />
 
                               {/* Admin Routes */}

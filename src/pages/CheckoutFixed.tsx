@@ -564,35 +564,8 @@ const CheckoutFixed: React.FC = () => {
             </Card>
           )}
 
-          {/* Account Mode Info */}
-          {isAuthenticated && !isGuestMode && (
-            <Card className="border-green-200 bg-green-50">
-              <CardContent className="pt-6">
-                <div className="flex items-center gap-3">
-                  <User className="h-5 w-5 text-green-600" />
-                  <div className="flex-1">
-                    <h3 className="font-medium text-green-800">
-                      Signed in as {user?.name || user?.email}
-                    </h3>
-                    <p className="text-sm text-green-700">
-                      Your address and order details will be saved to your account.
-                    </p>
-                  </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setIsGuestMode(true)}
-                    className="border-green-300 text-green-700 hover:bg-green-100"
-                  >
-                    Switch to Guest
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
           <div className="space-y-6">
-            {/* Debug Information (remove in production) */}
+            {/* Debug Information (remove in production)
             <Card className="bg-yellow-50 border-yellow-200">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm text-yellow-800">Debug Info</CardTitle>
@@ -608,7 +581,7 @@ const CheckoutFixed: React.FC = () => {
                 <p>Has Existing Addresses: {hasExistingAddresses ? 'Yes' : 'No'}</p>
                 <p>User Email: {user?.email || 'None'}</p>
               </CardContent>
-            </Card>
+            </Card> */}
 
             {/* Shipping Information */}
             <Card>

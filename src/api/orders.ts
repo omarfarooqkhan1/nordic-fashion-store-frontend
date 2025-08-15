@@ -51,6 +51,7 @@ export interface Order {
   billing_country?: string;
   payment_method?: string;
   notes?: string;
+  shipping_service?: 'DHL' | 'FedEx' | 'UPS';
   created_at: string;
   updated_at: string;
   items: OrderItem[];
@@ -189,6 +190,7 @@ export const fetchAllOrders = async (
 export interface OrderUpdateData {
   status?: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
   tracking_number?: string;
+  shipping_service?: 'DHL' | 'FedEx' | 'UPS';
   notes?: string;
 }
 

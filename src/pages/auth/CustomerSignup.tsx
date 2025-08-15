@@ -95,7 +95,7 @@ const CustomerSignup: React.FC = () => {
         </div>
         <AuthForm
           title="Create Account"
-          description="Join Nordic Fashion Store today"
+          description="Join Nord Flex today"
           submitText="Sign Up"
           isLoading={loading}
           error={error}

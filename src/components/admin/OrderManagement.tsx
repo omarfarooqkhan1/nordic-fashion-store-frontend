@@ -66,6 +66,7 @@ const OrderManagement: React.FC = () => {
     setUpdateForm({
       status: order.status,
       tracking_number: order.tracking_number || '',
+      shipping_service: order.shipping_service as 'DHL' | 'FedEx' | 'UPS' | undefined,
       notes: order.notes || '',
     });
     setIsUpdateDialogOpen(true);
@@ -73,9 +74,14 @@ const OrderManagement: React.FC = () => {
 
   const handleSubmitUpdate = () => {
     if (selectedOrder) {
+      let updateData = { ...updateForm };
+      // If tracking number is set and status is not already 'shipped', force status to 'shipped'
+      if (updateData.tracking_number && updateData.tracking_number.trim() !== '' && updateData.status !== 'shipped') {
+        updateData.status = 'shipped';
+      }
       updateOrderMutation.mutate({
         orderId: selectedOrder.id,
-        updateData: updateForm,
+        updateData,
       });
     }
   };
@@ -170,7 +176,7 @@ const OrderManagement: React.FC = () => {
                           {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
                         </Badge>
                       </td>
-                      <td className="p-4 font-medium">€{order.total.toFixed(2)}</td>
+                      <td className="p-4 font-medium">€{Number(order.total).toFixed(2)}</td>
                       <td className="p-4">
                         {order.tracking_number ? (
                           <div className="flex items-center gap-2">
@@ -249,6 +255,26 @@ const OrderManagement: React.FC = () => {
               </p>
             </div>
 
+            {/* Shipping Service */}
+            <div className="space-y-2">
+              <Label>Shipping Service</Label>
+              <div className="flex gap-3">
+                {['DHL', 'FedEx', 'UPS'].map((service) => (
+                  <Button
+                    key={service}
+                    type="button"
+                    variant={updateForm.shipping_service === service ? 'default' : 'outline'}
+                    onClick={() => setUpdateForm(prev => ({ ...prev, shipping_service: service as 'DHL' | 'FedEx' | 'UPS' }))}
+                  >
+                    {service}
+                  </Button>
+                ))}
+              </div>
+              <p className="text-sm text-muted-foreground">
+                Select the shipping service used for this order. Only one can be selected.
+              </p>
+            </div>
+
             {/* Notes */}
             <div className="space-y-2">
               <Label htmlFor="notes">Internal Notes</Label>
@@ -275,7 +301,7 @@ const OrderManagement: React.FC = () => {
                   </div>
                   <div>
                     <p className="text-muted-foreground">Total</p>
-                    <p className="font-medium">€{selectedOrder.total.toFixed(2)}</p>
+                    <p className="font-medium">€{Number(selectedOrder.total).toFixed(2)}</p>
                   </div>
                   <div>
                     <p className="text-muted-foreground">Items</p>

@@ -12,12 +12,8 @@ export const Footer: React.FC = () => {
           {/* Brand */}
           <div className="space-y-4">
             <div className="flex items-center space-x-2">
-              <div className="text-xl font-bold text-leather-800 dark:text-leather-100">
-                NORDIC
-              </div>
-              <div className="text-xl font-bold text-gold-500">
-                SKIN
-              </div>
+              <div className="text-xl font-bold text-leather-800 dark:text-leather-100">NORD</div>
+              <div className="text-xl font-light text-gold-500">FLEX</div>
             </div>
             <p className="text-sm text-muted-foreground">
               {t('footer.brand.desc')}
@@ -85,7 +81,7 @@ export const Footer: React.FC = () => {
               <p>{t('footer.company')}</p>
               <p>{t('footer.location')}</p>
               <p>+46 8 123 456 789</p>
-              <p>info@nordicleather.com</p>
+              <p>info@nordflex.shop</p>
             </div>
           </div>
         </div>

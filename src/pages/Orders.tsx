@@ -58,23 +58,36 @@ const Orders: React.FC = () => {
   const [singleOrder, setSingleOrder] = useState<ApiOrder | null>(null)
 
   // Check if this is a single order view
+
   const isOrderDetail = params.id && location.pathname.includes('/orders/')
   const fromCheckout = location.state?.fromCheckout
+  const orderDataFromCheckout = location.state?.orderData;
 
   useEffect(() => {
     const loadOrders = async () => {
       try {
         if (isOrderDetail && params.id) {
-          // Load single order
-          const order = await fetchOrder(params.id, token);
-          setSingleOrder(order);
-          
-          if (fromCheckout) {
-            toast({
-              title: "Order Confirmation",
-              description: `Your order #${order.order_number} has been successfully placed!`,
-              className: "bg-green-500 text-white"
-            });
+          // If order data is available from checkout (guest), use it directly
+          if (orderDataFromCheckout) {
+            setSingleOrder(orderDataFromCheckout);
+            if (fromCheckout) {
+              toast({
+                title: "Order Confirmation",
+                description: `Your order #${orderDataFromCheckout.order_number} has been successfully placed!`,
+                className: "bg-green-500 text-white"
+              });
+            }
+          } else {
+            // Otherwise, fetch from backend (requires auth)
+            const order = await fetchOrder(params.id, token);
+            setSingleOrder(order);
+            if (fromCheckout) {
+              toast({
+                title: "Order Confirmation",
+                description: `Your order #${order.order_number} has been successfully placed!`,
+                className: "bg-green-500 text-white"
+              });
+            }
           }
         } else {
           // Load all orders
@@ -94,7 +107,7 @@ const Orders: React.FC = () => {
     };
 
     loadOrders();
-  }, [token, isOrderDetail, params.id, fromCheckout, toast]);
+  }, [token, isOrderDetail, params.id, fromCheckout, toast, orderDataFromCheckout]);
 
   const getStatusIcon = (status: ApiOrder["status"]) => {
     switch (status) {

@@ -54,6 +54,22 @@ import {
   type Product,
   type Category
 } from '@/api/admin';
+import { 
+  createProduct, 
+  updateProduct, 
+  deleteProduct, 
+  bulkUploadProducts, 
+  getBulkUploadTemplate,
+  fetchCategories,
+  createCategory,
+  updateCategory,
+  deleteCategory,
+  uploadProductImage,
+  deleteProductImage,
+  updateProductImageOrder,
+  getCategorizedImages,
+  type ProductFormData,
+} from '@/api/admin';
 import OrderManagement from '@/components/admin/OrderManagement';
 
 const AdminDashboard: React.FC = () => {
@@ -97,7 +113,11 @@ const AdminDashboard: React.FC = () => {
   // Fetch products
   const { data: products = [], isLoading: productsLoading } = useQuery({
     queryKey: ['admin-products'],
-    queryFn: () => fetchProducts(),
+    queryFn: async () => {
+      const data = await fetchProducts();
+      // Cast to admin Product type for compatibility
+      return data as unknown as Product[];
+    },
     enabled: isAuthenticated,
   });
 
@@ -158,11 +178,6 @@ const AdminDashboard: React.FC = () => {
       });
     },
   });
-
-  const handleLogout = () => {
-    localStorage.removeItem('adminAuthenticated');
-    navigate('/admin/login');
-  };
 
   const handleDeleteProduct = (product: Product) => {
     if (confirm(`Are you sure you want to delete "${product.name}"?`)) {
@@ -574,9 +589,6 @@ const AdminDashboard: React.FC = () => {
     <div className="container mx-auto px-2 sm:px-4 py-4 sm:py-8 space-y-4 sm:space-y-8">
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
         <h1 className="text-2xl sm:text-4xl font-bold text-foreground">Admin Dashboard</h1>
-        <Button variant="outline" onClick={handleLogout} className="self-start sm:self-auto">
-          Logout
-        </Button>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">

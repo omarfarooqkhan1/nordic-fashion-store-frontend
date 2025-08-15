@@ -58,7 +58,7 @@ const Index = () => {
             >
               <img
                 src={image}
-                alt={`Nordic Skin craftsmanship ${index + 1}`}
+                alt={`Nord Flex craftsmanship ${index + 1}`}
                 className="w-full h-full object-cover"
               />
             </div>
