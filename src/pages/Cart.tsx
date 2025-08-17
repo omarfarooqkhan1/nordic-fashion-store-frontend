@@ -2,6 +2,7 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useCart } from '@/contexts/CartContext';
+import { Trash2 } from 'lucide-react';
 import { 
   Container, 
   LoadingState, 
@@ -12,10 +13,11 @@ import {
 
 const Cart = () => {
   const { t } = useLanguage();
-  const { items, isLoading, updateQuantity, removeFromCart, clearCartItems, getCartTotal, getItemPrice } = useCart();
+  const { items, customItems, isLoading, updateQuantity, removeFromCart, removeCustomJacketFromCart, clearCartItems, getCartTotal, getItemPrice } = useCart();
   
   // Debug logs
   console.log('Cart component - items:', items);
+  console.log('Cart component - customItems:', customItems);
   console.log('Cart component - getCartTotal():', getCartTotal());
   
   // Handle checkout action
@@ -32,8 +34,8 @@ const Cart = () => {
     );
   }
   
-  // Display message if cart is empty
-  if (!items || items.length === 0) {
+  // Display message if cart is empty (both regular and custom items)
+  if ((!items || items.length === 0) && (!customItems || customItems.length === 0)) {
     return (
       <Container>
         <EmptyState
@@ -63,6 +65,7 @@ const Cart = () => {
       <div className="grid lg:grid-cols-3 gap-8">
         {/* Cart Items Section */}
         <div className="lg:col-span-2 space-y-4">
+          {/* Regular Product Items */}
           {items.map((item) => (
             <CartItem
               key={item.id}
@@ -71,6 +74,81 @@ const Cart = () => {
               onRemove={removeFromCart}
               getItemPrice={getItemPrice}
             />
+          ))}
+          
+          {/* Custom Jacket Items */}
+          {customItems && customItems.map((customItem) => (
+            <div key={customItem.id} className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6 shadow-sm">
+              <div className="flex flex-col lg:flex-row gap-6">
+                {/* Custom Jacket Images */}
+                <div className="flex gap-4 lg:w-1/3">
+                  <div className="flex-1">
+                    <img 
+                      src={customItem.frontImageUrl} 
+                      alt="Front View" 
+                      className="w-full h-32 object-cover rounded-lg border border-gray-200 dark:border-gray-600"
+                    />
+                    <p className="text-xs text-gray-500 text-center mt-1">Front</p>
+                  </div>
+                  <div className="flex-1">
+                    <img 
+                      src={customItem.backImageUrl} 
+                      alt="Back View" 
+                      className="w-full h-32 object-cover rounded-lg border border-gray-200 dark:border-gray-600"
+                    />
+                    <p className="text-xs text-gray-500 text-center mt-1">Back</p>
+                  </div>
+                </div>
+                
+                {/* Custom Jacket Details */}
+                <div className="flex-1 space-y-3">
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                      {customItem.name}
+                    </h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      Custom Design - {customItem.color} • Size: {customItem.size}
+                    </p>
+                    {customItem.customDescription && (
+                      <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
+                        {customItem.customDescription}
+                      </p>
+                    )}
+                  </div>
+                  
+                  {/* Logo Count */}
+                  {customItem.logos && customItem.logos.length > 0 && (
+                    <div className="text-sm text-gray-600 dark:text-gray-400">
+                      {customItem.logos.length} logo{customItem.logos.length !== 1 ? 's' : ''} placed
+                    </div>
+                  )}
+                  
+                  {/* Price and Actions */}
+                  <div className="flex justify-between items-center">
+                    <div className="text-lg font-bold text-gray-900 dark:text-white">
+                      ${(Number(customItem.price) || 0).toFixed(2)}
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={async () => {
+                        try {
+                          console.log('Removing custom jacket:', customItem.id);
+                          await removeCustomJacketFromCart(customItem.id);
+                          console.log('Custom jacket removed successfully');
+                        } catch (error) {
+                          console.error('Error removing custom jacket:', error);
+                        }
+                      }}
+                      disabled={false}
+                      className="text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950 p-2 rounded-full"
+                    >
+                      <Trash2 className="h-5 w-5" />
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </div>
           ))}
 
           <div className="flex flex-col sm:flex-row justify-between items-center pt-4 gap-4">

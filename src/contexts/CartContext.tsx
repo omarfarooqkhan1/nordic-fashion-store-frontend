@@ -1,19 +1,23 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { 
-  fetchCart, addOrUpdateCartItem, updateCartItem, removeCartItem, clearCart 
+  fetchCart, addOrUpdateCartItem, updateCartItem, removeCartItem, clearCart,
+  addCustomJacketToCart, removeCustomJacketFromCart, fetchCustomJacketCart
 } from '@/api/cart';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { CartItem } from '@/types/Cart';
+import { CartItem, CustomJacketItem } from '@/types/Cart';
 import { useAuth } from './AuthContext';
 
 interface CartContextType {
   items: CartItem[];
+  customItems: CustomJacketItem[];
   isLoading: boolean;
   addToCart: (product_variant_id: number, quantity: number) => Promise<void>;
+  addCustomJacketToCart: (customJacket: Omit<CustomJacketItem, 'id' | 'createdAt'>) => Promise<CustomJacketItem>;
   updateQuantity: (itemId: number, quantity: number) => Promise<void>;
   removeFromCart: (itemId: number) => Promise<void>;
+  removeCustomJacketFromCart: (customItemId: string) => void;
   clearCartItems: () => Promise<void>;
   getCartTotal: () => number;
   getCartItemsCount: () => number;
@@ -40,58 +44,168 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setSessionId(currentSessionId);
   }, []); // Run only once on component mount
 
-  // Fetch cart data, enabled only when sessionId is available
+  // Fetch cart data, enabled for both authenticated and guest users
   const { data: cart, isLoading, error } = useQuery({
-    queryKey: ['cart', sessionId, token], // Use token from auth context
-    queryFn: () => fetchCart(sessionId, token), // Pass token from auth context
+    queryKey: ['cart', token ? 'user' : sessionId, token], // Use 'user' for authenticated, sessionId for guests
+    queryFn: () => fetchCart(token ? undefined : sessionId, token), // Pass undefined for authenticated users
     staleTime: 5 * 60 * 1000, 
-    enabled: !!sessionId, // Only run the query if sessionId is truthy
+    enabled: !!(token || sessionId), // Enable for either token or sessionId
     retry: (failureCount, error) => {
       // Don't retry on 401 errors (unauthorized) or 400 errors (bad request)
       if ((error as any)?.response?.status === 401 || (error as any)?.response?.status === 400) {
         return false;
       }
       return failureCount < 3;
-    },
-    onSuccess: (data) => {
-      // Debug log to see what's coming from the API
-      console.log('Cart data received:', data);
     }
   });
 
-  const items: CartItem[] = cart?.items || [];
+  const items: CartItem[] = (cart as any)?.cart?.items || [];
+
+  // Debug logging
+  console.log('🔍 CartContext - cart data:', cart);
+  console.log('🔍 CartContext - cart.cart structure:', (cart as any)?.cart);
+  console.log('🔍 CartContext - items extracted:', items);
+
+  // Fetch custom jacket cart data
+  const { data: customJacketCart, isLoading: isLoadingCustom } = useQuery({
+    queryKey: ['customJacketCart', token ? 'user' : sessionId, token],
+    queryFn: () => fetchCustomJacketCart(token ? undefined : sessionId, token),
+    staleTime: 5 * 60 * 1000,
+    enabled: !!(token || sessionId),
+    retry: (failureCount, error) => {
+      if ((error as any)?.response?.status === 401 || (error as any)?.response?.status === 400) {
+        return false;
+      }
+      return failureCount < 3;
+    }
+  });
+
+  const customItems: CustomJacketItem[] = customJacketCart || [];
+  
+  // Debug logging
+  console.log('🔍 CartContext - customJacketCart data:', customJacketCart);
+  console.log('🔍 CartContext - customItems extracted:', customItems);
 
   const addMutation = useMutation({
-    mutationFn: ({ product_variant_id, quantity }: { product_variant_id: number; quantity: number; }) =>
-      addOrUpdateCartItem(product_variant_id, quantity, sessionId, token), // Use token from auth context
+    mutationFn: ({ product_variant_id, quantity }: { product_variant_id: number; quantity: number; }) => {
+      // For authenticated users, pass undefined as sessionId
+      // For guest users, pass the actual sessionId
+      const sessionIdToUse = token ? undefined : sessionId;
+      return addOrUpdateCartItem(product_variant_id, quantity, sessionIdToUse, token);
+    },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['cart'] }); 
+      // Invalidate both cart queries to ensure all cart data is refreshed
+      const cartIdentifier = token ? 'user' : sessionId;
+      console.log('🔄 addMutation onSuccess - Invalidating queries:', {
+        cartKey: ['cart', cartIdentifier, token],
+        customKey: ['customJacketCart', cartIdentifier, token]
+      });
+      
+      queryClient.invalidateQueries({ queryKey: ['cart', cartIdentifier, token] });
+      queryClient.invalidateQueries({ queryKey: ['customJacketCart', cartIdentifier, token] });
+      
+      // Also try to refetch immediately to ensure data is fresh
+      queryClient.refetchQueries({ queryKey: ['cart', cartIdentifier, token] });
+      queryClient.refetchQueries({ queryKey: ['customJacketCart', cartIdentifier, token] });
+      
       toast({ title: t('toast.addedToCart') });
     },
-    onError: (error) => {
+    onError: (error: any) => {
       console.error('Error adding to cart:', error);
-      toast({ title: t('toast.cartError'), description: error.message || t('toast.error'), variant: 'destructive' });
+      
+      // Extract the actual error message from the backend response
+      let errorMessage = t('toast.error');
+      
+      if (error?.response?.data?.message) {
+        // Backend returned a specific error message
+        errorMessage = error.response.data.message;
+        
+        // Add additional details if available
+        if (error.response.data.available !== undefined) {
+          errorMessage += ` (Available: ${error.response.data.available})`;
+        }
+        if (error.response.data.requested !== undefined) {
+          errorMessage += ` (Requested: ${error.response.data.requested})`;
+        }
+      } else if (error?.message) {
+        // Error object has a message property
+        errorMessage = error.message;
+      }
+      
+      toast({ 
+        title: t('toast.cartError'), 
+        description: errorMessage, 
+        variant: 'destructive' 
+      });
     }
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ itemId, quantity }: { itemId: number; quantity: number; }) =>
-      updateCartItem(itemId, quantity, sessionId, token), // Use token from auth context
+    mutationFn: ({ itemId, quantity }: { itemId: number; quantity: number; }) => {
+      // For authenticated users, pass undefined as sessionId
+      // For guest users, pass the actual sessionId
+      const sessionIdToUse = token ? undefined : sessionId;
+      return updateCartItem(itemId, quantity, sessionIdToUse, token);
+    },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['cart'] }); 
+      // Invalidate both cart queries to ensure all cart data is refreshed
+      const cartIdentifier = token ? 'user' : sessionId;
+      queryClient.invalidateQueries({ queryKey: ['cart', cartIdentifier, token] });
+      queryClient.invalidateQueries({ queryKey: ['customJacketCart', cartIdentifier, token] });
       toast({ title: t('toast.cartUpdated') });
     },
-    onError: (error) => {
+    onError: (error: any) => {
       console.error('Error updating cart:', error);
-      toast({ title: t('toast.cartError'), description: error.message || t('toast.error'), variant: 'destructive' });
+      
+      // Extract the actual error message from the backend response
+      let errorMessage = t('toast.error');
+      
+      if (error?.response?.data?.message) {
+        // Backend returned a specific error message
+        errorMessage = error.response.data.message;
+        
+        // Add additional details if available
+        if (error.response.data.available !== undefined) {
+          errorMessage += ` (Available: ${error.response.data.available})`;
+        }
+        if (error.response.data.requested !== undefined) {
+          errorMessage += ` (Requested: ${error.response.data.requested})`;
+        }
+      } else if (error?.message) {
+        // Error object has a message property
+        errorMessage = error.message;
+      }
+      
+      toast({ 
+        title: t('toast.cartError'), 
+        description: errorMessage, 
+        variant: 'destructive' 
+      });
     }
   });
 
   const removeMutation = useMutation({
-    mutationFn: ({ itemId }: { itemId: number; }) =>
-      removeCartItem(itemId, sessionId, token), // Use token from auth context
+    mutationFn: ({ itemId }: { itemId: number; }) => {
+      // For authenticated users, pass undefined as sessionId
+      // For guest users, pass the actual sessionId
+      const sessionIdToUse = token ? undefined : sessionId;
+      return removeCartItem(itemId, sessionIdToUse, token);
+    },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['cart'] }); 
+      // Invalidate both cart queries to ensure all cart data is refreshed
+      const cartIdentifier = token ? 'user' : sessionId;
+      console.log('🔄 removeMutation onSuccess - Invalidating queries:', {
+        cartKey: ['cart', cartIdentifier, token],
+        customKey: ['customJacketCart', cartIdentifier, token]
+      });
+      
+      queryClient.invalidateQueries({ queryKey: ['cart', cartIdentifier, token] });
+      queryClient.invalidateQueries({ queryKey: ['customJacketCart', cartIdentifier, token] });
+      
+      // Also try to refetch immediately to ensure data is fresh
+      queryClient.refetchQueries({ queryKey: ['cart', cartIdentifier, token] });
+      queryClient.refetchQueries({ queryKey: ['customJacketCart', cartIdentifier, token] });
+      
       toast({ title: t('toast.itemRemoved') || 'Item removed from cart' });
     },
     onError: (error) => {
@@ -100,11 +214,61 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   });
 
-  const clearMutation = useMutation({
-    mutationFn: () =>
-      clearCart(sessionId, token), // Use token from auth context
+  // Custom jacket mutations
+  const addCustomJacketMutation = useMutation({
+    mutationFn: (customJacket: Omit<CustomJacketItem, 'id' | 'createdAt'>) =>
+      addCustomJacketToCart(customJacket, sessionId, token),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['cart'] }); 
+      // Invalidate both cart queries to ensure all cart data is refreshed
+      const cartIdentifier = token ? 'user' : sessionId;
+      queryClient.invalidateQueries({ queryKey: ['cart', cartIdentifier, token] });
+      queryClient.invalidateQueries({ queryKey: ['customJacketCart', cartIdentifier, token] });
+      toast({ title: 'Custom jacket added to cart' });
+    },
+    onError: (error) => {
+      console.error('Error adding custom jacket to cart:', error);
+      toast({ title: 'Error adding custom jacket', description: error.message || 'Failed to add to cart', variant: 'destructive' });
+    }
+  });
+
+  const removeCustomJacketMutation = useMutation({
+    mutationFn: (customItemId: string) =>
+      removeCustomJacketFromCart(customItemId, sessionId, token),
+    onSuccess: () => {
+      // Invalidate both cart queries to ensure all cart data is refreshed
+      const cartIdentifier = token ? 'user' : sessionId;
+      queryClient.invalidateQueries({ queryKey: ['cart', cartIdentifier, token] });
+      queryClient.invalidateQueries({ queryKey: ['customJacketCart', cartIdentifier, token] });
+      toast({ title: 'Custom jacket removed from cart' });
+    },
+    onError: (error) => {
+      console.error('Error removing custom jacket from cart:', error);
+      toast({ title: 'Error removing custom jacket', description: error.message || 'Failed to remove from cart', variant: 'destructive' });
+    }
+  });
+
+  const clearMutation = useMutation({
+    mutationFn: () => {
+      // For authenticated users, pass undefined as sessionId
+      // For guest users, pass the actual sessionId
+      const sessionIdToUse = token ? undefined : sessionId;
+      return clearCart(sessionIdToUse, token);
+    },
+    onSuccess: () => {
+      // Invalidate both cart queries to ensure all cart data is refreshed
+      const cartIdentifier = token ? 'user' : sessionId;
+      console.log('🔄 clearMutation onSuccess - Invalidating queries:', {
+        cartKey: ['cart', cartIdentifier, token],
+        customKey: ['customJacketCart', cartIdentifier, token]
+      });
+      
+      queryClient.invalidateQueries({ queryKey: ['cart', cartIdentifier, token] });
+      queryClient.invalidateQueries({ queryKey: ['customJacketCart', cartIdentifier, token] });
+      
+      // Also try to refetch immediately to ensure data is fresh
+      queryClient.refetchQueries({ queryKey: ['cart', cartIdentifier, token] });
+      queryClient.refetchQueries({ queryKey: ['customJacketCart', cartIdentifier, token] });
+      
       toast({ title: t('toast.cartUpdated') });
     },
     onError: (error) => {
@@ -114,7 +278,9 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   });
 
   const addToCart = async (product_variant_id: number, quantity: number) => {
-    if (!sessionId) {
+    // For authenticated users, we can proceed without sessionId
+    // For guest users, we need sessionId
+    if (!token && !sessionId) {
       toast({ title: t('error.generic'), description: t('common.loading'), variant: 'destructive' });
       return;
     }
@@ -122,7 +288,9 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const updateQuantity = async (itemId: number, quantity: number) => {
-    if (!sessionId) {
+    // For authenticated users, we can proceed without sessionId
+    // For guest users, we need sessionId
+    if (!token && !sessionId) {
       toast({ title: t('error.generic'), description: t('common.loading'), variant: 'destructive' });
       return;
     }
@@ -134,7 +302,9 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const removeFromCart = async (itemId: number) => {
-    if (!sessionId) {
+    // For authenticated users, we can proceed without sessionId
+    // For guest users, we need sessionId
+    if (!token && !sessionId) {
       toast({ title: t('error.generic'), description: t('common.loading'), variant: 'destructive' });
       return;
     }
@@ -142,7 +312,9 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const clearCartItems = async () => {
-    if (!sessionId) {
+    // For authenticated users, we can proceed without sessionId
+    // For guest users, we need sessionId
+    if (!token && !sessionId) {
       toast({ title: t('error.generic'), description: t('common.loading'), variant: 'destructive' });
       return;
     }
@@ -167,8 +339,10 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const getCartTotal = () => {
-    if (!items || items.length === 0) return 0;
-    try {
+    let totalAmount = 0;
+    
+    // Calculate total from regular items
+    if (items && items.length > 0) {
       console.log('Cart items for calculation:', JSON.stringify(items, null, 2));
       
       // Log each item's structure to check if actual_price exists
@@ -183,7 +357,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         });
       });
       
-      return items.reduce((total, item) => {
+      const regularItemsTotal = items.reduce((total, item) => {
         const price = getItemPrice(item);
         const quantity = item?.quantity ?? 0;
         const itemTotal = price * quantity;
@@ -192,30 +366,64 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         
         return total + itemTotal;
       }, 0);
-    } catch (error) {
-      console.error('Error calculating cart total:', error);
-      return 0;
+      
+      totalAmount += regularItemsTotal;
+      console.log('💰 Regular items total:', regularItemsTotal);
     }
+    
+    // Calculate total from custom jacket items
+    if (customItems && customItems.length > 0) {
+      const customItemsTotal = customItems.reduce((total, item) => {
+        const price = item.price || 0;
+        const quantity = item.quantity || 0;
+        const itemTotal = price * quantity;
+        
+        console.log(`Custom Jacket ${item.id}: price=${price}, quantity=${quantity}, total=${itemTotal}`);
+        
+        return total + itemTotal;
+      }, 0);
+      
+      totalAmount += customItemsTotal;
+      console.log('💰 Custom items total:', customItemsTotal);
+    }
+    
+    console.log('💰 Final cart total:', totalAmount);
+    return totalAmount;
   };
 
   const getCartItemsCount = () => {
-    if (!items || items.length === 0) return 0;
-    try {
-      return items.reduce((total, item) => total + (item?.quantity ?? 0), 0);
-    } catch (error) {
-      console.error('Error calculating cart items count:', error);
-      return 0;
+    let totalCount = 0;
+    
+    // Count regular cart items
+    if (items && items.length > 0) {
+      totalCount += items.reduce((total, item) => total + (item?.quantity ?? 0), 0);
     }
+    
+    // Count custom jacket items
+    if (customItems && customItems.length > 0) {
+      totalCount += customItems.reduce((total, item) => total + (item?.quantity ?? 0), 0);
+    }
+    
+    console.log('🔢 Cart count calculation:', {
+      regularItems: items?.length || 0,
+      customItems: customItems?.length || 0,
+      totalCount
+    });
+    
+    return totalCount;
   };
 
   return (
     <CartContext.Provider
       value={{
         items,
-        isLoading,
+        customItems,
+        isLoading: isLoading || isLoadingCustom,
         addToCart,
+        addCustomJacketToCart: addCustomJacketMutation.mutateAsync,
         updateQuantity,
         removeFromCart,
+        removeCustomJacketFromCart: removeCustomJacketMutation.mutateAsync,
         clearCartItems,
         getCartTotal,
         getCartItemsCount,

@@ -49,8 +49,8 @@ const passwordSchema = z
   })
 
 const addressSchema = z.object({
-  type: z.enum(["home", "work", "other"]),
-  label: z.string().min(1, "Label is required"),
+  type: z.enum(["home", "work", "other"]).optional(),
+  label: z.string().optional(),
   street: z.string().min(5, "Street address must be at least 5 characters"),
   city: z.string().min(2, "City must be at least 2 characters"),
   state: z.string().min(2, "State/Province must be at least 2 characters"),

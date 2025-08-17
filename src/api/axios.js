@@ -1,14 +1,33 @@
 // src/api/axios.js
 import axios from 'axios';
 
+// Create axios instance
 const api = axios.create({
-  baseURL: 'http://localhost:8000/api', // Updated to match backend port
+  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8000/api',
   headers: {
     Accept: 'application/json',
-    'Content-Type': 'application/json',
+    // Removed Content-Type to allow FormData to set its own
   },
-  withCredentials: true, // 🔒 Needed if you're using Laravel Sanctum for auth
+  withCredentials: true,
 });
+
+// Add request interceptor to include session ID for guest users
+api.interceptors.request.use(
+  (config) => {
+    // Get session ID from localStorage for guest users
+    const sessionId = localStorage.getItem('nordic_fashion_cart_session_id');
+    if (sessionId) {
+      config.headers['X-Session-Id'] = sessionId;
+      console.log('🔑 Adding X-Session-Id header:', sessionId);
+    } else {
+      console.log('⚠️ No session ID found in localStorage');
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
 
 // Get CSRF cookie before any requests
 api.interceptors.request.use(async (config) => {

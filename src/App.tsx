@@ -32,11 +32,12 @@ import NotFound from "./pages/NotFound"
 
 // New Auth Pages
 import CustomerLogin from "./pages/auth/CustomerLogin"
+import CustomJacketConfigurator from "./pages/CustomJacketConfigurator"
 import CustomerSignup from "./pages/auth/CustomerSignup"
 import VerifyEmail from "./pages/auth/VerifyEmail"
+import Auth0Callback from "./pages/auth/Auth0Callback"
 import ForgotPassword from "./pages/auth/ForgotPassword"
 import ResetPassword from "./pages/auth/ResetPassword"
-import Auth0Callback from "./pages/auth/Auth0Callback"
 
 // Customer Pages
 import Profile from "./pages/Profile"
@@ -90,12 +91,13 @@ const App: React.FC = () => {
                               <Route path="/product/:id" element={<ProductDetail />} />
 
                               {/* New Auth Routes */}
-                              <Route path="/login" element={<CustomerLogin />} />
+        <Route path="/login" element={<CustomerLogin />} />
+        <Route path="/custom-jacket" element={<CustomJacketConfigurator />} />
                               <Route path="/signup" element={<CustomerSignup />} />
                               <Route path="/verify-email" element={<VerifyEmail />} />
-                              <Route path="/forgot-password" element={<ForgotPassword />} />
-                              <Route path="/reset-password" element={<ResetPassword />} />
                               <Route path="/admin/login" element={<AdminLogin />} />
+                              <Route path="/forgot-password" element={<ForgotPassword />} />
+                              <Route path="/reset-password/:token" element={<ResetPassword />} />
                               <Route path="/auth/callback" element={<Auth0Callback />} />
 
                               {/* Cart Route - Can be accessed by customers or guests */}

@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import { ShoppingCart, Menu, User, Settings, Search, Heart, Phone, Mail, LogIn, UserPlus, Shield, LayoutDashboard } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -34,7 +34,7 @@ const languages: { code: Language; name: string; flag: string }[] = [
 export const Header: React.FC = () => {
   const { theme, toggleTheme } = useTheme()
   const { language, setLanguage, t } = useLanguage()
-  const { getCartItemsCount } = useCart()
+  const { items, customItems, getCartItemsCount } = useCart()
   const [searchQuery, setSearchQuery] = useState("")
   const navigate = useNavigate()
 
@@ -45,6 +45,23 @@ export const Header: React.FC = () => {
   const { loginWithRedirect } = useAuth0()
 
   const currentLanguage = languages.find((lang) => lang.code === language)
+  
+  // Compute cart count that will automatically update when cart data changes
+  const cartCount = useMemo(() => {
+    let totalCount = 0;
+    
+    // Count regular cart items
+    if (items && items.length > 0) {
+      totalCount += items.reduce((total, item) => total + (item?.quantity ?? 0), 0);
+    }
+    
+    // Count custom jacket items
+    if (customItems && customItems.length > 0) {
+      totalCount += customItems.reduce((total, item) => total + (item?.quantity ?? 0), 0);
+    }
+    
+    return totalCount;
+  }, [items, customItems]);
 
   const categories = [
     { name: t("categories.bags"), path: "/products?category=bags" },
@@ -103,6 +120,12 @@ export const Header: React.FC = () => {
               </div>
             </Link>
 
+            {/* Custom Jacket Button */}
+            <Link to="/custom-jacket" className="ml-6">
+              <Button variant="default" size="lg" className="font-semibold bg-yellow-400 text-leather-900 shadow-gold-200/40 shadow-md hover:scale-105 transition-transform border border-yellow-300">
+                {t('customJacket.title')}
+              </Button>
+            </Link>
             {/* Desktop Search */}
             <div className="hidden md:flex flex-1 max-w-md mx-8">
               <form onSubmit={handleSearch} className="relative w-full">
@@ -193,12 +216,12 @@ export const Header: React.FC = () => {
                 <Link to="/cart">
                   <Button variant="ghost" size="sm" className="relative h-9 w-9 p-0">
                     <ShoppingCart className="h-4 w-4" />
-                    {getCartItemsCount() > 0 && (
+                    {cartCount > 0 && (
                       <Badge
                         variant="destructive"
                         className="absolute -top-2 -right-2 h-5 w-5 rounded-full p-0 text-xs flex items-center justify-center bg-primary text-primary-foreground"
                       >
-                        {getCartItemsCount()}
+                        {cartCount}
                       </Badge>
                     )}
                   </Button>

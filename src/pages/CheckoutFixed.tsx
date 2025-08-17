@@ -55,7 +55,7 @@ interface CheckoutFormData {
 
 const CheckoutFixed: React.FC = () => {
   const navigate = useNavigate();
-  const { items, getCartTotal, getCartItemsCount, clearCartItems, isLoading } = useCart();
+  const { items, customItems, getCartTotal, getCartItemsCount, clearCartItems, isLoading } = useCart();
   const { user, token, isAuthenticated, loading: authLoading } = useAuth();
   const { toast } = useToast();
   const [isProcessing, setIsProcessing] = useState(false);
@@ -64,8 +64,26 @@ const CheckoutFixed: React.FC = () => {
   const [useDefaultAddress, setUseDefaultAddress] = useState(false);
   const [hasExistingAddresses, setHasExistingAddresses] = useState(false);
   
-  console.log('🏪 Checkout Fixed - Cart items:', items?.length || 0, 'isLoading:', isLoading);
+  console.log('🏪 Checkout Fixed - Cart items:', items?.length || 0, 'Custom items:', customItems?.length || 0, 'isLoading:', isLoading);
+  console.log('🔍 Full cart data in CheckoutFixed:', { items, customItems, getCartTotal: getCartTotal(), getCartItemsCount: getCartItemsCount() });
+  console.log('🔍 hasValidCart calculation:', { 
+    itemsValid: items && items.length > 0, 
+    customItemsValid: customItems && customItems.length > 0
+  });
   
+  // Calculate cart validity after data is loaded
+  const hasValidCart = (items && items.length > 0) || (customItems && customItems.length > 0);
+  
+  // Debug: Check if we have all the data we need
+  console.log('🔍 Cart data completeness check:', {
+    itemsLoaded: items !== undefined,
+    customItemsLoaded: customItems !== undefined,
+    itemsCount: items?.length || 0,
+    customItemsCount: customItems?.length || 0,
+    hasValidCart,
+    isLoading
+  });
+
   const [formData, setFormData] = useState<CheckoutFormData>({
     shipping_name: user?.name || '',
     shipping_email: user?.email || '',
@@ -275,9 +293,6 @@ const CheckoutFixed: React.FC = () => {
     }
   };
 
-  // Simple cart check - no automatic redirects, just manual button
-  const hasValidCart = items && items.length > 0;
-
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
 
@@ -483,6 +498,7 @@ const CheckoutFixed: React.FC = () => {
 
   // Show loading while cart is loading
   if (isLoading) {
+    console.log('🔄 Cart is still loading, showing loading spinner...');
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="flex items-center justify-center h-64">
@@ -495,6 +511,12 @@ const CheckoutFixed: React.FC = () => {
 
   // Show empty cart message if no items (but don't redirect automatically)
   if (!hasValidCart) {
+    console.log('⚠️ Cart validation failed:', { 
+      items: items?.length || 0, 
+      customItems: customItems?.length || 0,
+      hasValidCart,
+      isLoading
+    });
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="text-center py-16">
@@ -959,6 +981,7 @@ const CheckoutFixed: React.FC = () => {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-3">
+                {/* Regular Items */}
                 {items && items.map((item) => (
                   <div key={item.id} className="flex justify-between text-sm">
                     <div className="flex-1">
@@ -968,6 +991,24 @@ const CheckoutFixed: React.FC = () => {
                       </p>
                     </div>
                     <span className="font-medium">€{(getCartTotal() / getCartItemsCount() * item.quantity).toFixed(2)}</span>
+                  </div>
+                ))}
+                
+                {/* Custom Jacket Items */}
+                {customItems && customItems.map((customItem) => (
+                  <div key={customItem.id} className="flex justify-between text-sm">
+                    <div className="flex-1">
+                      <p className="font-medium">{customItem.name}</p>
+                      <p className="text-muted-foreground">
+                        Custom Design - {customItem.color} • Size: {customItem.size} × {customItem.quantity}
+                      </p>
+                      {customItem.logos && customItem.logos.length > 0 && (
+                        <p className="text-xs text-muted-foreground">
+                          {customItem.logos.length} logo{customItem.logos.length !== 1 ? 's' : ''} placed
+                        </p>
+                      )}
+                    </div>
+                    <span className="font-medium">€{(Number(customItem.price) || 0).toFixed(2)}</span>
                   </div>
                 ))}
               </div>
