@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { User, Lock, Eye, EyeOff } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
+import { useLanguage } from "../../contexts/LanguageContext";
 import api from "@/api/axios";
 
 
@@ -24,12 +25,13 @@ const CustomerSignup: React.FC = () => {
   const { registerCustomer, loading } = useAuth();
   const { loginWithRedirect } = useAuth0();
   const navigate = useNavigate();
+  const { t } = useLanguage();
 
   // AuthForm will provide email and password
   const onSubmit = async (data: { email: string; password: string }) => {
     setError("");
     if (!name || name.length < 2) {
-      setError("Name must be at least 2 characters");
+      setError(t('auth.name') + " must be at least 2 characters");
       return;
     }
     if (data.password !== confirmPassword) {
@@ -47,7 +49,7 @@ const CustomerSignup: React.FC = () => {
       // Redirect to verify email page
       navigate("/verify-email", { state: { userId: result.user_id, email: data.email } });
     } catch (err: any) {
-      setError(err.message || "Registration failed. Please try again.");
+      setError(err.message || t('toast.signupError'));
     }
   };
 
@@ -83,33 +85,33 @@ const CustomerSignup: React.FC = () => {
               d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
             />
           </svg>
-          Sign up with Google
+          {t('auth.signInWithGoogle')}
         </Button>
         <div className="relative mb-4">
           <div className="absolute inset-0 flex items-center">
             <Separator className="w-full" />
           </div>
           <div className="relative flex justify-center text-xs uppercase">
-            <span className="bg-background px-2 text-muted-foreground">Or sign up with email</span>
+            <span className="bg-background px-2 text-muted-foreground">{t('auth.email')}</span>
           </div>
         </div>
         <AuthForm
-          title="Create Account"
+          title={t('auth.createAccount')}
           description="Join Nord Flex today"
-          submitText="Sign Up"
+          submitText={t('auth.signup')}
           isLoading={loading}
           error={error}
           onSubmit={onSubmit}
         >
           {/* Full Name field (custom, above password) */}
           <div className="space-y-2 mb-2">
-            <Label htmlFor="name">Full Name</Label>
+            <Label htmlFor="name">{t('auth.name')}</Label>
             <div className="relative">
               <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
               <Input
                 id="name"
                 type="text"
-                placeholder="Enter your full name"
+                placeholder={t('auth.name')}
                 className="pl-10"
                 value={name}
                 onChange={e => setName(e.target.value)}
@@ -119,13 +121,13 @@ const CustomerSignup: React.FC = () => {
           </div>
           {/* Confirm Password field (custom, below password) */}
           <div className="space-y-2 mb-2">
-            <Label htmlFor="confirmPassword">Confirm Password</Label>
+            <Label htmlFor="confirmPassword">{t('auth.confirmPassword')}</Label>
             <div className="relative">
               <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
               <Input
                 id="confirmPassword"
                 type={showConfirmPassword ? "text" : "password"}
-                placeholder="Confirm your password"
+                placeholder={t('auth.confirmPassword')}
                 className="pl-10 pr-10"
                 value={confirmPassword}
                 onChange={e => setConfirmPassword(e.target.value)}
@@ -148,9 +150,9 @@ const CustomerSignup: React.FC = () => {
             </div>
           </div>
           <div className="text-center text-sm mt-4">
-            <span className="text-muted-foreground">Already have an account? </span>
+            <span className="text-muted-foreground">{t('auth.alreadyHaveAccount')} </span>
             <Link to="/login" className="text-primary hover:underline font-medium">
-              Sign in here
+              {t('auth.login')}
             </Link>
           </div>
         </AuthForm>

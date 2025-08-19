@@ -292,3 +292,34 @@ export const fetchCombinedCart = async (
     };
   }
 };
+
+export const updateCustomJacketQuantity = async (
+  customItemId: string,
+  quantity: number,
+  sessionId: string | undefined,
+  token?: string
+): Promise<CustomJacketItem> => {
+  try {
+    console.log('🔄 updateCustomJacketQuantity called with:', { customItemId, quantity, sessionId, hasToken: !!token });
+    
+    const params: any = {};
+    
+    // Only add session_id to params if it exists (for guest users)
+    if (sessionId) {
+      params.session_id = sessionId;
+    }
+    
+    const response = await api.put(`/cart/custom-jacket/${customItemId}`, {
+      quantity: quantity
+    }, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      params: params
+    });
+    
+    console.log('✅ updateCustomJacketQuantity response:', response.data);
+    return response.data;
+  } catch (error) {
+    console.error('❌ Error updating custom jacket quantity:', error);
+    throw new Error(error.response?.data?.message || 'Failed to update custom jacket quantity');
+  }
+};

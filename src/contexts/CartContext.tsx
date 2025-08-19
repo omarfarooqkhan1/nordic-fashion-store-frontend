@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { 
   fetchCart, addOrUpdateCartItem, updateCartItem, removeCartItem, clearCart,
-  addCustomJacketToCart, removeCustomJacketFromCart, fetchCustomJacketCart
+  addCustomJacketToCart, removeCustomJacketFromCart, fetchCustomJacketCart, updateCustomJacketQuantity
 } from '@/api/cart';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -16,6 +16,7 @@ interface CartContextType {
   addToCart: (product_variant_id: number, quantity: number) => Promise<void>;
   addCustomJacketToCart: (customJacket: Omit<CustomJacketItem, 'id' | 'createdAt'>) => Promise<CustomJacketItem>;
   updateQuantity: (itemId: number, quantity: number) => Promise<void>;
+  updateCustomJacketQuantity: (customItemId: string, quantity: number) => Promise<void>;
   removeFromCart: (itemId: number) => Promise<void>;
   removeCustomJacketFromCart: (customItemId: string) => void;
   clearCartItems: () => Promise<void>;
@@ -247,6 +248,22 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   });
 
+  const updateCustomJacketQuantityMutation = useMutation({
+    mutationFn: ({ customItemId, quantity }: { customItemId: string; quantity: number }) =>
+      updateCustomJacketQuantity(customItemId, quantity, sessionId, token),
+    onSuccess: () => {
+      // Invalidate both cart queries to ensure all cart data is refreshed
+      const cartIdentifier = token ? 'user' : sessionId;
+      queryClient.invalidateQueries({ queryKey: ['cart', cartIdentifier, token] });
+      queryClient.invalidateQueries({ queryKey: ['customJacketCart', cartIdentifier, token] });
+      toast({ title: 'Custom jacket quantity updated' });
+    },
+    onError: (error) => {
+      console.error('Error updating custom jacket quantity:', error);
+      toast({ title: 'Error updating quantity', description: error.message || 'Failed to update quantity', variant: 'destructive' });
+    }
+  });
+
   const clearMutation = useMutation({
     mutationFn: () => {
       // For authenticated users, pass undefined as sessionId
@@ -413,6 +430,27 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return totalCount;
   };
 
+  // Update custom jacket quantity function
+  const handleUpdateCustomJacketQuantity = async (customItemId: string, quantity: number) => {
+    if (quantity <= 0) {
+      // If quantity is 0 or negative, remove the item
+      await removeCustomJacketMutation.mutateAsync(customItemId);
+      return;
+    }
+    
+    try {
+      console.log(`🔄 Updating custom jacket ${customItemId} quantity to ${quantity}`);
+      
+      // Use the mutation to update the quantity
+      await updateCustomJacketQuantityMutation.mutateAsync({ customItemId, quantity });
+      
+      console.log(`✅ Custom jacket quantity updated successfully`);
+    } catch (error) {
+      console.error('❌ Error updating custom jacket quantity:', error);
+      throw error;
+    }
+  };
+
   return (
     <CartContext.Provider
       value={{
@@ -422,6 +460,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         addToCart,
         addCustomJacketToCart: addCustomJacketMutation.mutateAsync,
         updateQuantity,
+        updateCustomJacketQuantity: handleUpdateCustomJacketQuantity,
         removeFromCart,
         removeCustomJacketFromCart: removeCustomJacketMutation.mutateAsync,
         clearCartItems,

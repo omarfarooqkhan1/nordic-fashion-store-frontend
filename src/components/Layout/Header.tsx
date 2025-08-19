@@ -108,26 +108,26 @@ export const Header: React.FC = () => {
       {/* Main Header */}
       <header className="sticky top-0 z-50 w-full border-b border-border bg-gradient-to-r from-background/95 via-background/98 to-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 shadow-sm">
         {/* Top Header Row */}
-        <div className="container mx-auto px-4">
-          <div className="flex h-16 items-center justify-between">
+        <div className="container mx-auto px-2 sm:px-4">
+          <div className="flex flex-wrap h-auto min-h-[64px] items-center justify-between gap-2 sm:gap-4 md:gap-6">
             {/* Logo */}
-            <Link to="/" className="flex items-center space-x-1 group">
+            <Link to="/" className="flex items-center space-x-1 group flex-shrink-0">
               <div className="text-lg md:text-2xl font-bold text-foreground group-hover:text-muted-foreground transition-colors duration-300">
                 NORD
               </div>
               <div className="text-lg md:text-2xl font-light text-primary group-hover:text-primary/80 transition-colors duration-300">
-              FLEX
+                FLEX
               </div>
             </Link>
 
             {/* Custom Jacket Button */}
-            <Link to="/custom-jacket" className="ml-6">
-              <Button variant="default" size="lg" className="font-semibold bg-yellow-400 text-leather-900 shadow-gold-200/40 shadow-md hover:scale-105 transition-transform border border-yellow-300">
+            <Link to="/custom-jacket" className="ml-0 sm:ml-6 flex-shrink-0">
+              <Button variant="default" size="lg" className="font-semibold bg-yellow-400 text-leather-900 shadow-gold-200/40 shadow-md transition-transform border border-yellow-300 whitespace-nowrap px-2 sm:px-4 text-xs sm:text-base min-h-[36px] sm:min-h-[44px] hover:bg-yellow-500 hover:text-leather-900 hover:border-yellow-400">
                 {t('customJacket.title')}
               </Button>
             </Link>
             {/* Desktop Search */}
-            <div className="hidden md:flex flex-1 max-w-md mx-8">
+            <div className="hidden md:flex flex-1 max-w-md mx-2 sm:mx-6">
               <form onSubmit={handleSearch} className="relative w-full">
                 <Input
                   type="text"
@@ -148,7 +148,7 @@ export const Header: React.FC = () => {
             </div>
 
             {/* Right Side Actions */}
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-2 sm:space-x-3 md:space-x-4 flex-shrink-0">
               {/* Desktop Language Selector */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -231,7 +231,7 @@ export const Header: React.FC = () => {
               {/* Admin Dashboard - Only show if user is admin */}
               {isAdmin && (
                 <Link to="/admin/dashboard">
-                  <Button variant="ghost" size="sm" className="h-9 w-9 p-0" title="Admin Dashboard">
+                                              <Button variant="ghost" size="sm" className="h-9 w-9 p-0" title={t('admin.dashboard')}>
                     <LayoutDashboard className="h-4 w-4 text-blue-600" />
                   </Button>
                 </Link>
@@ -256,10 +256,10 @@ export const Header: React.FC = () => {
                           {isAdmin ? (
                             <span className="inline-flex items-center gap-1 text-blue-600">
                               <Shield className="h-3 w-3" />
-                              Administrator
+                              {t('admin.dashboard')}
                             </span>
                           ) : (
-                            <span className="text-green-600">Customer</span>
+                            <span className="text-green-600">{t('auth.customerLogin')}</span>
                           )}
                         </div>
                       </div>
@@ -270,13 +270,13 @@ export const Header: React.FC = () => {
                           <DropdownMenuItem asChild>
                             <Link to="/profile" className="flex items-center">
                               <User className="mr-2 h-4 w-4" />
-                              My Profile
+                              {t('auth.profile')}
                             </Link>
                           </DropdownMenuItem>
                           <DropdownMenuItem asChild>
                             <Link to="/orders" className="flex items-center">
                               <ShoppingCart className="mr-2 h-4 w-4" />
-                              My Orders
+                              {t('nav.orders')}
                             </Link>
                           </DropdownMenuItem>
                         </>
@@ -293,13 +293,13 @@ export const Header: React.FC = () => {
                       <DropdownMenuItem asChild>
                         <Link to="/login" className="flex items-center hover:bg-accent">
                           <LogIn className="mr-2 h-4 w-4" />
-                          Customer Login
+                          {t('auth.customerLogin')}
                         </Link>
                       </DropdownMenuItem>
                       <DropdownMenuItem asChild>
                         <Link to="/signup" className="flex items-center hover:bg-accent">
                           <UserPlus className="mr-2 h-4 w-4" />
-                          Sign Up
+                          {t('auth.signup')}
                         </Link>
                       </DropdownMenuItem>
                       <DropdownMenuItem onClick={handleGoogleLogin} className="hover:bg-accent cursor-pointer">
@@ -321,7 +321,7 @@ export const Header: React.FC = () => {
                             d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
                           />
                         </svg>
-                        Sign in with Google
+                        {t('auth.signInWithGoogle')}
                       </DropdownMenuItem>
                     </>
                   )}
@@ -350,24 +350,24 @@ export const Header: React.FC = () => {
                         <div className="text-xs text-muted-foreground">{user?.email}</div>
                         <div className="text-xs text-muted-foreground mt-1">
                           {isAdmin ? (
-                            <span className="inline-flex items-center gap-1 text-blue-600">
-                              <Shield className="h-3 w-3" />
-                              Administrator
-                            </span>
-                          ) : (
-                            <span className="text-green-600">Customer</span>
-                          )}
+                                                      <span className="inline-flex items-center gap-1 text-blue-600">
+                            <Shield className="mr-2 h-4 w-4" />
+                            {t('admin.dashboard')}
+                          </span>
+                        ) : (
+                          <span className="text-green-600">{t('auth.customerLogin')}</span>
+                        )}
                         </div>
                         {isAdmin && (
                           <Link to="/admin/dashboard">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="mt-2 w-full text-blue-600 border-blue-200 hover:bg-blue-50"
-                            >
-                              <LayoutDashboard className="mr-2 h-4 w-4" />
-                              Admin Dashboard
-                            </Button>
+                                                      <Button
+                            variant="outline"
+                            size="sm"
+                            className="mt-2 w-full text-blue-600 border-blue-200 hover:bg-blue-50"
+                          >
+                            <LayoutDashboard className="mr-2 h-4 w-4" />
+                            {t('admin.dashboard')}
+                          </Button>
                           </Link>
                         )}
                         <Button
@@ -376,7 +376,7 @@ export const Header: React.FC = () => {
                           size="sm"
                           className="mt-2 w-full text-red-600 border-red-200 hover:bg-red-50"
                         >
-                          Logout
+                          {t('auth.logout')}
                         </Button>
                       </div>
                     ) : (
@@ -384,13 +384,13 @@ export const Header: React.FC = () => {
                         <Link to="/login">
                           <Button variant="outline" size="sm" className="w-full">
                             <LogIn className="mr-2 h-4 w-4" />
-                            Customer Login
+                            {t('auth.customerLogin')}
                           </Button>
                         </Link>
                         <Link to="/signup">
                           <Button variant="outline" size="sm" className="w-full">
                             <UserPlus className="mr-2 h-4 w-4" />
-                            Sign Up
+                            {t('auth.signup')}
                           </Button>
                         </Link>
                         <Button onClick={handleGoogleLogin} variant="outline" size="sm" className="w-full">

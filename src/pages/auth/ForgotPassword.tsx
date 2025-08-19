@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { useLanguage } from "../../contexts/LanguageContext";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -8,6 +9,7 @@ import api from "@/api/axios";
 
 const ForgotPassword: React.FC = () => {
   const navigate = useNavigate();
+  const { t } = useLanguage();
   const [email, setEmail] = useState("");
   const [step, setStep] = useState<"request" | "verify">("request");
   const [code, setCode] = useState("");
@@ -36,7 +38,7 @@ const ForgotPassword: React.FC = () => {
       setSuccess("");
       setTimer(60);
     } catch (err: any) {
-      setError(err.response?.data?.message || "Failed to send reset code");
+      setError(err.response?.data?.message || t('auth.resetPassword'));
     } finally {
       setLoading(false);
     }
@@ -50,7 +52,7 @@ const ForgotPassword: React.FC = () => {
       setSuccess("Code resent to your email.");
       setTimer(60);
     } catch (err: any) {
-      setError(err.response?.data?.message || "Failed to resend code");
+      setError(err.response?.data?.message || t('auth.resetPassword'));
     } finally {
       setLoading(false);
     }
@@ -67,10 +69,10 @@ const ForgotPassword: React.FC = () => {
         password,
         password_confirmation: passwordConfirm,
       });
-      setSuccess("Password reset! Redirecting to login...");
+      setSuccess(t('auth.passwordResetSuccess'));
       setTimeout(() => navigate("/login", { replace: true }), 1500);
     } catch (err: any) {
-      setError(err.response?.data?.message || "Reset failed");
+      setError(err.response?.data?.message || t('auth.resetPassword'));
     } finally {
       setLoading(false);
     }
@@ -80,10 +82,10 @@ const ForgotPassword: React.FC = () => {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl font-bold text-center">Forgot Password</CardTitle>
+          <CardTitle className="text-2xl font-bold text-center">{t('auth.forgotPassword')}</CardTitle>
           <CardDescription className="text-center">
             {step === "request"
-              ? "Enter your email to receive a reset code."
+              ? t('auth.resetPasswordInstructions')
               : `Enter the 6-digit code sent to ${email}.`}
           </CardDescription>
         </CardHeader>
@@ -102,14 +104,14 @@ const ForgotPassword: React.FC = () => {
             <form onSubmit={handleRequest} className="space-y-4">
               <Input
                 type="email"
-                placeholder="Email"
+                placeholder={t('auth.email')}
                 value={email}
                 onChange={e => setEmail(e.target.value)}
                 required
                 disabled={loading}
               />
               <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? "Sending..." : "Send Reset Code"}
+                {loading ? t('common.loading') : t('auth.resetPassword')}
               </Button>
             </form>
           ) : (
@@ -127,7 +129,7 @@ const ForgotPassword: React.FC = () => {
               />
               <Input
                 type="password"
-                placeholder="New password"
+                placeholder={t('auth.newPassword')}
                 value={password}
                 onChange={e => setPassword(e.target.value)}
                 required
@@ -135,7 +137,7 @@ const ForgotPassword: React.FC = () => {
               />
               <Input
                 type="password"
-                placeholder="Confirm new password"
+                placeholder={t('auth.confirmNewPassword')}
                 value={passwordConfirm}
                 onChange={e => setPasswordConfirm(e.target.value)}
                 required
@@ -148,10 +150,10 @@ const ForgotPassword: React.FC = () => {
                   onClick={handleResend}
                   disabled={timer > 0 || loading}
                 >
-                  {timer > 0 ? `Resend (${timer}s)` : "Resend Code"}
+                  {timer > 0 ? `Resend (${timer}s)` : t('auth.resetPassword')}
                 </Button>
                 <Button type="submit" className="w-32" disabled={loading}>
-                  {loading ? "Resetting..." : "Reset Password"}
+                  {loading ? t('common.loading') : t('auth.resetPassword')}
                 </Button>
               </div>
             </form>

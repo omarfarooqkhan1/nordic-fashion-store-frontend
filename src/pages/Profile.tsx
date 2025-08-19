@@ -40,7 +40,7 @@ const profileSchema = z.object({
 const passwordSchema = z
   .object({
     currentPassword: z.string().min(1, "Current password is required"),
-    newPassword: z.string().min(6, "Password must be at least 6 characters"),
+    newPassword: z.string().min(8, "Password must be at least 8 characters"),
     confirmPassword: z.string(),
   })
   .refine((data) => data.newPassword === data.confirmPassword, {
@@ -200,7 +200,7 @@ const Profile: React.FC = () => {
     resolver: zodResolver(addressSchema),
     defaultValues: {
       type: "home",
-      country: "Sweden",
+      country: "Finland",
     },
   })
 
@@ -326,30 +326,30 @@ const Profile: React.FC = () => {
   const isAuth0User = user?.auth_type === "auth0"
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 py-8">
-      <div className="container mx-auto px-4 max-w-2xl">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 py-6 sm:py-8">
+      <div className="container mx-auto px-2 sm:px-4 max-w-2xl w-full">
         <div className="space-y-6">
           {/* Header */}
-          <div className="text-center">
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">{t('auth.profile')}</h1>
-            <p className="text-gray-600 dark:text-gray-300 mt-2">{t('auth.updateProfile')}</p>
+          <div className="text-center px-2">
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100">{t('auth.profile')}</h1>
+            <p className="text-gray-600 dark:text-gray-300 mt-2 text-sm sm:text-base">{t('auth.updateProfile')}</p>
           </div>
 
           {/* User Info Card */}
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
+              <CardTitle className="flex flex-col sm:flex-row items-center gap-2">
                 <User className="h-5 w-5" />
-                {t('auth.profile')}
+                <span>{t('auth.profile')}</span>
               </CardTitle>
               <CardDescription>{t('auth.updateProfile')}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="flex items-center justify-between p-4 bg-muted rounded-lg">
-                <div>
-                  <p className="font-medium">{user?.name}</p>
-                  <p className="text-sm text-muted-foreground">{user?.email}</p>
-                  <div className="flex items-center gap-2 mt-2">
+              <div className="flex flex-col sm:flex-row items-center sm:items-start justify-between gap-4 p-4 bg-muted rounded-lg">
+                <div className="flex-1 w-full sm:w-auto text-center sm:text-left">
+                  <p className="font-medium break-words">{user?.name}</p>
+                  <p className="text-sm text-muted-foreground break-words">{user?.email}</p>
+                  <div className="flex flex-wrap items-center gap-2 mt-2 justify-center sm:justify-start">
                     <Badge variant="secondary">{t('nav.customer')}</Badge>
                     <Badge variant={isAuth0User ? "default" : "outline"}>
                       {isAuth0User ? (
@@ -371,8 +371,8 @@ const Profile: React.FC = () => {
                     </Badge>
                   </div>
                 </div>
-                <div className="text-right">
-                  <div className="w-16 h-16 bg-primary rounded-full flex items-center justify-center text-white text-xl font-bold">
+                <div className="text-center sm:text-right w-full sm:w-auto">
+                  <div className="w-16 h-16 bg-primary rounded-full flex items-center justify-center text-white text-xl font-bold mx-auto sm:mx-0">
                     {user?.name?.charAt(0).toUpperCase()}
                   </div>
                 </div>
@@ -521,10 +521,10 @@ const Profile: React.FC = () => {
                 <div className="space-y-3">
                   {addresses.map((address) => (
                     <div key={address.id} className="p-4 border rounded-lg bg-muted/50">
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-2">
-                            <h4 className="font-medium">{address.label}</h4>
+                      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                        <div className="flex-1 w-full sm:w-auto">
+                          <div className="flex flex-wrap items-center gap-2 mb-2">
+                            <h4 className="font-medium break-words">{address.label}</h4>
                             {address.is_default && (
                               <Badge variant="default" className="text-xs">
                                 {t('address.default')}
@@ -534,13 +534,13 @@ const Profile: React.FC = () => {
                               {t(`address.${address.type}`)}
                             </Badge>
                           </div>
-                          <p className="text-sm text-muted-foreground">
+                          <p className="text-sm text-muted-foreground break-words">
                             {address.street}<br />
                             {address.city}, {address.state} {address.postal_code}<br />
                             {address.country}
                           </p>
                         </div>
-                        <div className="flex items-center gap-2">
+                        <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto justify-start sm:justify-end mt-2 sm:mt-0">
                           {!address.is_default && (
                             <Button
                               variant="outline"
@@ -592,7 +592,7 @@ const Profile: React.FC = () => {
                     {editingAddress ? t('address.edit') : t('address.add')}
                   </h4>
                   <form onSubmit={handleAddressSubmit(onAddressSubmit)} className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <Label htmlFor="addressType">{t('address.type')}</Label>
                         <select
@@ -634,7 +634,7 @@ const Profile: React.FC = () => {
                       )}
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <Label htmlFor="addressCity">{t('address.city')}</Label>
                         <Input
@@ -660,7 +660,7 @@ const Profile: React.FC = () => {
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <Label htmlFor="addressPostalCode">{t('address.postalCode')}</Label>
                         <Input
@@ -686,10 +686,11 @@ const Profile: React.FC = () => {
                       </div>
                     </div>
 
-                    <div className="flex gap-2">
+                    <div className="flex flex-col sm:flex-row gap-2">
                       <Button 
                         type="submit" 
                         disabled={createAddressMutation.isPending || updateAddressMutation.isPending}
+                        className="w-full sm:w-auto"
                       >
                         <Save className="mr-2 h-4 w-4" />
                         {createAddressMutation.isPending || updateAddressMutation.isPending 
@@ -701,6 +702,7 @@ const Profile: React.FC = () => {
                         type="button"
                         variant="outline"
                         onClick={handleCancelAddressForm}
+                        className="w-full sm:w-auto"
                       >
                         {t('address.cancel')}
                       </Button>

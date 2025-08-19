@@ -1,4 +1,5 @@
 import api from './axios.js';
+import { buildApiHeaders } from './api-headers';
 
 export interface OrderData {
   shipping_name: string;
@@ -65,23 +66,28 @@ export interface OrderItem {
   quantity: number;
   subtotal: number;
   product_snapshot: any;
+  variant?: {
+    id: number;
+    color: string;
+    size: string;
+    images: Array<{
+      id: number;
+      url: string;
+      alt_text?: string;
+    }>;
+    product: {
+      id: number;
+      name: string;
+      images: Array<{
+        id: number;
+        url: string;
+        alt_text?: string;
+      }>;
+    };
+  };
 }
 
-const getHeaders = (sessionId?: string, bearerToken?: string) => {
-  const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
-  };
-
-  if (sessionId) {
-    headers['X-Session-Id'] = sessionId;
-  }
-
-  if (bearerToken) {
-    headers['Authorization'] = `Bearer ${bearerToken}`;
-  }
-
-  return headers;
-};
+// getHeaders removed; use buildApiHeaders from api-headers.ts
 
 export const createOrder = async (
   orderData: OrderData,
@@ -96,7 +102,7 @@ export const createOrder = async (
       sessionId: sessionId ? 'Present' : 'Not found'
     });
     
-    const headers = getHeaders(sessionId, bearerToken);
+    const headers = buildApiHeaders(sessionId, bearerToken);
     console.log('📋 Request headers:', headers);
     
     console.log('📡 Making API request to /orders/test');
@@ -136,7 +142,7 @@ export const fetchOrders = async (
     const response = await api.get(
       '/orders',
       {
-        headers: getHeaders(sessionId, bearerToken),
+        headers: buildApiHeaders(sessionId, bearerToken),
       }
     );
     
@@ -157,7 +163,7 @@ export const fetchOrder = async (
     const response = await api.get(
       `/orders/${orderId}`,
       {
-        headers: getHeaders(sessionId, bearerToken),
+        headers: buildApiHeaders(sessionId, bearerToken),
       }
     );
     
@@ -176,7 +182,7 @@ export const fetchAllOrders = async (
     const response = await api.get(
       '/admin/orders',
       {
-        headers: getHeaders(undefined, bearerToken),
+        headers: buildApiHeaders(undefined, bearerToken),
       }
     );
     
@@ -204,7 +210,7 @@ export const updateOrderStatus = async (
       `/admin/orders/${orderId}`,
       updateData,
       {
-        headers: getHeaders(undefined, bearerToken),
+        headers: buildApiHeaders(undefined, bearerToken),
       }
     );
     

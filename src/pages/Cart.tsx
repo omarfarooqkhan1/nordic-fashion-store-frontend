@@ -13,7 +13,7 @@ import {
 
 const Cart = () => {
   const { t } = useLanguage();
-  const { items, customItems, isLoading, updateQuantity, removeFromCart, removeCustomJacketFromCart, clearCartItems, getCartTotal, getItemPrice } = useCart();
+  const { items, customItems, isLoading, updateQuantity, updateCustomJacketQuantity, removeFromCart, removeCustomJacketFromCart, clearCartItems, getCartTotal, getItemPrice } = useCart();
   
   // Debug logs
   console.log('Cart component - items:', items);
@@ -58,11 +58,11 @@ const Cart = () => {
 
   return (
     <Container>
-      <h1 className="text-4xl font-bold text-leather-900 dark:text-leather-100 mb-8">
+      <h1 className="text-2xl sm:text-4xl font-bold text-leather-900 dark:text-leather-100 mb-4 sm:mb-8">
         {t('cart.title') || 'Shopping Cart'}
       </h1>
 
-      <div className="grid lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8">
         {/* Cart Items Section */}
         <div className="lg:col-span-2 space-y-4">
           {/* Regular Product Items */}
@@ -78,15 +78,19 @@ const Cart = () => {
           
           {/* Custom Jacket Items */}
           {customItems && customItems.map((customItem) => (
-            <div key={customItem.id} className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6 shadow-sm">
-              <div className="flex flex-col lg:flex-row gap-6">
+            <div key={customItem.id} className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 sm:p-6 shadow-sm">
+              <div className="flex flex-col sm:flex-row gap-4 sm:gap-6">
                 {/* Custom Jacket Images */}
-                <div className="flex gap-4 lg:w-1/3">
+                <div className="flex gap-2 sm:gap-4 w-full sm:w-1/3">
                   <div className="flex-1">
                     <img 
                       src={customItem.frontImageUrl} 
                       alt="Front View" 
-                      className="w-full h-32 object-cover rounded-lg border border-gray-200 dark:border-gray-600"
+                      className="w-full h-20 sm:h-32 object-cover rounded-lg border border-gray-200 dark:border-gray-600"
+                      onError={(e) => {
+                        console.error('Failed to load front image:', customItem.frontImageUrl);
+                        e.currentTarget.src = 'https://placehold.co/200x200/EFEFEF/AAAAAA?text=Front+View';
+                      }}
                     />
                     <p className="text-xs text-gray-500 text-center mt-1">Front</p>
                   </div>
@@ -94,7 +98,11 @@ const Cart = () => {
                     <img 
                       src={customItem.backImageUrl} 
                       alt="Back View" 
-                      className="w-full h-32 object-cover rounded-lg border border-gray-200 dark:border-gray-600"
+                      className="w-full h-20 sm:h-32 object-cover rounded-lg border border-gray-200 dark:border-gray-600"
+                      onError={(e) => {
+                        console.error('Failed to load back image:', customItem.backImageUrl);
+                        e.currentTarget.src = 'https://placehold.co/200x200/EFEFEF/AAAAAA?text=Back+View';
+                      }}
                     />
                     <p className="text-xs text-gray-500 text-center mt-1">Back</p>
                   </div>
@@ -123,11 +131,48 @@ const Cart = () => {
                     </div>
                   )}
                   
-                  {/* Price and Actions */}
-                  <div className="flex justify-between items-center">
+                  {/* Quantity Controls and Price */}
+                  <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
+                    {/* Quantity Selector */}
+                    <div className="flex items-center space-x-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          const currentQuantity = customItem.quantity || 1;
+                          if (currentQuantity > 1) {
+                            updateCustomJacketQuantity(customItem.id, currentQuantity - 1);
+                          }
+                        }}
+                        className="w-8 h-8 p-0"
+                        disabled={(customItem.quantity || 1) <= 1}
+                      >
+                        -
+                      </Button>
+                      <span className="text-sm font-medium min-w-[2rem] text-center">
+                        {customItem.quantity || 1}
+                      </span>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          const currentQuantity = customItem.quantity || 1;
+                          updateCustomJacketQuantity(customItem.id, currentQuantity + 1);
+                        }}
+                        className="w-8 h-8 p-0"
+                      >
+                        +
+                      </Button>
+                    </div>
+                    
+                    {/* Price */}
                     <div className="text-lg font-bold text-gray-900 dark:text-white">
                       ${(Number(customItem.price) || 0).toFixed(2)}
                     </div>
+                  </div>
+                  
+                  {/* Remove Button */}
+                  <div className="flex justify-end">
                     <Button
                       variant="ghost"
                       size="sm"
@@ -151,13 +196,13 @@ const Cart = () => {
             </div>
           ))}
 
-          <div className="flex flex-col sm:flex-row justify-between items-center pt-4 gap-4">
+          <div className="flex flex-col sm:flex-row justify-between items-center pt-4 gap-2 sm:gap-4">
             <Button 
               variant="outline" 
               onClick={clearCartItems}
               className="w-full sm:w-auto text-red-500 border-red-500 hover:bg-red-50 dark:hover:bg-red-950 rounded-md"
             >
-              {t('cart.remove') || 'Remove All'}
+              {t('cart.remove') || 'Remove All Items'}
             </Button>
             <Button 
               variant="outline"

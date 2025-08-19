@@ -1,4 +1,5 @@
 import api from './axios.js';
+import { buildApiHeaders } from './api-headers';
 
 export interface ProductFormData {
   name: string;
@@ -73,17 +74,6 @@ export interface ProductImage {
   sort_order: number;
 }
 
-const getAuthHeaders = (token?: string) => {
-  const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
-  };
-
-  if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
-  }
-
-  return headers;
-};
 
 // Admin Products API
 export const createProduct = async (
@@ -95,7 +85,7 @@ export const createProduct = async (
       '/products',
       productData,
       {
-        headers: getAuthHeaders(token),
+                headers: buildApiHeaders(undefined, token),
       }
     );
     
@@ -116,7 +106,7 @@ export const updateProduct = async (
       `/products/${productId}`,
       productData,
       {
-        headers: getAuthHeaders(token),
+                headers: buildApiHeaders(undefined, token),
       }
     );
     
@@ -135,7 +125,7 @@ export const deleteProduct = async (
     await api.delete(
       `/products/${productId}`,
       {
-        headers: getAuthHeaders(token),
+                headers: buildApiHeaders(undefined, token),
       }
     );
   } catch (error: any) {
@@ -168,10 +158,10 @@ export const bulkUploadProducts = async (
       '/products/bulk-upload',
       formData,
       {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'multipart/form-data',
-        },
+                headers: {
+                    ...buildApiHeaders(undefined, token),
+                    'Content-Type': 'multipart/form-data',
+                },
       }
     );
     
@@ -189,7 +179,7 @@ export const getBulkUploadTemplate = async (
     const response = await api.get(
       '/products/bulk-upload/template',
       {
-        headers: getAuthHeaders(token),
+                headers: buildApiHeaders(undefined, token),
         responseType: 'blob',
       }
     );
@@ -220,7 +210,7 @@ export const createCategory = async (
       '/categories',
       categoryData,
       {
-        headers: getAuthHeaders(token),
+                headers: buildApiHeaders(undefined, token),
       }
     );
     
@@ -241,7 +231,7 @@ export const updateCategory = async (
       `/categories/${categoryId}`,
       categoryData,
       {
-        headers: getAuthHeaders(token),
+                headers: buildApiHeaders(undefined, token),
       }
     );
     
@@ -260,7 +250,7 @@ export const deleteCategory = async (
     const response = await api.delete(
       `/categories/${categoryId}`,
       {
-        headers: getAuthHeaders(token),
+                headers: buildApiHeaders(undefined, token),
       }
     );
     
@@ -286,10 +276,10 @@ export const uploadProductImage = async (
       `/products/${productId}/images`,
       formData,
       {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'multipart/form-data',
-        },
+                headers: {
+                    ...buildApiHeaders(undefined, token),
+                    'Content-Type': 'multipart/form-data',
+                },
       }
     );
     
@@ -309,7 +299,7 @@ export const deleteProductImage = async (
     const response = await api.delete(
       `/products/${productId}/images/${imageId}`,
       {
-        headers: getAuthHeaders(token),
+                headers: buildApiHeaders(undefined, token),
       }
     );
     return response.data;
@@ -336,7 +326,7 @@ export const getCategorizedImages = async (
     const response = await api.get(
       `/products/${productId}/images/categorized`,
       {
-        headers: getAuthHeaders(token),
+                headers: buildApiHeaders(undefined, token),
       }
     );
     return response.data;
@@ -356,7 +346,7 @@ export const updateProductImageOrder = async (
       `/products/${productId}/images/reorder`,
       { images: imageUpdates },
       {
-        headers: getAuthHeaders(token),
+                headers: buildApiHeaders(undefined, token),
       }
     );
     
@@ -386,7 +376,7 @@ export const createProductVariant = async (
       `/products/${productId}/variants`,
       variantData,
       {
-        headers: getAuthHeaders(token),
+                headers: buildApiHeaders(undefined, token),
       }
     );
     
@@ -408,7 +398,7 @@ export const updateProductVariant = async (
       `/products/${productId}/variants/${variantId}`,
       variantData,
       {
-        headers: getAuthHeaders(token),
+                headers: buildApiHeaders(undefined, token),
       }
     );
     
@@ -427,7 +417,7 @@ export const deleteProductVariant = async (
     const response = await api.delete(
       `/variants/${variantId}`,
       {
-        headers: getAuthHeaders(token),
+                headers: buildApiHeaders(undefined, token),
       }
     );
     
@@ -454,7 +444,7 @@ export const updateProductBasicInfo = async (
       `/products/${productId}`,
       productData,
       {
-        headers: getAuthHeaders(token),
+                headers: buildApiHeaders(undefined, token),
       }
     );
     

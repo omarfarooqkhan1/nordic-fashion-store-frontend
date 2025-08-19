@@ -43,6 +43,7 @@ import ResetPassword from "./pages/auth/ResetPassword"
 import Profile from "./pages/Profile"
 import Orders from "./pages/Orders"
 import CheckoutFixed from "./pages/CheckoutFixed"
+import CheckoutSuccess from "./pages/CheckoutSuccess"
 
 // Create a client
 const queryClient = new QueryClient()
@@ -105,6 +106,7 @@ const App: React.FC = () => {
 
                               {/* Checkout Route - Can be accessed by customers or guests */}
                               <Route path="/checkout" element={<CheckoutFixed />} />
+                              <Route path="/checkout/success" element={<CheckoutSuccess />} />
 
                               {/* Customer Protected Routes */}
                               <Route

@@ -1,4 +1,4 @@
-import React, { Suspense } from 'react';
+import React, { Suspense, useRef, useEffect } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { OrbitControls, Center, Html, useProgress } from '@react-three/drei';
 import JacketGLTF from './JacketFBX';
@@ -79,8 +79,26 @@ const JacketScene: React.FC<JacketSceneProps> = ({ bodyColor, leftArmColor, righ
     );
   };
 
+  // Attach native webglcontextlost handler to Canvas
+  const canvasWrapperRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const wrapper = canvasWrapperRef.current;
+    if (!wrapper) return;
+    const canvas = wrapper.querySelector('canvas');
+    if (!canvas) return;
+    const handler = (e: Event) => {
+      e.preventDefault();
+      alert('WebGL context was lost. Please reload the page.');
+      console.error('WebGL context lost:', e);
+    };
+    canvas.addEventListener('webglcontextlost', handler, false);
+    return () => {
+      canvas.removeEventListener('webglcontextlost', handler, false);
+    };
+  }, [view]);
+
   return (
-    <div className="w-full h-96 rounded-lg overflow-hidden bg-gradient-to-b from-gray-100 to-gray-300">
+    <div ref={canvasWrapperRef} className="w-full h-96 rounded-lg overflow-hidden bg-gradient-to-b from-gray-100 to-gray-300">
       <Canvas camera={{ position: getCameraPosition(), fov: 25 }}>
         {getLighting()}
         <Suspense fallback={<Loader />}>

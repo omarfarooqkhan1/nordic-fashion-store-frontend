@@ -1,5 +1,10 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+
+// Utility to scroll to top
+const scrollToTop = () => {
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+};
 import { useLanguage } from '@/contexts/LanguageContext';
 
 export const Footer: React.FC = () => {
@@ -25,22 +30,22 @@ export const Footer: React.FC = () => {
             <h3 className="text-sm font-semibold text-foreground">{t('footer.quicklinks')}</h3>
             <ul className="space-y-2 text-sm">
               <li>
-                <Link to="/" className="text-muted-foreground hover:text-gold-500 transition-colors">
+                <Link to="/" className="text-muted-foreground hover:text-gold-500 transition-colors" onClick={scrollToTop}>
                   {t('nav.home')}
                 </Link>
               </li>
               <li>
-                <Link to="/products" className="text-muted-foreground hover:text-gold-500 transition-colors">
+                <Link to="/products" className="text-muted-foreground hover:text-gold-500 transition-colors" onClick={scrollToTop}>
                   {t('nav.products')}
                 </Link>
               </li>
               <li>
-                <Link to="/about" className="text-muted-foreground hover:text-gold-500 transition-colors">
+                <Link to="/about" className="text-muted-foreground hover:text-gold-500 transition-colors" onClick={scrollToTop}>
                   {t('nav.about')}
                 </Link>
               </li>
               <li>
-                <Link to="/contact" className="text-muted-foreground hover:text-gold-500 transition-colors">
+                <Link to="/contact" className="text-muted-foreground hover:text-gold-500 transition-colors" onClick={scrollToTop}>
                   {t('nav.contact')}
                 </Link>
               </li>
@@ -52,22 +57,22 @@ export const Footer: React.FC = () => {
             <h3 className="text-sm font-semibold text-foreground">{t('footer.categories')}</h3>
             <ul className="space-y-2 text-sm">
               <li>
-                <Link to="/products?category=bags" className="text-muted-foreground hover:text-gold-500 transition-colors">
+                <Link to="/products?category=bags" className="text-muted-foreground hover:text-gold-500 transition-colors" onClick={scrollToTop}>
                   {t('products.bags')}
                 </Link>
               </li>
               <li>
-                <Link to="/products?category=wallets" className="text-muted-foreground hover:text-gold-500 transition-colors">
+                <Link to="/products?category=wallets" className="text-muted-foreground hover:text-gold-500 transition-colors" onClick={scrollToTop}>
                   {t('products.wallets')}
                 </Link>
               </li>
               <li>
-                <Link to="/products?category=belts" className="text-muted-foreground hover:text-gold-500 transition-colors">
+                <Link to="/products?category=belts" className="text-muted-foreground hover:text-gold-500 transition-colors" onClick={scrollToTop}>
                   {t('products.belts')}
                 </Link>
               </li>
               <li>
-                <Link to="/products?category=jackets" className="text-muted-foreground hover:text-gold-500 transition-colors">
+                <Link to="/products?category=jackets" className="text-muted-foreground hover:text-gold-500 transition-colors" onClick={scrollToTop}>
                   {t('products.jackets')}
                 </Link>
               </li>
@@ -80,8 +85,8 @@ export const Footer: React.FC = () => {
             <div className="space-y-2 text-sm text-muted-foreground">
               <p>{t('footer.company')}</p>
               <p>{t('footer.location')}</p>
-              <p>+46 8 123 456 789</p>
-              <p>info@nordflex.shop</p>
+              <p>+358 44 9782549</p>
+              <a href="mailto:support@nordflex.shop">support@nordflex.shop</a>
             </div>
           </div>
         </div>

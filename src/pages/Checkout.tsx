@@ -58,18 +58,18 @@ const Checkout: React.FC = () => {
     shipping_phone: '',
     shipping_address: '',
     shipping_city: '',
-    shipping_state: 'Stockholm',
+    shipping_state: 'Turku',
     shipping_postal_code: '',
-    shipping_country: 'Sweden',
+    shipping_country: 'Finland',
     billing_same_as_shipping: true,
     billing_name: '',
     billing_email: '',
     billing_phone: '',
     billing_address: '',
     billing_city: '',
-    billing_state: 'Stockholm',
+    billing_state: 'Turku',
     billing_postal_code: '',
-    billing_country: 'Sweden',
+    billing_country: 'Finland',
     payment_method: 'credit_card',
     notes: '',
     card_number: '',
@@ -356,7 +356,7 @@ const Checkout: React.FC = () => {
                       id="shipping_state"
                       value={formData.shipping_state}
                       onChange={(e) => handleInputChange('shipping_state', e.target.value)}
-                      placeholder="Stockholm"
+                      placeholder="Turku"
                     />
                   </div>
                 </div>
@@ -452,7 +452,7 @@ const Checkout: React.FC = () => {
                           id="billing_state"
                           value={formData.billing_state}
                           onChange={(e) => handleInputChange('billing_state', e.target.value)}
-                          placeholder="Stockholm"
+                          placeholder="Turku"
                         />
                       </div>
                     </div>
