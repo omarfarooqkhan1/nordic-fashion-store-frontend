@@ -54,6 +54,7 @@ import {
   type ProductFormData,
 } from '@/api/admin';
 import OrderManagement from '@/components/admin/OrderManagement';
+import ContactForms from '@/components/admin/ContactForms';
 import { getPendingReviews, approveReview, rejectReview, type ProductReview } from '@/api/reviews';
 import { fetchProductById } from '@/api/products';
 import { LoadingState } from '@/components/common';
@@ -671,6 +672,10 @@ const AdminDashboard: React.FC = () => {
           <TabsTrigger value="pending-reviews" className="text-xs sm:text-sm">
             Pending Reviews
           </TabsTrigger>
+          <TabsTrigger value="contact-forms" className="text-xs sm:text-sm">
+            <span className="hidden sm:inline">Contact Forms</span>
+            <span className="sm:hidden">Contacts</span>
+          </TabsTrigger>
         </TabsList>
 
         {/* Overview Tab */}
@@ -1093,6 +1098,11 @@ const AdminDashboard: React.FC = () => {
               )}
             </CardContent>
           </Card>
+        </TabsContent>
+
+        {/* Contact Forms Tab */}
+        <TabsContent value="contact-forms" className="space-y-6">
+          <ContactForms />
         </TabsContent>
       </Tabs>
     </div>

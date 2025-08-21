@@ -15,6 +15,11 @@ const Cart = () => {
   const { t } = useLanguage();
   const { items, customItems, isLoading, updateQuantity, updateCustomJacketQuantity, removeFromCart, removeCustomJacketFromCart, clearCartItems, getCartTotal, getItemPrice } = useCart();
   
+  // Scroll to top when component mounts
+  React.useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+  
   // Debug logs
   console.log('Cart component - items:', items);
   console.log('Cart component - customItems:', customItems);

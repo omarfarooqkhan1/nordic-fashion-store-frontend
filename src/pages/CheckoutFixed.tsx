@@ -36,7 +36,7 @@ const CheckoutFixed: React.FC = () => {
   const [isCreatingPaymentIntent, setIsCreatingPaymentIntent] = useState(false);
   const [formData, setFormData] = useState<any>({
     shipping_name: '',
-    shipping_email: user?.email || '',
+    shipping_email: isAuthenticated ? (user?.email || '') : '',
     shipping_phone: '',
     shipping_address: '',
     shipping_city: '',
@@ -45,7 +45,7 @@ const CheckoutFixed: React.FC = () => {
     shipping_country: 'Finland',
     billing_same_as_shipping: true,
     billing_name: '',
-    billing_email: user?.email || '',
+    billing_email: isAuthenticated ? (user?.email || '') : '',
     billing_phone: '',
     billing_address: '',
     billing_city: '',
@@ -74,6 +74,11 @@ const CheckoutFixed: React.FC = () => {
   const shipping = React.useMemo(() => (subtotal > 100 ? 0 : 9.99), [subtotal]);
   const tax = React.useMemo(() => subtotal * 0.25, [subtotal]); // 25% VAT
   const total = React.useMemo(() => subtotal + shipping + tax, [subtotal, shipping, tax]);
+
+  // Scroll to top when component mounts
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
 
   // Fetch user's saved addresses on mount if authenticated
   useEffect(() => {
@@ -112,16 +117,16 @@ const CheckoutFixed: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated]);
 
-  // Update email fields whenever user changes
+  // Update email fields whenever user changes (only for authenticated users)
   useEffect(() => {
-    if (user?.email) {
+    if (user?.email && isAuthenticated) {
       setFormData(prev => ({
         ...prev,
         shipping_email: user.email,
         billing_email: prev.billing_same_as_shipping ? user.email : prev.billing_email,
       }));
     }
-  }, [user?.email]);
+  }, [user?.email, isAuthenticated]);
   // Remove isGuestMode if not present in useAuth
   // Function to handle toggling between default and custom address
   const handleAddressToggle = (useDefault: boolean) => {
@@ -571,15 +576,14 @@ const CheckoutFixed: React.FC = () => {
                     {errors.shipping_name && <p className="text-sm text-red-500">{errors.shipping_name}</p>}
                   </div>
                   <div>
-                    <Label htmlFor="shipping_email">{t('checkout.email')}</Label>
+                    <Label htmlFor="shipping_email">{t('checkout.email')} *</Label>
                     <Input
                       id="shipping_email"
                       type="email"
                       value={formData.shipping_email}
                       onChange={(e) => handleInputChange('shipping_email', e.target.value)}
                       className={errors.shipping_email ? 'border-red-500' : ''}
-                      disabled
-                      placeholder={user?.email || t('checkout.emailAuto')}
+                      placeholder={user?.email || t('checkout.emailPlaceholder') || 'Enter your email address'}
                     />
                     {errors.shipping_email && <p className="text-sm text-red-500">{errors.shipping_email}</p>}
                   </div>

@@ -1,6 +1,5 @@
 import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import { useCart } from '@/contexts/CartContext';
-import { useLanguage } from '@/contexts/LanguageContext';
 import html2canvas from 'html2canvas';
 // import { captureJacketDesign, generateJacketFilename } from '@/utils/jacketImageCapture';
 import { 
@@ -8,13 +7,13 @@ import {
   Image, 
   RotateCcw, 
   ShoppingCart,
+  Eye,
   Trash2
 } from 'lucide-react';
 import JacketScene from '../components/3D/JacketScene';
 import { toast } from '@/components/ui/use-toast';
 
 const CustomConfigurator = () => {
-  const { t } = useLanguage();
   const [selectedColor, setSelectedColor] = useState('#000000');
   const [logos, setLogos] = useState<Array<{
     id: string;
@@ -31,14 +30,11 @@ const CustomConfigurator = () => {
   // Keep JacketScene always mounted, only update props
   // Use a ref to store the current view for captureView to avoid remounts
   const currentViewRef = useRef<'front' | 'back'>('front');
-  useEffect(() => { 
-    currentViewRef.current = currentView; 
-  }, [currentView]);
+  useEffect(() => { currentViewRef.current = currentView; }, [currentView]);
   const sizeChangeTimeoutRef = useRef<NodeJS.Timeout>();
   const logoContainerRef = useRef<HTMLDivElement>(null);
   const jacketSceneRef = useRef<HTMLDivElement>(null);
   const [customDescription, setCustomDescription] = useState('');
-  const [selectedSize, setSelectedSize] = useState('M');
   
   // Fixed logo size - no more adjustable sizing
   const FIXED_LOGO_SIZE = 48; // 48px fixed size for all logos
@@ -56,12 +52,12 @@ const CustomConfigurator = () => {
     
     logos.forEach(logo => {
       let logoCost = baseLogoCost; // Base logo cost
-      let reason = t('customJacket.logoPlacement');
+      let reason = 'Logo placement';
       
       // Add size upgrade cost for larger logos
       if (logo.size > 80) {
         logoCost += sizeUpgradeCost;
-        reason = t('customJacket.logoPlacementSizeUpgrade');
+        reason = 'Logo placement + Size upgrade';
       }
       
       totalLogoCost += logoCost;
@@ -277,7 +273,7 @@ const CustomConfigurator = () => {
       >
         <img 
           src={logo.src} 
-          alt={t('customJacket.logo')} 
+          alt="Logo" 
           className="opacity-90 drop-shadow-lg pointer-events-none" 
           style={{ width: `${FIXED_LOGO_SIZE}px`, height: `${FIXED_LOGO_SIZE}px` }}
           draggable={false}
@@ -312,7 +308,7 @@ const CustomConfigurator = () => {
           >
             <img 
               src={logo.src} 
-              alt={t('customJacket.logo')}
+              alt="Logo"
               className="opacity-90 drop-shadow-lg pointer-events-none" 
               style={{
                 width: `${FIXED_LOGO_SIZE}px`, 
@@ -354,23 +350,23 @@ const CustomConfigurator = () => {
         <div className="flex justify-center space-x-2">
           <button
             onClick={() => setCurrentView('front')}
-            className={`px-4 py-2 mt-20 mb-10 rounded-lg font-medium transition-all duration-200 ${
+            className={`px-4 py-20 rounded-lg font-medium transition-all duration-200 ${
               currentView === 'front'
                 ? 'bg-foreground text-background shadow-lg'
                 : 'bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground'
             }`}
           >
-                              {t('customJacket.frontView')}
+            Front View
           </button>
           <button
             onClick={() => setCurrentView('back')}
-            className={`px-4 py-2 mt-20 mb-10 rounded-lg font-medium transition-all duration-200 ${
+            className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 ${
               currentView === 'back'
                 ? 'bg-foreground text-background shadow-lg'
                 : 'bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground'
             }`}
           >
-                              {t('customJacket.backView')}
+            Back View
           </button>
         </div>
 
@@ -400,159 +396,107 @@ const CustomConfigurator = () => {
     setLogos([]);
     setSelectedLogoId(null);
     setCustomDescription('');
-    setSelectedSize('M');
   };
 
   const { addCustomJacketToCart } = useCart();
   const [isAddingToCart, setIsAddingToCart] = useState(false);
 
-  // Enhanced image capture that properly composites 3D canvas with logo overlays
-  const captureView = async (view: 'front' | 'back') => {
-    console.log(`🎯 Capturing ${view} view...`);
-    
-    // Switch to the target view if needed
-    if (currentView !== view) {
-      console.log(`🔄 Switching from ${currentView} to ${view} view...`);
-      setCurrentView(view);
-      
-      // Wait for the 3D scene to render the new view
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      console.log(`✅ View switched to ${view}`);
-    }
-    
-    // Additional wait to ensure 3D scene is fully rendered
-    await new Promise(resolve => setTimeout(resolve, 500));
-    
-    // Wait for the next frame to ensure rendering is complete
-    await new Promise(resolve => requestAnimationFrame(resolve));
-    
-    // Get the 3D canvas
-    const jacketCanvas = jacketSceneRef.current?.querySelector('canvas');
-    console.log(`🎨 Canvas element:`, jacketCanvas);
-    
-    if (!jacketCanvas) {
-      throw new Error(`3D canvas not found for ${view} view`);
-    }
-    
-    // Ensure canvas has proper dimensions
-    console.log(`📏 Canvas dimensions: ${jacketCanvas.width}x${jacketCanvas.height}`);
-    if (jacketCanvas.width === 0 || jacketCanvas.height === 0) {
-      throw new Error(`3D canvas has invalid dimensions for ${view} view`);
-    }
-    
-    // Get the canvas bounding rect for accurate positioning
-    const canvasRect = jacketCanvas.getBoundingClientRect();
-    console.log(`📐 Canvas rect:`, canvasRect);
-    
-    // Capture the 3D canvas as base image
-    console.log(`📸 Capturing base canvas...`);
-    const baseImageDataUrl = jacketCanvas.toDataURL('image/png', 0.9);
-    console.log(`✅ Base image captured, length: ${baseImageDataUrl.length}`);
-    
-    // Create a new canvas to composite the final image
-    const finalCanvas = document.createElement('canvas');
-    finalCanvas.width = jacketCanvas.width;
-    finalCanvas.height = jacketCanvas.height;
-    const ctx = finalCanvas.getContext('2d');
-    
-    if (!ctx) {
-      throw new Error('Failed to get canvas context for image composition');
-    }
-    
-    // Load the base jacket image
-    const baseImage = document.createElement('img');
-    baseImage.crossOrigin = 'anonymous';
-    
-    await new Promise<void>((resolve, reject) => {
-      baseImage.onload = () => resolve();
-      baseImage.onerror = () => reject(new Error('Failed to load base jacket image'));
-      baseImage.src = baseImageDataUrl;
-    });
-    
-    // Draw the base jacket image
-    ctx.drawImage(baseImage, 0, 0, finalCanvas.width, finalCanvas.height);
-    console.log(`✅ Base jacket image drawn to final canvas`);
-    
-    // Get logos for the current view
-    const currentViewLogos = logos.filter(logo => logo.view === view);
-    console.log(`🎯 Found ${currentViewLogos.length} logos for ${view} view`);
-    
-    // Overlay logos on the canvas with proper positioning
-    for (const logo of currentViewLogos) {
-      try {
-        console.log(`🎨 Processing logo ${logo.id}:`, logo);
-        
-        // Load the logo image
-        const logoImage = document.createElement('img');
-        logoImage.crossOrigin = 'anonymous';
-        
-        await new Promise<void>((resolve, reject) => {
-          logoImage.onload = () => resolve();
-          logoImage.onerror = () => reject(new Error(`Failed to load logo ${logo.id}`));
-          logoImage.src = logo.src;
-        });
-        
-        // Calculate logo position in pixels based on percentage positioning
-        // The logo.position.x and y are percentages (0-100) relative to the canvas
-        const logoX = (logo.position.x / 100) * finalCanvas.width;
-        const logoY = (logo.position.y / 100) * finalCanvas.height;
-        
-        console.log(`📍 Logo ${logo.id} positioned at ${logo.position.x}%, ${logo.position.y}% -> pixels: (${logoX}, ${logoY})`);
-        
-        // Draw the logo at the calculated position, centered on the position point
-        ctx.drawImage(
-          logoImage,
-          logoX - (logo.size / 2), // Center the logo horizontally
-          logoY - (logo.size / 2), // Center the logo vertically
-          logo.size,
-          logo.size
-        );
-        
-        console.log(`✅ Logo ${logo.id} overlaid successfully at pixel position (${logoX}, ${logoY})`);
-        
-      } catch (logoError) {
-        console.warn(`⚠️ Failed to overlay logo ${logo.id}:`, logoError);
-        // Continue with other logos even if one fails
-      }
-    }
-    
-    const finalImageDataUrl = finalCanvas.toDataURL('image/png', 0.9);
-    console.log(`🎉 Final ${view} image captured, length: ${finalImageDataUrl.length}`);
-    return finalImageDataUrl;
-  };
-
   const handleAddToCart = async () => {
     console.log('🎯 handleAddToCart called');
+    // We'll query the canvas and overlay inside captureView after DOM updates
     setIsAddingToCart(true);
-    
     try {
 
-      // Capture both front and back views
-      console.log('📸 Capturing front view...');
+      // Helper to composite 3D canvas and overlay
+      const captureView = async (view: 'front' | 'back') => {
+        // Only update props, never unmount JacketScene
+        if (currentViewRef.current !== view) {
+          setCurrentView(view);
+          // Wait for the prop to propagate and the scene to update
+          await new Promise(r => setTimeout(r, 100));
+        }
+        await new Promise(r => requestAnimationFrame(r));
+        // Wait for canvas and overlay to be available (poll up to 2s)
+        let jacketCanvas = null;
+        let overlayContainer = null;
+        const maxTries = 40; // 40 x 50ms = 2s
+        let tries = 0;
+        while (tries < maxTries) {
+          jacketCanvas = jacketSceneRef.current?.querySelector('canvas');
+          overlayContainer = logoContainerRef.current;
+          if (
+            jacketCanvas &&
+            overlayContainer &&
+            jacketCanvas.width > 0 &&
+            jacketCanvas.height > 0 &&
+            jacketCanvas.getBoundingClientRect().width > 0 &&
+            jacketCanvas.getBoundingClientRect().height > 0
+          ) {
+            break;
+          }
+          await new Promise(res => setTimeout(res, 50));
+          tries++;
+        }
+        if (!jacketCanvas || !overlayContainer) {
+          throw new Error(
+            `3D canvas or overlay container not available after view switch (tried ${tries} times, view=${view})`
+          );
+        }
+        if (
+          jacketCanvas.width === 0 ||
+          jacketCanvas.height === 0 ||
+          jacketCanvas.getBoundingClientRect().width === 0 ||
+          jacketCanvas.getBoundingClientRect().height === 0
+        ) {
+          throw new Error(
+            `3D canvas is present but has zero size (width=${jacketCanvas.width}, height=${jacketCanvas.height}, rect=${JSON.stringify(jacketCanvas.getBoundingClientRect())}, view=${view})`
+          );
+        }
+        // Optionally scroll into view to force rendering
+        if (typeof jacketCanvas.scrollIntoView === 'function') {
+          jacketCanvas.scrollIntoView({ block: 'center', behavior: 'instant' });
+        }
+        // 1. Capture 3D canvas as image
+        const jacketDataUrl = jacketCanvas.toDataURL('image/png', 0.92);
+        // 2. Capture overlay as image
+        const overlayCanvas = await html2canvas(overlayContainer, { backgroundColor: null, useCORS: true, scale: 2 });
+        // 3. Composite both onto a new canvas
+        const width = jacketCanvas.width;
+        const height = jacketCanvas.height;
+        const finalCanvas = document.createElement('canvas');
+        finalCanvas.width = width;
+        finalCanvas.height = height;
+        const ctx = finalCanvas.getContext('2d');
+        if (!ctx) throw new Error('Unable to get canvas context');
+        // Draw 3D jacket
+        const jacketImg = new window.Image();
+        jacketImg.src = jacketDataUrl;
+        await new Promise(res => { jacketImg.onload = res; });
+        ctx.drawImage(jacketImg, 0, 0, width, height);
+        // Draw overlay
+        ctx.drawImage(overlayCanvas, 0, 0, width, height);
+        return finalCanvas.toDataURL('image/png', 0.92);
+      };
+
+      // Capture both front and back
       const frontImage = await captureView('front');
-      
-      console.log('📸 Capturing back view...');
       const backImage = await captureView('back');
 
-      // Validate captured images
+      // Validate that we have valid data URLs
       if (!frontImage.startsWith('data:image/') || !backImage.startsWith('data:image/')) {
-        throw new Error('Failed to capture valid jacket images');
+        throw new Error('Invalid image data captured - not a valid data URL');
       }
 
-      console.log('✅ Images captured successfully');
-      console.log('Front image size:', frontImage.length);
-      console.log('Back image size:', backImage.length);
-
-      // Create custom jacket item
+      // Create custom jacket item with base64 images
       const customJacket = {
         type: 'custom_jacket' as const,
         name: 'Custom Leather Jacket',
         color: selectedColor,
-        size: selectedSize,
+        size: 'M', // Default size, can be made selectable
         quantity: 1,
         price: calculateTotalCost().total,
-        frontImageUrl: frontImage,
-        backImageUrl: backImage,
+        frontImageUrl: frontImage, // Use actual captured front image
+        backImageUrl: backImage,   // Use actual captured back image
         logos: logos.map(logo => ({
           id: logo.id,
           src: logo.src,
@@ -562,26 +506,19 @@ const CustomConfigurator = () => {
         customDescription: customDescription || undefined
       };
 
-      // Add to cart
       await addCustomJacketToCart(customJacket);
-      toast({ 
-        title: t('customJacket.success'), 
-        description: t('customJacket.addedToCart') 
-      });
-      
-      // Reset the configurator
+      toast({ title: 'Success', description: 'Custom jacket added to cart!' });
       resetConfigurator();
-      
     } catch (error) {
-      console.error('❌ Error adding custom jacket to cart:', error);
-      
-      let errorMessage = t('customJacket.captureFailed');
+      console.error('Error adding to cart:', error);
+      let errorMessage = 'Failed to add custom jacket to cart';
       if (error instanceof Error) {
         errorMessage = error.message;
+      } else if (typeof error === 'string') {
+        errorMessage = error;
       }
-      
       toast({ 
-        title: t('customJacket.captureFailedTitle'), 
+        title: 'Error', 
         description: errorMessage, 
         variant: 'destructive' 
       });
@@ -595,8 +532,8 @@ const CustomConfigurator = () => {
       <div className="max-w-7xl mx-auto px-2 sm:px-4 py-8 sm:py-12">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 sm:mb-6 gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-foreground mb-2">{t('customJacket.configurator')}</h1>
-            <p className="text-muted-foreground">{t('customJacket.designDescription')}</p>
+            <h1 className="text-3xl font-bold text-foreground mb-2">Custom Jacket Configurator</h1>
+            <p className="text-muted-foreground">Design your perfect leather jacket with custom colors and logos</p>
           </div>
         </div>
         
@@ -606,7 +543,7 @@ const CustomConfigurator = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Left Sidebar - Design Options */}
           <div className="bg-card rounded-lg p-6 border border-border shadow-sm">
-            <h2 className="text-xl font-bold text-foreground mb-6">{t('customJacket.designOptions')}</h2>
+            <h2 className="text-xl font-bold text-foreground mb-6">Design Options</h2>
             
             {/* Color Options (primary only; sleeve colors are applied when model supports it) */}
             <div className="mb-8">
@@ -616,28 +553,28 @@ const CustomConfigurator = () => {
               >
                 <div className="flex items-center space-x-2">
                   <Palette size={20} />
-                  <span>{t('customJacket.colors')}</span>
+                  <span>Colors</span>
                 </div>
                 <span className={`transform transition-transform ${showColorOptions ? 'rotate-180' : ''}`}>▼</span>
               </button>
               {showColorOptions && (
                 <div className="space-y-4">
                   <div>
-                    <label className="text-muted-foreground text-sm mb-2 block">{t('customJacket.primaryColor')}</label>
+                    <label className="text-muted-foreground text-sm mb-2 block">Primary Color</label>
                     
                     {/* Current Color Display */}
                     <div className="mb-3 p-3 bg-muted/50 rounded-lg border border-border">
-                      <div className="text-xs text-muted-foreground mb-1">{t('customJacket.currentSelection')}</div>
+                      <div className="text-xs text-muted-foreground mb-1">Current Selection:</div>
                       <div className="flex items-center space-x-2">
                         <div 
                           className="w-6 h-6 rounded-full border-2 border-foreground shadow-sm"
                           style={{ backgroundColor: selectedColor }}
                         />
                         <span className="text-sm font-medium text-foreground">
-                          {selectedColor === '#000000' && t('customJacket.classicBlack')}
-                          {selectedColor === '#3E2723' && t('customJacket.darkBrown')}
-                          {selectedColor === '#0A1F3A' && t('customJacket.darkBlue')}
-                          {selectedColor === '#4A0000' && t('customJacket.darkBurgundy')}
+                          {selectedColor === '#000000' && 'Classic Black'}
+                          {selectedColor === '#3E2723' && 'Dark Brown'}
+                          {selectedColor === '#0A1F3A' && 'Dark Blue'}
+                          {selectedColor === '#4A0000' && 'Dark Burgundy'}
                         </span>
                       </div>
                     </div>
@@ -667,14 +604,14 @@ const CustomConfigurator = () => {
               >
                 <div className="flex items-center space-x-2">
                   <Image size={20} />
-                  <span>{t('customJacket.logoSelection')}</span>
+                  <span>Logo Selection</span>
                 </div>
                 <span className={`transform transition-transform ${showLogoOptions ? 'rotate-180' : ''}`}>▼</span>
               </button>
               {showLogoOptions && (
                 <div className="space-y-4">
                   <div className="text-sm text-muted-foreground mb-3">
-                    {t('customJacket.logoInstructions')}
+                    Drag and drop logos from below onto the jacket, or click to select. Then drag the logo on the jacket to position it.
                   </div>
                   
                   {/* Logo Grid */}
@@ -700,7 +637,7 @@ const CustomConfigurator = () => {
                   {/* Drop Zone Info */}
                   <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
                     <div className="text-xs text-blue-800 space-y-1">
-                      <div><strong>{t('customJacket.tip')}</strong> {t('customJacket.tipText')}</div>
+                      <div><strong>Tip:</strong> Drag any logo above and drop it onto the jacket area to apply it.</div>
                     </div>
                   </div>
 
@@ -708,14 +645,14 @@ const CustomConfigurator = () => {
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
                       <label className="text-sm font-medium text-foreground">
-                        {t('customJacket.logoSize')}
+                        Logo Size
                       </label>
                       <span className="text-sm text-muted-foreground">
                         {FIXED_LOGO_SIZE}px (Fixed)
                       </span>
                     </div>
                     <div className="text-xs text-muted-foreground text-center p-2 bg-muted/50 rounded">
-                      {t('customJacket.logoSizeDescription').replace('{size}', FIXED_LOGO_SIZE.toString())}
+                      All logos use a consistent {FIXED_LOGO_SIZE}px size for uniform appearance
                     </div>
                   </div>
 
@@ -724,10 +661,10 @@ const CustomConfigurator = () => {
                     <div className="space-y-3">
                       <div className="flex items-center justify-between">
                         <label className="text-sm font-medium text-foreground">
-                          {t('customJacket.logoManagement')}
+                          Logo Management
                         </label>
                         <span className="text-xs text-muted-foreground">
-                          {logos.length} {logos.length === 1 ? t('customJacket.logo') : t('customJacket.logos')}
+                          {logos.length} logo{logos.length !== 1 ? 's' : ''}
                         </span>
                       </div>
                       <div className="space-y-2 max-h-32 overflow-y-auto">
@@ -745,14 +682,14 @@ const CustomConfigurator = () => {
                               <div className="flex items-center space-x-2">
                                 <img 
                                   src={logo.src} 
-                                  alt={t('customJacket.logo')} 
+                                  alt="Logo" 
                                   className="w-6 h-6 rounded border border-border"
                                 />
-                                <span className="text-sm text-foreground">{t('customJacket.logo')} {logo.id}</span>
+                                <span className="text-sm text-foreground">Logo {logo.id}</span>
                             </div>
                               <div className="flex items-center space-x-2">
                                 <span className="text-xs text-muted-foreground capitalize">
-                                  {logo.view} {t('customJacket.view')}
+                                  {logo.view} view
                                 </span>
                                 <button
                                   onClick={() => deleteLogo(logo.id)}
@@ -776,32 +713,26 @@ const CustomConfigurator = () => {
               <div className="flex items-center justify-between w-full text-foreground font-semibold mb-3">
                 <div className="flex items-center space-x-2">
                   <span>📝</span>
-                  <span>{t('customJacket.customInstructions')}</span>
+                  <span>Custom Instructions</span>
                 </div>
               </div>
               <div className="space-y-3">
                 <div className="text-sm text-muted-foreground">
-                  {t('customJacket.customInstructionsDescription')}
+                  Add any special requirements, custom details, or specific instructions for your order.
                 </div>
                 <textarea
                   value={customDescription}
                   onChange={(e) => setCustomDescription(e.target.value)}
-                  placeholder={t('customJacket.customInstructionsPlaceholder')}
+                  placeholder="Describe any special requirements, custom details, or specific instructions for your jacket order..."
                   className="w-full h-32 p-3 text-sm border border-border rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-foreground/20 focus:border-foreground transition-all"
                   maxLength={500}
                 />
                 <div className="flex justify-between items-center text-xs text-muted-foreground">
-                  <span>{t('customJacket.optionalHelp')}</span>
+                  <span>Optional - Help us understand your vision better</span>
                   <span>{customDescription.length}/500</span>
                 </div>
               </div>
             </div>
-
-
-
-
-
-
 
             {/* Reset Button */}
             <button
@@ -809,7 +740,7 @@ const CustomConfigurator = () => {
               className="w-full px-4 py-2 bg-destructive/10 text-destructive border border-destructive/20 rounded-lg hover:bg-destructive/20 transition-all flex items-center justify-center space-x-2"
             >
               <RotateCcw size={16} />
-              <span>{t('customJacket.resetDesign')}</span>
+              <span>Reset Design</span>
             </button>
           </div>
 
@@ -820,38 +751,38 @@ const CustomConfigurator = () => {
 
           {/* Right Sidebar - Product Info */}
           <div className="bg-card rounded-lg p-6 border border-border shadow-sm">
-            <h2 className="text-xl font-bold text-foreground mb-6">{t('customJacket.productDetails')}</h2>
+            <h2 className="text-xl font-bold text-foreground mb-6">Product Details</h2>
             
             <div className="space-y-6">
 
               <div>
-                <h3 className="text-foreground font-semibold mb-2">{t('customJacket.customLeatherJacket')}</h3>
+                <h3 className="text-foreground font-semibold mb-2">Custom Leather Jacket</h3>
                 <p className="text-muted-foreground text-sm">
-                  {t('customJacket.premiumQualityDescription')}
+                  Premium quality leather jacket with full customization. 
                 </p>
               </div>
 
               <div>
-                <h3 className="text-foreground font-semibold mb-2">{t('customJacket.features')}</h3>
+                <h3 className="text-foreground font-semibold mb-2">Features</h3>
                 <ul className="text-muted-foreground text-sm space-y-1">
-                  <li>• {t('customJacket.genuineLeatherConstruction')}</li>
-                  <li>• {t('customJacket.premiumLeatherFinish')}</li>
-                  <li>• {t('customJacket.ykkMetalZippers')}</li>
-                  <li>• {t('customJacket.realTime3dPreview')}</li>
+                  <li>• Genuine leather construction</li>
+                  <li>• Premium leather finish</li>
+                  <li>• YKK metal zippers</li>
+                  <li>• Real-time 3D preview</li>
                 </ul>
                 <div className="bg-muted rounded-lg p-4 mt-4">
                   <div className="flex justify-between items-center mb-2">
-                    <span className="text-foreground font-semibold">{t('customJacket.price')}</span>
+                    <span className="text-foreground font-semibold">Price:</span>
                     <span className="text-2xl font-bold text-green-600">
                       ${calculateTotalCost().total.toFixed(2)}
                     </span>
                   </div>
-                  <p className="text-muted-foreground text-xs mb-5">{t('customJacket.allCostsIncluded')}</p>
-                  <div className="text-xs font-medium text-foreground mb-2">{t('customJacket.costBreakdown')}</div>
+                  <p className="text-muted-foreground text-xs mb-5">All customization costs included</p>
+                  <div className="text-xs font-medium text-foreground mb-2">Cost Breakdown:</div>
               
               {/* Base Price */}
               <div className="flex justify-between items-center text-xs">
-                <span className="text-muted-foreground">{t('customJacket.baseJacket')}</span>
+                <span className="text-muted-foreground">Base Jacket</span>
                 <span className="font-medium">${basePrice}</span>
               </div>
               
@@ -859,7 +790,7 @@ const CustomConfigurator = () => {
               {calculateLogoCosts().totalLogoCost > 0 && (
                 <div className="space-y-1 mt-1">
                   <div className="flex justify-between items-center text-xs">
-                    <span className="text-muted-foreground">{t('customJacket.logoCustomization')}</span>
+                    <span className="text-muted-foreground">Logo Customization</span>
                     <span className="font-medium">${calculateLogoCosts().totalLogoCost}</span>
                   </div>
                   {calculateLogoCosts().logoBreakdown.map((logo) => (
@@ -874,7 +805,7 @@ const CustomConfigurator = () => {
               {/* Color Cost */}
               {calculateColorCost().cost > 0 && (
                 <div className="flex justify-between items-center text-xs mt-1">
-                  <span className="text-muted-foreground">{t('customJacket.premiumColor')}</span>
+                  <span className="text-muted-foreground">Premium Color</span>
                   <span className="font-medium">${calculateColorCost().cost}</span>
                 </div>
               )}
@@ -883,17 +814,13 @@ const CustomConfigurator = () => {
 
               <div className="space-y-3">
                 <div>
-                  <label className="text-muted-foreground text-sm mb-1 block">{t('customJacket.size')}</label>
-                  <select 
-                    value={selectedSize}
-                    onChange={(e) => setSelectedSize(e.target.value)}
-                    className="w-full px-3 py-2 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-ring"
-                  >
-                    <option value="S">{t('customJacket.small')} (S)</option>
-                    <option value="M">{t('customJacket.medium')} (M)</option>
-                    <option value="L">{t('customJacket.large')} (L)</option>
-                    <option value="XL">{t('customJacket.extraLarge')} (XL)</option>
-                    <option value="XXL">{t('customJacket.twoXLarge')} (XXL)</option>
+                  <label className="text-muted-foreground text-sm mb-1 block">Size</label>
+                  <select className="w-full px-3 py-2 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-ring">
+                    <option value="S">Small (S)</option>
+                    <option value="M">Medium (M)</option>
+                    <option value="L">Large (L)</option>
+                    <option value="XL">Extra Large (XL)</option>
+                    <option value="XXL">2X Large (XXL)</option>
                   </select>
                 </div>
               </div>
@@ -908,12 +835,12 @@ const CustomConfigurator = () => {
                 {isAddingToCart ? (
                   <>
                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                    <span>{t('customJacket.addingToCart')}</span>
+                    <span>Adding to Cart...</span>
                   </>
                 ) : (
                   <>
                     <ShoppingCart size={16} />
-                <span>{t('customJacket.addToCart')}</span>
+                <span>Add to Cart</span>
                   </>
                 )}
                 </button>

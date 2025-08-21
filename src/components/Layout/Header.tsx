@@ -1,8 +1,8 @@
 "use client"
 
 import type React from "react"
-import { useState, useMemo } from "react"
-import { Link, useNavigate } from "react-router-dom"
+import { useState, useMemo, useEffect } from "react"
+import { Link, useNavigate, useLocation } from "react-router-dom"
 import { ShoppingCart, Menu, User, Settings, Search, Heart, Phone, Mail, LogIn, UserPlus, Shield, LayoutDashboard } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -36,7 +36,10 @@ export const Header: React.FC = () => {
   const { language, setLanguage, t } = useLanguage()
   const { items, customItems, getCartItemsCount } = useCart()
   const [searchQuery, setSearchQuery] = useState("")
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [searchModalOpen, setSearchModalOpen] = useState(false)
   const navigate = useNavigate()
+  const location = useLocation()
 
   // Use our custom auth context
   const { user, isAuthenticated, isAdmin, isCustomer, logout, loading } = useAuth()
@@ -75,7 +78,30 @@ export const Header: React.FC = () => {
     e.preventDefault()
     if (searchQuery.trim()) {
       navigate(`/products?search=${encodeURIComponent(searchQuery.trim())}`)
+      // Close mobile menu if it's open
+      if (mobileMenuOpen) {
+        setMobileMenuOpen(false)
+      }
+      // Close search modal
+      setSearchModalOpen(false)
+      // Clear search query after navigation
+      setSearchQuery("")
     }
+  }
+
+  const handleCartClick = () => {
+    // Scroll to top when navigating to cart
+    window.scrollTo(0, 0)
+  }
+
+  const handleAuthClick = () => {
+    // Scroll to top when navigating to auth pages
+    window.scrollTo(0, 0)
+  }
+
+  const handleContactClick = () => {
+    // Scroll to top when navigating to contact page
+    window.scrollTo(0, 0)
   }
 
   const handleGoogleLogin = () => {
@@ -89,6 +115,15 @@ export const Header: React.FC = () => {
   const handleLogout = () => {
     logout()
   }
+
+  const closeMobileMenu = () => {
+    setMobileMenuOpen(false)
+  }
+
+  // Close mobile menu when route changes
+  useEffect(() => {
+    setMobileMenuOpen(false)
+  }, [location.pathname])
 
   return (
     <>
@@ -108,33 +143,52 @@ export const Header: React.FC = () => {
       {/* Main Header */}
       <header className="sticky top-0 z-50 w-full border-b border-border bg-gradient-to-r from-background/95 via-background/98 to-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 shadow-sm">
         {/* Top Header Row */}
-        <div className="container mx-auto px-2 sm:px-4">
-          <div className="flex flex-wrap h-auto min-h-[64px] items-center justify-between gap-2 sm:gap-4 md:gap-6">
+        <div className="container mx-auto px-4 sm:px-6">
+          <div className="flex items-center justify-between h-16 gap-2 sm:gap-4">
             {/* Logo */}
             <Link to="/" className="flex items-center space-x-1 group flex-shrink-0">
-              <div className="text-lg md:text-2xl font-bold text-foreground group-hover:text-muted-foreground transition-colors duration-300">
+              <div className="text-lg sm:text-xl md:text-2xl font-bold text-foreground group-hover:text-muted-foreground transition-colors duration-300">
                 NORD
               </div>
-              <div className="text-lg md:text-2xl font-light text-primary group-hover:text-primary/80 transition-colors duration-300">
+              <div className="text-lg sm:text-xl md:text-2xl font-light text-primary group-hover:text-primary/80 transition-colors duration-300">
                 FLEX
               </div>
             </Link>
 
-            {/* Custom Jacket Button */}
-            <Link to="/custom-jacket" className="ml-0 sm:ml-6 flex-shrink-0">
-              <Button variant="default" size="lg" className="font-semibold bg-yellow-400 text-leather-900 shadow-gold-200/40 shadow-md transition-transform border border-yellow-300 whitespace-nowrap px-2 sm:px-4 text-xs sm:text-base min-h-[36px] sm:min-h-[44px] hover:bg-yellow-500 hover:text-leather-900 hover:border-yellow-400">
-                {t('customJacket.title')}
-              </Button>
-            </Link>
-            {/* Desktop Search */}
-            <div className="hidden md:flex flex-1 max-w-md mx-2 sm:mx-6">
+            {/* Custom Jacket Button - Responsive */}
+            <div className="hidden sm:flex flex-1 justify-center">
+              <Link to="/custom-jacket" className="flex-shrink-0">
+                <Button 
+                  variant="default" 
+                  size="lg" 
+                  className="font-semibold bg-yellow-400 hover:bg-yellow-500 text-leather-900 shadow-lg hover:shadow-xl transition-all duration-300 border-2 border-yellow-300 hover:border-yellow-500 whitespace-nowrap px-4 sm:px-6 py-2 sm:py-3 text-xs sm:text-sm md:text-base hover:scale-105"
+                >
+                  {t('customJacket.title')}
+                </Button>
+              </Link>
+            </div>
+
+            {/* Mobile Custom Jacket Button - Smaller */}
+            <div className="sm:hidden">
+              <Link to="/custom-jacket" className="flex-shrink-0">
+                <Button 
+                  variant="default" 
+                  size="sm" 
+                  className="font-semibold bg-yellow-400 hover:bg-yellow-500 text-leather-900 shadow-md hover:shadow-lg transition-all duration-300 border-2 border-yellow-300 hover:border-yellow-500 whitespace-nowrap px-3 py-2 text-xs"
+                >
+                  Custom Jacket
+                </Button>
+              </Link>
+            </div>
+            {/* Desktop Search - Hidden on mobile, shown on desktop */}
+            <div className="hidden lg:flex flex-1 max-w-md mx-4">
               <form onSubmit={handleSearch} className="relative w-full">
                 <Input
                   type="text"
                   placeholder={t("search.placeholder")}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pr-10 bg-muted/50 border-border focus:border-primary"
+                  className="pr-10 bg-muted/50 border-border focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
                 />
                 <Button
                   type="submit"
@@ -148,11 +202,11 @@ export const Header: React.FC = () => {
             </div>
 
             {/* Right Side Actions */}
-            <div className="flex items-center space-x-2 sm:space-x-3 md:space-x-4 flex-shrink-0">
+            <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
               {/* Desktop Language Selector */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="sm" className="h-9 w-9 p-0 hidden sm:flex">
+                  <Button variant="ghost" size="sm" className="h-10 w-10 p-0 hidden sm:flex rounded-full hover:bg-muted/50 transition-colors">
                     <span className="text-lg">{currentLanguage?.flag}</span>
                   </Button>
                 </DropdownMenuTrigger>
@@ -171,15 +225,15 @@ export const Header: React.FC = () => {
               </DropdownMenu>
 
               {/* Desktop Theme Toggle */}
-              <Button variant="ghost" size="sm" onClick={toggleTheme} className="h-9 w-9 p-0 hidden sm:flex">
+              <Button variant="ghost" size="sm" onClick={toggleTheme} className="h-10 w-10 p-0 hidden sm:flex rounded-full hover:bg-muted/50 transition-colors">
                 {theme === "light" ? "🌙" : "☀️"}
               </Button>
 
               {/* Search Icon for Mobile */}
-              <Sheet>
+              <Sheet open={searchModalOpen} onOpenChange={setSearchModalOpen}>
                 <SheetTrigger asChild>
-                  <Button variant="ghost" size="sm" className="h-9 w-9 p-0 md:hidden">
-                    <Search className="h-4 w-4" />
+                  <Button variant="ghost" size="sm" className="h-9 w-9 sm:h-10 sm:w-10 p-0 md:hidden rounded-full hover:bg-muted/50 transition-colors">
+                    <Search className="h-4 w-4 sm:h-5 sm:w-5" />
                   </Button>
                 </SheetTrigger>
                 <SheetContent side="top" className="h-auto">
@@ -206,20 +260,20 @@ export const Header: React.FC = () => {
 
               {/* Wishlist - Only show for customers */}
               {!isAdmin && (
-                <Button variant="ghost" size="sm" className="h-9 w-9 p-0 hidden sm:flex">
-                  <Heart className="h-4 w-4" />
+                <Button variant="ghost" size="sm" className="h-10 w-10 p-0 hidden sm:flex rounded-full hover:bg-muted/50 transition-colors">
+                  <Heart className="h-5 w-5" />
                 </Button>
               )}
 
               {/* Cart - Only show for customers */}
               {!isAdmin && (
-                <Link to="/cart">
-                  <Button variant="ghost" size="sm" className="relative h-9 w-9 p-0">
-                    <ShoppingCart className="h-4 w-4" />
+                <Link to="/cart" onClick={handleCartClick}>
+                  <Button variant="ghost" size="sm" className="relative h-9 w-9 sm:h-10 sm:w-10 p-0 rounded-full hover:bg-muted/50 transition-colors">
+                    <ShoppingCart className="h-4 w-4 sm:h-5 sm:w-5" />
                     {cartCount > 0 && (
                       <Badge
                         variant="destructive"
-                        className="absolute -top-2 -right-2 h-5 w-5 rounded-full p-0 text-xs flex items-center justify-center bg-primary text-primary-foreground"
+                        className="absolute -top-2 -right-2 h-5 w-5 sm:h-6 sm:w-6 rounded-full p-0 text-xs flex items-center justify-center bg-primary text-primary-foreground font-semibold"
                       >
                         {cartCount}
                       </Badge>
@@ -231,8 +285,8 @@ export const Header: React.FC = () => {
               {/* Admin Dashboard - Only show if user is admin */}
               {isAdmin && (
                 <Link to="/admin/dashboard">
-                                              <Button variant="ghost" size="sm" className="h-9 w-9 p-0" title={t('admin.dashboard')}>
-                    <LayoutDashboard className="h-4 w-4 text-blue-600" />
+                  <Button variant="ghost" size="sm" className="h-9 w-9 sm:h-10 sm:w-10 p-0 rounded-full hover:bg-muted/50 transition-colors" title={t('admin.dashboard')}>
+                    <LayoutDashboard className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600" />
                   </Button>
                 </Link>
               )}
@@ -240,8 +294,8 @@ export const Header: React.FC = () => {
               {/* User Menu */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="sm" className="h-9 w-9 p-0 hidden sm:flex">
-                    {isAdmin ? <Shield className="h-4 w-4 text-blue-600" /> : <User className="h-4 w-4" />}
+                  <Button variant="ghost" size="sm" className="h-10 w-10 p-0 hidden sm:flex rounded-full hover:bg-muted/50 transition-colors">
+                    {isAdmin ? <Shield className="h-5 w-5 text-blue-600" /> : <User className="h-5 w-5" />}
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="bg-popover border border-border w-56">
@@ -329,18 +383,73 @@ export const Header: React.FC = () => {
               </DropdownMenu>
 
               {/* Mobile Hamburger Menu */}
-              <Sheet>
+              <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
                 <SheetTrigger asChild>
-                  <Button variant="ghost" size="sm" className="h-9 w-9 p-0 md:hidden">
-                    <Menu className="h-5 w-5" />
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="h-9 w-9 sm:h-10 sm:w-10 p-0 md:hidden rounded-full hover:bg-muted/50 transition-colors border border-border"
+                    aria-label={t("nav.menu")}
+                  >
+                    <Menu className="h-4 w-4 sm:h-5 sm:w-5" />
                   </Button>
                 </SheetTrigger>
-                <SheetContent side="left" className="w-64 p-0">
+                <SheetContent side="left" className="w-64 p-0 [&>button]:hidden" aria-label={t("nav.menu")}>
                   <SheetHeader className="p-4">
                     <SheetTitle>{t("nav.menu")}</SheetTitle>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={closeMobileMenu}
+                      className="h-8 w-8 p-0 absolute right-2 top-2"
+                      aria-label={t("nav.close")}
+                    >
+                      ✕
+                    </Button>
                   </SheetHeader>
 
                   <div className="px-4 pb-4">
+                    {/* Mobile Language & Theme Section */}
+                    <div className="mb-4 p-3 bg-muted rounded-lg">
+                      <div className="text-sm font-medium mb-3 text-muted-foreground">{t('nav.settings')}</div>
+                      <div className="flex items-center gap-3">
+                        {/* Mobile Language Selector */}
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="outline" size="sm" className="flex-1 h-9" aria-label={t('nav.settings')}>
+                              <span className="mr-2 text-base">{currentLanguage?.flag}</span>
+                              <span className="text-xs">{currentLanguage?.name}</span>
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="start" className="bg-popover border border-border min-w-[140px]">
+                            {languages.map((lang) => (
+                              <DropdownMenuItem
+                                key={lang.code}
+                                onClick={() => {
+                                  setLanguage(lang.code)
+                                  closeMobileMenu()
+                                }}
+                                className="hover:bg-accent cursor-pointer"
+                              >
+                                <span className="mr-2 text-base">{lang.flag}</span>
+                                <span className="text-sm">{lang.name}</span>
+                              </DropdownMenuItem>
+                            ))}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+
+                        {/* Mobile Theme Toggle */}
+                        <Button variant="outline" size="sm" onClick={() => {
+                          toggleTheme()
+                          closeMobileMenu()
+                        }} className="px-3 h-9" aria-label={theme === "light" ? "Switch to dark mode" : "Switch to light mode"}>
+                          <span className="text-base">{theme === "light" ? "🌙" : "☀️"}</span>
+                        </Button>
+                      </div>
+                    </div>
+
+                    <Separator className="my-4" />
+
                     {/* Mobile Auth Section */}
                     {loading ? (
                       <div className="p-2 text-sm text-muted-foreground">{t("auth.loading")}</div>
@@ -359,19 +468,22 @@ export const Header: React.FC = () => {
                         )}
                         </div>
                         {isAdmin && (
-                          <Link to="/admin/dashboard">
-                                                      <Button
-                            variant="outline"
-                            size="sm"
-                            className="mt-2 w-full text-blue-600 border-blue-200 hover:bg-blue-50"
-                          >
-                            <LayoutDashboard className="mr-2 h-4 w-4" />
-                            {t('admin.dashboard')}
-                          </Button>
+                          <Link to="/admin/dashboard" onClick={closeMobileMenu}>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="mt-2 w-full text-blue-600 border-blue-200 hover:bg-blue-50"
+                            >
+                              <LayoutDashboard className="mr-2 h-4 w-4" />
+                              {t('admin.dashboard')}
+                            </Button>
                           </Link>
                         )}
                         <Button
-                          onClick={handleLogout}
+                          onClick={() => {
+                            handleLogout()
+                            closeMobileMenu()
+                          }}
                           variant="outline"
                           size="sm"
                           className="mt-2 w-full text-red-600 border-red-200 hover:bg-red-50"
@@ -381,27 +493,18 @@ export const Header: React.FC = () => {
                       </div>
                     ) : (
                       <div className="mb-4 space-y-2">
-                        <Link to="/login">
+                        <Link to="/login" onClick={() => { closeMobileMenu(); handleAuthClick(); }}>
                           <Button variant="outline" size="sm" className="w-full">
                             <LogIn className="mr-2 h-4 w-4" />
                             {t('auth.customerLogin')}
                           </Button>
                         </Link>
-                        <Link to="/signup">
+                        <Link to="/signup" onClick={() => { closeMobileMenu(); handleAuthClick(); }}>
                           <Button variant="outline" size="sm" className="w-full">
                             <UserPlus className="mr-2 h-4 w-4" />
                             {t('auth.signup')}
                           </Button>
                         </Link>
-                        <Button onClick={handleGoogleLogin} variant="outline" size="sm" className="w-full">
-                          <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">
-                            <path
-                              fill="currentColor"
-                              d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                            />
-                          </svg>
-                          Google
-                        </Button>
                       </div>
                     )}
 
@@ -413,12 +516,45 @@ export const Header: React.FC = () => {
                         <Link
                           key={category.name}
                           to={category.path}
-                          className="block rounded-md px-2 py-1 text-sm font-medium text-muted-foreground hover:bg-accent"
+                          onClick={closeMobileMenu}
+                          className="block rounded-md px-3 py-3 text-sm font-medium text-muted-foreground hover:bg-accent transition-colors duration-200"
                         >
                           {category.name}
                         </Link>
                       ))}
                     </nav>
+
+                    {/* Mobile Contact Link */}
+                    <Link to="/contact" onClick={() => { closeMobileMenu(); handleContactClick(); }} className="flex items-center gap-2 rounded-md px-3 py-3 text-sm font-medium text-muted-foreground hover:bg-accent transition-colors duration-200">
+                      {t('nav.contact')}
+                    </Link>
+
+                    {/* Mobile Cart Link */}
+                    {!isAdmin && (
+                      <>
+                        <Separator className="my-4" />
+                        <Link to="/cart" onClick={() => { closeMobileMenu(); handleCartClick(); }} className="flex items-center gap-2 rounded-md px-3 py-3 text-sm font-medium text-muted-foreground hover:bg-accent transition-colors duration-200">
+                          <ShoppingCart className="h-4 w-4" />
+                          {t('nav.cart')} {cartCount > 0 && `(${cartCount})`}
+                        </Link>
+                      </>
+                    )}
+
+                    {/* Mobile Profile Link for Customers */}
+                    {!isAdmin && isAuthenticated && (
+                      <Link to="/profile" onClick={closeMobileMenu} className="flex items-center gap-2 rounded-md px-3 py-3 text-sm font-medium text-muted-foreground hover:bg-accent transition-colors duration-200">
+                        <User className="h-4 w-4" />
+                        {t('auth.profile')}
+                      </Link>
+                    )}
+
+                    {/* Mobile Orders Link for Customers */}
+                    {!isAdmin && isAuthenticated && (
+                      <Link to="/orders" onClick={closeMobileMenu} className="flex items-center gap-2 rounded-md px-3 py-3 text-sm font-medium text-muted-foreground hover:bg-accent transition-colors duration-200">
+                        <ShoppingCart className="h-4 w-4" />
+                        {t('nav.orders')}
+                      </Link>
+                    )}
                   </div>
                 </SheetContent>
               </Sheet>

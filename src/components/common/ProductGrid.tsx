@@ -74,7 +74,7 @@ const ProductGrid: React.FC<ProductGridProps> = ({
   }
 
   return (
-    <div className={cn('grid gap-6', gridClasses[columns], className)}>
+    <div className={cn('grid gap-6 max-w-7xl mx-auto', gridClasses[columns], className)}>
       {products.map((product) => {
         const discountedPrice = product.discount 
           ? Number(product.price) * (1 - product.discount / 100)
@@ -109,12 +109,12 @@ const ProductGrid: React.FC<ProductGridProps> = ({
               <CardContent className="p-4 space-y-2">
                 <div className="space-y-1">
                   <h3 className="font-semibold text-foreground line-clamp-2 group-hover:text-gold-600 transition-colors">
-                    {product.name}
+                    {product?.name || 'Unnamed Product'}
                   </h3>
                   
                   {showCategory && (
                     <p className="text-sm text-muted-foreground capitalize">
-                      {product.category.name}
+                      {product?.category?.name || 'Uncategorized'}
                     </p>
                   )}
                 </div>

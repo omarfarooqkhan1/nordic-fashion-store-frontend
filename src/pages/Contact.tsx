@@ -1,18 +1,79 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useToast } from '@/hooks/use-toast';
+import api from '@/api/axios';
 
 const Contact = () => {
   const { t } = useLanguage();
+  const { toast } = useToast();
+  const [formData, setFormData] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    subject: '',
+    message: ''
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // Scroll to top when component mounts
+  React.useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Mock form submission
-    alert('Thank you for your message! We will get back to you soon.');
+    
+    if (!formData.firstName.trim() || !formData.lastName.trim() || !formData.email.trim() || !formData.subject.trim() || !formData.message.trim()) {
+      toast({
+        title: 'Please fill all fields',
+        description: 'All fields are required',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
+    
+    try {
+      await api.post('/contact', formData);
+      
+      toast({
+        title: 'Message sent successfully!',
+        description: 'Thank you for your message! We will get back to you soon.',
+        className: 'bg-green-500 text-white'
+      });
+      
+      // Reset form
+      setFormData({
+        firstName: '',
+        lastName: '',
+        email: '',
+        subject: '',
+        message: ''
+      });
+      
+    } catch (error: any) {
+      toast({
+        title: 'Failed to send message',
+        description: error.response?.data?.message || 'Something went wrong. Please try again.',
+        variant: 'destructive'
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -41,30 +102,70 @@ const Contact = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="firstName">First Name</Label>
-                  <Input id="firstName" required />
+                  <Input 
+                    id="firstName" 
+                    name="firstName"
+                    value={formData.firstName}
+                    onChange={handleInputChange}
+                    required 
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="lastName">Last Name</Label>
-                  <Input id="lastName" required />
+                  <Input 
+                    id="lastName" 
+                    name="lastName"
+                    value={formData.lastName}
+                    onChange={handleInputChange}
+                    required 
+                  />
                 </div>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
-                <Input id="email" type="email" required />
+                <Input 
+                  id="email" 
+                  type="email" 
+                  name="email"
+                  value={formData.email}
+                  onChange={handleInputChange}
+                  required 
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="subject">Subject</Label>
-                <Input id="subject" required />
+                <Input 
+                  id="subject" 
+                  name="subject"
+                  value={formData.subject}
+                  onChange={handleInputChange}
+                  required 
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="message">Message</Label>
-                <Textarea id="message" rows={6} required />
+                <Textarea 
+                  id="message" 
+                  rows={6} 
+                  name="message"
+                  value={formData.message}
+                  onChange={handleInputChange}
+                  required 
+                />
               </div>
               <Button 
                 type="submit" 
-                className="w-full bg-gradient-to-r from-gold-500 to-gold-600 hover:from-gold-400 hover:to-gold-500 text-leather-900 font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 border border-gold-400 hover:border-gold-300"
+                disabled={isSubmitting}
+                className="w-full bg-gradient-to-r from-gold-500 to-gold-600 hover:from-gold-400 hover:to-gold-500 text-leather-900 font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 border border-gold-400 hover:border-gold-300 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {t('contact.form.send')}
+                {isSubmitting ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    Sending...
+                  </>
+                ) : (
+                  t('contact.form.send')
+                )}
               </Button>
             </form>
           </CardContent>

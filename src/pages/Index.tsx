@@ -26,6 +26,11 @@ const Index = () => {
     'https://images.unsplash.com/photo-1506629905814-b9daf261d74f?w=1200&h=800&fit=crop',
   ];
 
+  // Scroll to top when component mounts
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentImageIndex((prev) => (prev + 1) % heroImages.length);
@@ -134,7 +139,7 @@ const Index = () => {
           ) : featuredProducts.length === 0 ? (
             <p className="text-center text-base sm:text-lg">{t('products.all')} - {t('cart.empty')}</p>
           ) : (
-            <Carousel className="w-full max-w-2xl md:max-w-5xl mx-auto" opts={{ align: 'start', loop: true }}>
+            <Carousel className="w-full max-w-4xl md:max-w-6xl mx-auto" opts={{ align: 'start', loop: true }}>
               <CarouselContent className="-ml-2 md:-ml-4">
                 {featuredProducts.map((product) => (
                   <CarouselItem key={product.id} className="pl-2 md:pl-4 basis-4/5 xs:basis-1/2 md:basis-1/2 lg:basis-1/3">
@@ -144,7 +149,7 @@ const Index = () => {
                           {product.images.length > 0 ? (
                             <img
                               src={product.images[0].url}
-                              alt={product.images[0].alt_text || product.name}
+                              alt={product.images[0].alt_text || product?.name || 'Product'}
                               className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                               onError={(e) => {
                                 e.currentTarget.src = '/placeholder.svg';
@@ -165,8 +170,8 @@ const Index = () => {
                       <CardContent className="p-4 sm:p-6">
                         <Link to={`/product/${product.id}`}>
                           <div>
-                            <h3 className="text-base sm:text-xl font-semibold mb-1 sm:mb-2 text-foreground hover:text-primary transition-colors">{product.name}</h3>
-                            <p className="text-xs sm:text-sm text-muted-foreground capitalize mb-1 sm:mb-2">{product.category.name}</p>
+                            <h3 className="text-base sm:text-xl font-semibold mb-1 sm:mb-2 text-foreground hover:text-primary transition-colors">{product?.name || 'Unnamed Product'}</h3>
+                            <p className="text-xs sm:text-sm text-muted-foreground capitalize mb-1 sm:mb-2">{product?.category?.name || 'Uncategorized'}</p>
                           </div>
                         </Link>
                         <p className="text-xs sm:text-sm text-muted-foreground mb-2 sm:mb-4 line-clamp-2">{product.description}</p>

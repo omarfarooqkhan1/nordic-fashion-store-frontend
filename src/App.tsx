@@ -49,9 +49,9 @@ import CheckoutSuccess from "./pages/CheckoutSuccess"
 const queryClient = new QueryClient()
 
 // Auth0 configuration
-const auth0Domain = import.meta.env.VITE_AUTH0_DOMAIN
-const auth0ClientId = import.meta.env.VITE_AUTH0_CLIENT_ID
-const auth0Audience = import.meta.env.VITE_AUTH0_AUDIENCE
+const auth0Domain = import.meta.env.VITE_AUTH0_DOMAIN || 'your-domain.auth0.com'
+const auth0ClientId = import.meta.env.VITE_AUTH0_CLIENT_ID || 'your_client_id'
+const auth0Audience = import.meta.env.VITE_AUTH0_AUDIENCE || 'https://your-domain.auth0.com/api/v2/'
 
 const App: React.FC = () => {
   return (
@@ -61,21 +61,22 @@ const App: React.FC = () => {
           <LanguageProvider>
             <TooltipProvider>
               <Toaster />
-              <Sonner />                <Auth0Provider
-                  domain={auth0Domain}
-                  clientId={auth0ClientId}
-                  authorizationParams={{
-                    redirect_uri: `${window.location.origin}/auth/callback`,
-                    audience: auth0Audience,
-                  }}
-                  cacheLocation="localstorage"
-                  useRefreshTokens={true}
-                  onRedirectCallback={(appState) => {
-                    // Handle the callback and redirect to intended page
-                    const returnTo = appState?.returnTo || window.location.pathname;
-                    window.location.replace(returnTo);
-                  }}
-                >
+              <Sonner />
+              <Auth0Provider
+                domain={auth0Domain}
+                clientId={auth0ClientId}
+                authorizationParams={{
+                  redirect_uri: import.meta.env.VITE_AUTH0_CALLBACK_URL || `${window.location.origin}/auth/callback`,
+                  audience: auth0Audience,
+                }}
+                cacheLocation="localstorage"
+                useRefreshTokens={true}
+                onRedirectCallback={(appState) => {
+                  // Handle the callback and redirect to intended page
+                  const returnTo = appState?.returnTo || window.location.pathname;
+                  window.location.replace(returnTo);
+                }}
+              >
                 <AuthProvider>
                   <CartProvider>
                     <Router>

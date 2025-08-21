@@ -56,6 +56,11 @@ const ProductDetail = () => {
   }, [product, selectedSize, selectedColor, currentImageIndex]);
 
   const [reviewSummary, setReviewSummary] = useState<{ average_rating: number; review_count: number } | null>(null);
+  // Scroll to top when component mounts
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
   // Fetch review summary on mount
   useEffect(() => {
     let isMounted = true;
