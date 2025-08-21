@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import MediaPreviewModal from '@/components/MediaPreviewModal';
+import MediaThumbnail from '@/components/MediaThumbnail';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
@@ -34,29 +36,32 @@ import {
 } from 'lucide-react';
 
 import { fetchProducts } from '@/api/products';
-// import { 
-//   createProduct, 
-//   updateProduct, 
-//   deleteProduct, 
-//   bulkUploadProducts, 
-//   getBulkUploadTemplate,
-//   fetchCategories,
-//   createCategory,
-//   updateCategory,
-//   deleteCategory,
-//   uploadProductImage,
-//   deleteProductImage,
-//   updateProductImageOrder,
-//   getCategorizedImages,
-//   type ProductFormData,
-// } from '@/api/products';
-import {
-  type Product,
-  type Category
+import type { Product, Category } from '@/api/admin';
+import { 
+  createProduct, 
+  updateProduct, 
+  deleteProduct, 
+  bulkUploadProducts, 
+  getBulkUploadTemplate,
+  fetchCategories,
+  createCategory,
+  updateCategory,
+  deleteCategory,
+  uploadProductImage,
+  deleteProductImage,
+  updateProductImageOrder,
+  getCategorizedImages,
+  type ProductFormData,
 } from '@/api/admin';
 import OrderManagement from '@/components/admin/OrderManagement';
+import ContactForms from '@/components/admin/ContactForms';
+import { getPendingReviews, approveReview, rejectReview, type ProductReview } from '@/api/reviews';
+import { fetchProductById } from '@/api/products';
+import { LoadingState } from '@/components/common';
 
 const AdminDashboard: React.FC = () => {
+  // State for which review modal is open (by review id)
+  const [openReviewModalId, setOpenReviewModalId] = useState<number | null>(null);
   const navigate = useNavigate();
   const location = useLocation();
   const { user, token } = useAuth();
@@ -69,6 +74,12 @@ const AdminDashboard: React.FC = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadFile, setUploadFile] = useState<File | null>(null);
   const [updateExisting, setUpdateExisting] = useState(false);
+
+  // Pending Reviews State
+  const [pendingReviews, setPendingReviews] = useState<ProductReview[]>([]);
+  const [pendingLoading, setPendingLoading] = useState(false);
+  const [pendingError, setPendingError] = useState<string | null>(null);
+  const [reviewProductNames, setReviewProductNames] = useState<Record<number, string>>({});
 
   // Determine active tab based on URL
   const getActiveTab = () => {
@@ -97,7 +108,11 @@ const AdminDashboard: React.FC = () => {
   // Fetch products
   const { data: products = [], isLoading: productsLoading } = useQuery({
     queryKey: ['admin-products'],
-    queryFn: () => fetchProducts(),
+    queryFn: async () => {
+      const data = await fetchProducts();
+      // Cast to admin Product type for compatibility
+      return data as unknown as Product[];
+    },
     enabled: isAuthenticated,
   });
 
@@ -159,10 +174,62 @@ const AdminDashboard: React.FC = () => {
     },
   });
 
-  const handleLogout = () => {
-    localStorage.removeItem('adminAuthenticated');
-    navigate('/admin/login');
-  };
+  // Approve review mutation
+  const approveReviewMutation = useMutation({
+    mutationFn: (reviewId: number) => approveReview(reviewId, token),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-products'] });
+      toast({ title: 'Review approved' });
+    },
+    onError: (error: any) => {
+      toast({ 
+        title: 'Error approving review', 
+        description: error.message,
+        variant: 'destructive' 
+      });
+    },
+  });
+
+  // Reject review mutation
+  const rejectReviewMutation = useMutation({
+    mutationFn: (reviewId: number) => rejectReview(reviewId, token),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-products'] });
+      toast({ title: 'Review rejected' });
+    },
+    onError: (error: any) => {
+      toast({ 
+        title: 'Error rejecting review', 
+        description: error.message,
+        variant: 'destructive' 
+      });
+    },
+  });
+
+  // Fetch pending reviews on mount
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    setPendingLoading(true);
+    getPendingReviews()
+      .then(async (reviews) => {
+        setPendingReviews(reviews);
+        // Fetch product names for each review
+        const names: Record<number, string> = {};
+        await Promise.all(
+          reviews.map(async (review) => {
+            try {
+              const product = await fetchProductById(review.product_id.toString());
+              names[review.id] = product.name;
+            } catch {
+              names[review.id] = 'Product';
+            }
+          })
+        );
+        setReviewProductNames(names);
+      })
+      .catch(e => setPendingError(e.message || 'Failed to load pending reviews'))
+      .finally(() => setPendingLoading(false));
+  }, [isAuthenticated]);
 
   const handleDeleteProduct = (product: Product) => {
     if (confirm(`Are you sure you want to delete "${product.name}"?`)) {
@@ -230,7 +297,7 @@ const AdminDashboard: React.FC = () => {
   };
 
   if (!isAuthenticated) {
-    return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
+    return <LoadingState message="Loading..." className="min-h-screen" />;
   }
 
   // Product Form Component
@@ -574,13 +641,10 @@ const AdminDashboard: React.FC = () => {
     <div className="container mx-auto px-2 sm:px-4 py-4 sm:py-8 space-y-4 sm:space-y-8">
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
         <h1 className="text-2xl sm:text-4xl font-bold text-foreground">Admin Dashboard</h1>
-        <Button variant="outline" onClick={handleLogout} className="self-start sm:self-auto">
-          Logout
-        </Button>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-1">
+        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-1">
           <TabsTrigger 
             value="overview" 
             onClick={() => navigate('/admin/dashboard')}
@@ -604,6 +668,13 @@ const AdminDashboard: React.FC = () => {
           </TabsTrigger>
           <TabsTrigger value="orders" className="text-xs sm:text-sm">
             Orders
+          </TabsTrigger>
+          <TabsTrigger value="pending-reviews" className="text-xs sm:text-sm">
+            Pending Reviews
+          </TabsTrigger>
+          <TabsTrigger value="contact-forms" className="text-xs sm:text-sm">
+            <span className="hidden sm:inline">Contact Forms</span>
+            <span className="sm:hidden">Contacts</span>
           </TabsTrigger>
         </TabsList>
 
@@ -707,7 +778,7 @@ const AdminDashboard: React.FC = () => {
           )}
 
           {productsLoading ? (
-            <div className="text-center py-8">Loading products...</div>
+            <LoadingState message="Loading products..." className="py-8" />
           ) : (
             <div className="grid gap-6">
               {products.map((product) => (
@@ -923,6 +994,115 @@ const AdminDashboard: React.FC = () => {
         {/* Orders Tab */}
         <TabsContent value="orders" className="space-y-6">
           <OrderManagement />
+        </TabsContent>
+        {/* Pending Reviews Tab */}
+        <TabsContent value="pending-reviews" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Pending Reviews</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {pendingLoading ? (
+                <div className="text-center py-4">Loading pending reviews...</div>
+              ) : pendingError ? (
+                <div className="text-red-500 text-center py-4">{pendingError}</div>
+              ) : pendingReviews.length === 0 ? (
+                <div className="text-center py-4 text-muted-foreground">
+                  No pending reviews
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {pendingReviews.map((review) => {
+                    // Use first image in media as thumbnail, fallback to icon
+                    const mainMedia = review.media && review.media.length > 0 ? review.media[0] : null;
+                    const productName = reviewProductNames[review.id] || 'Product';
+                    const userName = (review as any).userName || (review as any).customer_name || 'User';
+                    const handleApprove = (id: number) => approveReviewMutation.mutate(id);
+                    const handleReject = (id: number) => rejectReviewMutation.mutate(id);
+                    const isModalOpen = openReviewModalId === review.id;
+                    return (
+                      <div key={review.id} className="p-4 border rounded-lg bg-white shadow-sm">
+                        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                          {/* Thumbnail */}
+                          <MediaThumbnail
+                            media={mainMedia ? { url: mainMedia.url, type: mainMedia.type as 'image' | 'video' } : null}
+                            onClick={() => mainMedia && setOpenReviewModalId(review.id)}
+                            className="mr-4"
+                          />
+                          {/* Media Preview Modal (reusable) */}
+                          <MediaPreviewModal
+                            open={isModalOpen}
+                            onClose={() => setOpenReviewModalId(null)}
+                            media={mainMedia ? { url: mainMedia.url, type: mainMedia.type as 'image' | 'video' } : null}
+                          />
+                          {/* Review Details */}
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-1">
+                              <span className="font-semibold text-lg truncate">{productName}</span>
+                              <a
+                                href={review.product_id ? `/product/${review.product_id}` : '#'}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="ml-1 text-blue-500 hover:text-blue-700"
+                                title="View product in new tab"
+                                onClick={e => e.stopPropagation()}
+                              >
+                                {/* Lucide ExternalLink icon for robust UI */}
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path d="M18 13v6a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                              </a>
+                              <span className="text-xs text-muted-foreground">#{review.id}</span>
+                            </div>
+                            <div className="flex items-center gap-2 mb-1">
+                              <span className="text-sm text-muted-foreground">By {userName}</span>
+                              <span className="text-xs text-muted-foreground">{new Date(review.created_at).toLocaleString()}</span>
+                            </div>
+                            <div className="flex items-center gap-1 mb-2">
+                              {[1,2,3,4,5].map(star => (
+                                <span key={star} className={star <= review.rating ? 'text-yellow-400' : 'text-gray-300'}>★</span>
+                              ))}
+                              <span className="ml-2 text-xs text-muted-foreground">{review.rating}/5</span>
+                            </div>
+                            {review.title && <div className="font-medium mb-1">{review.title}</div>}
+                            {review.review_text && <div className="mb-2 text-sm">{review.review_text}</div>}
+                          </div>
+                          {/* Actions */}
+                          <div className="flex flex-col gap-2 md:items-end md:justify-center">
+                            <Button
+                              variant="success"
+                              size="sm"
+                              onClick={() => handleApprove(review.id)}
+                              disabled={approveReviewMutation.isPending}
+                            >
+                              {approveReviewMutation.isPending && approveReviewMutation.variables?.[0] === review.id ? (
+                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-900 mr-2"></div>
+                              ) : null}
+                              Approve
+                            </Button>
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              onClick={() => handleReject(review.id)}
+                              disabled={rejectReviewMutation.isPending}
+                            >
+                              {rejectReviewMutation.isPending && rejectReviewMutation.variables?.[0] === review.id ? (
+                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-900 mr-2"></div>
+                              ) : null}
+                              Reject
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Contact Forms Tab */}
+        <TabsContent value="contact-forms" className="space-y-6">
+          <ContactForms />
         </TabsContent>
       </Tabs>
     </div>

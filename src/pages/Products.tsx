@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useLanguage } from '@/contexts/LanguageContext';
 import type { Product } from '@/types/Product';
 import { fetchProducts } from '@/api/products';
+import { LoadingState } from '@/components/common/LoadingState';
 
 const Products = () => {
   const { t } = useLanguage();
@@ -18,6 +19,11 @@ const Products = () => {
   const [searchQuery, setSearchQuery] = useState<string>('');
 
   const categories = ['all', 'bags', 'wallets', 'belts', 'jackets', 'accessories'];
+
+  // Scroll to top when component mounts or search parameters change
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [searchQuery, selectedCategory]);
 
   // Sync URL params with state
   useEffect(() => {
@@ -67,13 +73,13 @@ const Products = () => {
   });
 
   return (
-    <div className="container mx-auto px-4 py-16 space-y-8">
+    <div className="container mx-auto px-2 sm:px-4 py-10 sm:py-16 space-y-8">
       {/* Header */}
-      <section className="text-center space-y-6">
-        <h1 className="text-4xl md:text-6xl font-bold text-leather-900 dark:text-leather-100">
+      <section className="text-center space-y-4 sm:space-y-6">
+        <h1 className="text-2xl sm:text-4xl md:text-6xl font-bold text-leather-900 dark:text-leather-100">
           {searchQuery ? `Search Results for "${searchQuery}"` : t('products.title') || 'Our Products'}
         </h1>
-        <p className="text-xl text-leather-700 dark:text-leather-200 max-w-2xl mx-auto">
+        <p className="text-base sm:text-xl text-leather-700 dark:text-leather-200 max-w-xl sm:max-w-2xl mx-auto">
           {searchQuery
             ? `Found ${sortedProducts.length} product${sortedProducts.length !== 1 ? 's' : ''}`
             : t('common.discover')}
@@ -81,8 +87,8 @@ const Products = () => {
       </section>
 
       {/* Filters */}
-      <div className="flex flex-col sm:flex-row gap-4 justify-between items-center">
-        <div className="flex gap-4">
+      <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 justify-between items-center">
+        <div className="flex flex-col sm:flex-row gap-4">
           <Select
             value={selectedCategory}
             onValueChange={(value) => {
@@ -96,7 +102,7 @@ const Products = () => {
               setSearchParams(newParams);
             }}
           >
-            <SelectTrigger className="w-[180px]">
+            <SelectTrigger className="w-full sm:w-[180px]">
               <SelectValue placeholder="Category" />
             </SelectTrigger>
             <SelectContent>
@@ -112,7 +118,7 @@ const Products = () => {
           </Select>
 
           <Select value={sortBy} onValueChange={setSortBy}>
-            <SelectTrigger className="w-[180px]">
+            <SelectTrigger className="w-full sm:w-[180px]">
               <SelectValue placeholder="Sort by" />
             </SelectTrigger>
             <SelectContent>
@@ -122,9 +128,9 @@ const Products = () => {
           </Select>
         </div>
 
-        <div className="flex items-center gap-4">
+        <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-4 w-full sm:w-auto">
           {searchQuery && (
-            <div className="flex items-center gap-2 px-3 py-1 bg-cognac-100 dark:bg-cognac-900/20 rounded-full text-sm">
+            <div className="flex items-center gap-2 px-3 py-1 bg-cognac-100 dark:bg-cognac-900/20 rounded-full text-xs sm:text-sm">
               <span>Search: "{searchQuery}"</span>
               <Button
                 variant="ghost"
@@ -141,21 +147,21 @@ const Products = () => {
               </Button>
             </div>
           )}
-          <p className="text-muted-foreground">
+          <p className="text-xs sm:text-sm text-muted-foreground">
             {sortedProducts.length} product{sortedProducts.length !== 1 ? 's' : ''}
           </p>
         </div>
       </div>
 
       {/* Loading/Error */}
-      {isLoading && <p className="text-center">Loading products...</p>}
+      {isLoading && <LoadingState message="Loading products..." className="py-12" />}
       {isError && <p className="text-center text-red-600">Error: {error?.message}</p>}
 
       {/* Product Grid */}
       {!isLoading && !isError && (
         <>
           {sortedProducts.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 max-w-7xl mx-auto">
               {sortedProducts.map((product) => (
                 <Card
                   key={product.id}

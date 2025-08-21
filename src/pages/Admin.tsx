@@ -11,6 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { mockProducts, Product } from '@/lib/mockData';
 import { Pencil, Trash2, Plus, Package, Users, TrendingUp, Euro } from 'lucide-react';
+import { LoadingState } from '@/components/common';
 
 const Admin = () => {
   const { t } = useLanguage();
@@ -35,7 +36,7 @@ const Admin = () => {
   };
 
   if (!isAuthenticated) {
-    return <div>Loading...</div>;
+    return <LoadingState message="Loading..." />;
   }
 
   const handleDeleteProduct = (id: string) => {

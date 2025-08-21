@@ -1,0 +1,94 @@
+import { useState, useEffect, useCallback } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
+import { canUserReview, type CanReviewResponse } from '@/api/reviews';
+
+interface UseReviewStatusReturn {
+  reviewStatus: CanReviewResponse['data'] | null;
+  isLoading: boolean;
+  error: string | null;
+  refreshStatus: () => Promise<void>;
+  canReview: boolean;
+  hasPurchased: boolean;
+  hasDelivered: boolean;
+  hasPending: boolean;
+  hasReviewed: boolean;
+  purchaseDetails: any;
+  pendingOrderDetails: any;
+  deliveryStatus: 'delivered' | 'pending' | 'none';
+  existingReview: any;
+}
+
+export const useReviewStatus = (productId: number): UseReviewStatusReturn => {
+  const { user, isAuthenticated } = useAuth();
+  const [reviewStatus, setReviewStatus] = useState<CanReviewResponse['data'] | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchReviewStatus = useCallback(async () => {
+    console.log('🔍 fetchReviewStatus called:', { productId, isAuthenticated, userId: user?.id });
+    
+    if (!isAuthenticated || !user) {
+      console.log('❌ User not authenticated, setting review status to null');
+      setReviewStatus(null);
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      setError(null);
+      console.log('🚀 Calling canUserReview API for product:', productId);
+      const response = await canUserReview(productId);
+      console.log('✅ API Response:', response);
+      setReviewStatus(response.data);
+      console.log('🟢 reviewStatus set:', response.data);
+    } catch (err: any) {
+      console.error('❌ Error fetching review status:', err);
+      setError(err.response?.data?.message || 'Failed to check review status');
+      setReviewStatus(null);
+      console.log('🔴 Error state set:', err.response?.data?.message || err.message || err);
+    } finally {
+      setIsLoading(false);
+      console.log('ℹ️ fetchReviewStatus finished. Current reviewStatus:', reviewStatus, 'Current error:', error);
+    }
+  }, [productId, isAuthenticated, user]);
+
+  // Initial fetch
+  useEffect(() => {
+    fetchReviewStatus();
+  }, [fetchReviewStatus]);
+
+  // Auto-refresh when user changes or product changes
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      fetchReviewStatus();
+    }
+  }, [user?.id, productId, isAuthenticated]);
+
+  // Set up periodic refresh (every 5 minutes) to catch order status changes
+  useEffect(() => {
+    if (!isAuthenticated || !user) return;
+
+    const interval = setInterval(() => {
+      fetchReviewStatus();
+    }, 5 * 60 * 1000); // 5 minutes
+
+    return () => clearInterval(interval);
+  }, [isAuthenticated, user, fetchReviewStatus]);
+
+  return {
+    reviewStatus,
+    isLoading,
+    error,
+    refreshStatus: fetchReviewStatus,
+    canReview: reviewStatus?.can_review ?? false,
+    hasPurchased: reviewStatus?.has_purchased ?? false,
+    hasDelivered: reviewStatus?.has_delivered ?? false,
+    hasPending: reviewStatus?.has_pending ?? false,
+    hasReviewed: reviewStatus?.has_reviewed ?? false,
+    purchaseDetails: reviewStatus?.purchase_details ?? null,
+    pendingOrderDetails: reviewStatus?.pending_order_details ?? null,
+    deliveryStatus: reviewStatus?.delivery_status ?? 'none',
+    existingReview: reviewStatus?.existing_review ?? null,
+  };
+};

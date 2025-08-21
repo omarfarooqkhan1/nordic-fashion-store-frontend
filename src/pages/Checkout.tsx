@@ -10,8 +10,9 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Separator } from '@/components/ui/separator';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { CreditCard, Truck, Shield, ArrowLeft } from 'lucide-react';
+import { CreditCard, Truck, Shield, ArrowLeft, Plus, MapPin } from 'lucide-react';
 import { createOrder } from '@/api/orders';
+import { createAddress } from '@/api/addresses';
 
 interface CheckoutFormData {
   shipping_name: string;
@@ -42,13 +43,14 @@ interface CheckoutFormData {
 
 const Checkout: React.FC = () => {
   const navigate = useNavigate();
-  const { items, getCartTotal, getCartItemsCount, clearCartItems, isLoading } = useCart();
+  const { items, customItems, getCartTotal, getCartItemsCount, clearCartItems, isLoading } = useCart();
   const { user, token } = useAuth();
   const { toast } = useToast();
   const [isProcessing, setIsProcessing] = useState(false);
   
   // Debug cart state
-  console.log('🏪 Checkout rendered - Cart items:', items?.length || 0, 'isLoading:', isLoading, 'isProcessing:', isProcessing);
+  console.log('🏪 Checkout rendered - Cart items:', items?.length || 0, 'Custom items:', customItems?.length || 0, 'isLoading:', isLoading, 'isProcessing:', isProcessing);
+  console.log('🔍 Full cart data:', { items, customItems, getCartTotal: getCartTotal(), getCartItemsCount: getCartItemsCount() });
   
   const [formData, setFormData] = useState<CheckoutFormData>({
     shipping_name: user?.name || '',
@@ -56,18 +58,18 @@ const Checkout: React.FC = () => {
     shipping_phone: '',
     shipping_address: '',
     shipping_city: '',
-    shipping_state: 'Stockholm',
+    shipping_state: 'Turku',
     shipping_postal_code: '',
-    shipping_country: 'Sweden',
+    shipping_country: 'Finland',
     billing_same_as_shipping: true,
     billing_name: '',
     billing_email: '',
     billing_phone: '',
     billing_address: '',
     billing_city: '',
-    billing_state: 'Stockholm',
+    billing_state: 'Turku',
     billing_postal_code: '',
-    billing_country: 'Sweden',
+    billing_country: 'Finland',
     payment_method: 'credit_card',
     notes: '',
     card_number: '',
@@ -80,11 +82,14 @@ const Checkout: React.FC = () => {
 
   // Wait for cart to load before checking if it's empty
   useEffect(() => {
-    console.log('🔄 useEffect - isLoading:', isLoading, 'items:', items?.length, 'isProcessing:', isProcessing);
+    console.log('🔄 useEffect - isLoading:', isLoading, 'items:', items?.length, 'customItems:', customItems?.length, 'isProcessing:', isProcessing);
+    console.log('🔍 useEffect - Full data:', { items, customItems });
     
     // Only check cart status after loading is complete
     if (!isLoading && !isProcessing) {
-      if (!items || items.length === 0) {
+      const totalItems = (items?.length || 0) + (customItems?.length || 0);
+      console.log('📊 Total items calculation:', { itemsCount: items?.length || 0, customItemsCount: customItems?.length || 0, totalItems });
+      if (totalItems === 0) {
         console.log('⚠️ Cart is empty after loading, redirecting to cart page');
         navigate('/cart');
       } else {
@@ -93,7 +98,7 @@ const Checkout: React.FC = () => {
     } else {
       console.log('🔄 Still loading or processing, waiting...');
     }
-  }, [isLoading, items, navigate, isProcessing]);
+  }, [isLoading, items, customItems, navigate, isProcessing]);
 
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
@@ -162,6 +167,28 @@ const Checkout: React.FC = () => {
       console.log('💰 Starting payment processing...');
       // Simulate payment processing delay
       await new Promise(resolve => setTimeout(resolve, 2000));
+
+      // Save shipping address to user's address book if user is authenticated
+      if (user && token) {
+        try {
+          console.log('🏠 Saving shipping address to address book...');
+          const addressData = {
+            type: 'home' as const,
+            label: 'Checkout Address',
+            street: formData.shipping_address,
+            city: formData.shipping_city,
+            state: formData.shipping_state,
+            postal_code: formData.shipping_postal_code,
+            country: formData.shipping_country,
+          };
+          
+          await createAddress(addressData);
+          console.log('✅ Shipping address saved to address book');
+        } catch (addressError) {
+          console.warn('⚠️ Failed to save address to address book:', addressError);
+          // Don't fail the order if address saving fails
+        }
+      }
 
       console.log('📝 Creating order with API call...');
       console.log('📤 Order data being sent:', formData);
@@ -269,6 +296,12 @@ const Checkout: React.FC = () => {
                   <Truck className="h-5 w-5" />
                   Shipping Information
                 </CardTitle>
+                {user && (
+                  <p className="text-sm text-muted-foreground flex items-center gap-2">
+                    <MapPin className="h-4 w-4" />
+                    Your shipping address will be saved to your address book for future orders
+                  </p>
+                )}
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
@@ -323,7 +356,7 @@ const Checkout: React.FC = () => {
                       id="shipping_state"
                       value={formData.shipping_state}
                       onChange={(e) => handleInputChange('shipping_state', e.target.value)}
-                      placeholder="Stockholm"
+                      placeholder="Turku"
                     />
                   </div>
                 </div>
@@ -419,7 +452,7 @@ const Checkout: React.FC = () => {
                           id="billing_state"
                           value={formData.billing_state}
                           onChange={(e) => handleInputChange('billing_state', e.target.value)}
-                          placeholder="Stockholm"
+                          placeholder="Turku"
                         />
                       </div>
                     </div>
@@ -541,6 +574,7 @@ const Checkout: React.FC = () => {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-3">
+                {/* Regular Items */}
                 {items && items.map((item) => (
                   <div key={item.id} className="flex justify-between text-sm">
                     <div className="flex-1">
@@ -550,6 +584,24 @@ const Checkout: React.FC = () => {
                       </p>
                     </div>
                     <span className="font-medium">€{(getCartTotal() / getCartItemsCount() * item.quantity).toFixed(2)}</span>
+                  </div>
+                ))}
+                
+                {/* Custom Jacket Items */}
+                {customItems && customItems.map((customItem) => (
+                  <div key={customItem.id} className="flex justify-between text-sm">
+                    <div className="flex-1">
+                      <p className="font-medium">{customItem.name}</p>
+                      <p className="text-muted-foreground">
+                        Custom Design - {customItem.color} • Size: {customItem.size} × {customItem.quantity}
+                      </p>
+                      {customItem.logos && customItem.logos.length > 0 && (
+                        <p className="text-xs text-muted-foreground">
+                          {customItem.logos.length} logo{customItem.logos.length !== 1 ? 's' : ''} placed
+                        </p>
+                      )}
+                    </div>
+                    <span className="font-medium">€{(Number(customItem.price) || 0).toFixed(2)}</span>
                   </div>
                 ))}
               </div>

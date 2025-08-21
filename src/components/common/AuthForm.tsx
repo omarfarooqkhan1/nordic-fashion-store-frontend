@@ -11,7 +11,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 
 const authSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
-  password: z.string().min(6, "Password must be at least 6 characters"),
+  password: z.string().min(8, "Password must be at least 8 characters"),
 });
 
 type AuthFormData = z.infer<typeof authSchema>;
@@ -96,10 +96,11 @@ export const AuthForm: React.FC<AuthFormProps> = ({
               {showPasswordToggle && (
                 <button
                   type="button"
-                  className="absolute right-3 top-3 h-4 w-4 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
+                  className="absolute right-0 top-0 flex items-center justify-center h-full px-3 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
                   onClick={() => setShowPassword(!showPassword)}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
                 >
-                  {showPassword ? <EyeOff /> : <Eye />}
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               )}
             </div>

@@ -27,10 +27,19 @@ const CartItem: React.FC<CartItemProps> = ({
   const itemPrice = getItemPrice(item);
   const totalPrice = itemPrice * item.quantity;
 
-  // Get product image - handle different possible image structures
-  const productImage = item.variant?.product?.images?.[0]?.url || 
-    item.variant?.images?.[0]?.url ||
+  // Get product image - prioritize variant images, then fall back to product images
+  const productImage = item.variant?.images?.[0]?.url || 
+    item.variant?.product?.images?.[0]?.url ||
     `https://placehold.co/96x96/EFEFEF/AAAAAA?text=Product`;
+
+  // Debug logging for image loading
+  console.log('🖼️ CartItem image debug:', {
+    itemId: item.id,
+    variantImages: item.variant?.images,
+    productImages: item.variant?.product?.images,
+    selectedImage: productImage,
+    variant: item.variant
+  });
 
   return (
     <Card className="bg-card border-border rounded-lg shadow-md">
@@ -38,14 +47,24 @@ const CartItem: React.FC<CartItemProps> = ({
         <div className="flex flex-col sm:flex-row gap-4 items-center sm:items-start">
           {/* Product Image */}
           <div className="w-24 h-24 bg-leather-200 dark:bg-leather-700 rounded-lg flex-shrink-0 overflow-hidden">
-            <img 
-              src={productImage}
-              alt={item.variant?.product?.name || 'Product'} 
-              className="w-full h-full object-cover rounded-lg"
-              onError={(e) => { 
-                e.currentTarget.src = 'https://placehold.co/96x96/EFEFEF/AAAAAA?text=No+Image'; 
-              }}
-            />
+            {productImage && productImage !== 'https://placehold.co/96x96/EFEFEF/AAAAAA?text=Product' ? (
+              <img 
+                src={productImage}
+                alt={item.variant?.product?.name || 'Product'} 
+                className="w-full h-full object-cover rounded-lg"
+                onError={(e) => { 
+                  console.warn(`🖼️ Failed to load image for item ${item.id}:`, productImage);
+                  e.currentTarget.src = 'https://placehold.co/96x96/EFEFEF/AAAAAA?text=No+Image'; 
+                }}
+                onLoad={() => {
+                  console.log(`✅ Image loaded successfully for item ${item.id}:`, productImage);
+                }}
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center bg-gray-100 dark:bg-gray-700 rounded-lg">
+                <span className="text-2xl text-gray-400">📦</span>
+              </div>
+            )}
           </div>
 
           <div className="flex-1 space-y-3 w-full">

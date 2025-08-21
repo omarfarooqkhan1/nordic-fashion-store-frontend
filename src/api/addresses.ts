@@ -3,8 +3,8 @@ import api from './axios'
 export interface Address {
   id: string
   user_id: number
-  type: 'home' | 'work' | 'other'
-  label: string
+  type?: 'home' | 'work' | 'other'
+  label?: string
   street: string
   city: string
   state: string
@@ -16,8 +16,8 @@ export interface Address {
 }
 
 export interface CreateAddressData {
-  type: 'home' | 'work' | 'other'
-  label: string
+  type?: 'home' | 'work' | 'other'
+  label?: string
   street: string
   city: string
   state?: string

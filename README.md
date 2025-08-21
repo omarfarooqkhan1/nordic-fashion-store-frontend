@@ -1,6 +1,6 @@
-# Nordic Fashion Store - Frontend
+# Nord Flex - Frontend
 
-Modern React frontend for Nordic Fashion Store e-commerce platform.
+Modern React frontend for Nord Flex e-commerce platform.
 
 ## 🚀 Quick Start
 

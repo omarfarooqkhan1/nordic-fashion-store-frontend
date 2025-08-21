@@ -36,7 +36,7 @@ const AdminLogin = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-leather-100 to-leather-200 dark:from-leather-900 dark:to-leather-800 px-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-leather-100 to-leather-200 dark:from-leather-900 dark:to-leather-800 px-2 sm:px-4">
       <Card className="w-full max-w-md bg-gradient-to-br from-card to-leather-100/50 dark:from-card dark:to-leather-800/30 border-border shadow-xl">
         <CardHeader className="text-center space-y-4">
           <div className="mx-auto w-16 h-16 bg-gradient-to-r from-gold-500 to-gold-600 rounded-full flex items-center justify-center">

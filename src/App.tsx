@@ -36,19 +36,22 @@ import CustomJacketConfigurator from "./pages/CustomJacketConfigurator"
 import CustomerSignup from "./pages/auth/CustomerSignup"
 import VerifyEmail from "./pages/auth/VerifyEmail"
 import Auth0Callback from "./pages/auth/Auth0Callback"
+import ForgotPassword from "./pages/auth/ForgotPassword"
+import ResetPassword from "./pages/auth/ResetPassword"
 
 // Customer Pages
 import Profile from "./pages/Profile"
 import Orders from "./pages/Orders"
 import CheckoutFixed from "./pages/CheckoutFixed"
+import CheckoutSuccess from "./pages/CheckoutSuccess"
 
 // Create a client
 const queryClient = new QueryClient()
 
 // Auth0 configuration
-const auth0Domain = import.meta.env.VITE_AUTH0_DOMAIN
-const auth0ClientId = import.meta.env.VITE_AUTH0_CLIENT_ID
-const auth0Audience = import.meta.env.VITE_AUTH0_AUDIENCE
+const auth0Domain = import.meta.env.VITE_AUTH0_DOMAIN || 'your-domain.auth0.com'
+const auth0ClientId = import.meta.env.VITE_AUTH0_CLIENT_ID || 'your_client_id'
+const auth0Audience = import.meta.env.VITE_AUTH0_AUDIENCE || 'https://your-domain.auth0.com/api/v2/'
 
 const App: React.FC = () => {
   return (
@@ -58,21 +61,22 @@ const App: React.FC = () => {
           <LanguageProvider>
             <TooltipProvider>
               <Toaster />
-              <Sonner />                <Auth0Provider
-                  domain={auth0Domain}
-                  clientId={auth0ClientId}
-                  authorizationParams={{
-                    redirect_uri: `${window.location.origin}/auth/callback`,
-                    audience: auth0Audience,
-                  }}
-                  cacheLocation="localstorage"
-                  useRefreshTokens={true}
-                  onRedirectCallback={(appState) => {
-                    // Handle the callback and redirect to intended page
-                    const returnTo = appState?.returnTo || window.location.pathname;
-                    window.location.replace(returnTo);
-                  }}
-                >
+              <Sonner />
+              <Auth0Provider
+                domain={auth0Domain}
+                clientId={auth0ClientId}
+                authorizationParams={{
+                  redirect_uri: import.meta.env.VITE_AUTH0_CALLBACK_URL || `${window.location.origin}/auth/callback`,
+                  audience: auth0Audience,
+                }}
+                cacheLocation="localstorage"
+                useRefreshTokens={true}
+                onRedirectCallback={(appState) => {
+                  // Handle the callback and redirect to intended page
+                  const returnTo = appState?.returnTo || window.location.pathname;
+                  window.location.replace(returnTo);
+                }}
+              >
                 <AuthProvider>
                   <CartProvider>
                     <Router>
@@ -94,6 +98,8 @@ const App: React.FC = () => {
                               <Route path="/signup" element={<CustomerSignup />} />
                               <Route path="/verify-email" element={<VerifyEmail />} />
                               <Route path="/admin/login" element={<AdminLogin />} />
+                              <Route path="/forgot-password" element={<ForgotPassword />} />
+                              <Route path="/reset-password/:token" element={<ResetPassword />} />
                               <Route path="/auth/callback" element={<Auth0Callback />} />
 
                               {/* Cart Route - Can be accessed by customers or guests */}
@@ -101,6 +107,7 @@ const App: React.FC = () => {
 
                               {/* Checkout Route - Can be accessed by customers or guests */}
                               <Route path="/checkout" element={<CheckoutFixed />} />
+                              <Route path="/checkout/success" element={<CheckoutSuccess />} />
 
                               {/* Customer Protected Routes */}
                               <Route
@@ -121,11 +128,7 @@ const App: React.FC = () => {
                               />
                               <Route
                                 path="/orders/:id"
-                                element={
-                                  <ProtectedRoute requireCustomer>
-                                    <Orders />
-                                  </ProtectedRoute>
-                                }
+                                element={<Orders />}
                               />
 
                               {/* Admin Routes */}
