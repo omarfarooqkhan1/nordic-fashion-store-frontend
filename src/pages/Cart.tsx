@@ -20,11 +20,6 @@ const Cart = () => {
     window.scrollTo(0, 0);
   }, []);
   
-  // Debug logs
-  console.log('Cart component - items:', items);
-  console.log('Cart component - customItems:', customItems);
-  console.log('Cart component - getCartTotal():', getCartTotal());
-  
   // Handle checkout action
   const handleCheckout = () => {
     window.location.href = '/checkout';
@@ -93,7 +88,6 @@ const Cart = () => {
                       alt="Front View" 
                       className="w-full h-20 sm:h-32 object-cover rounded-lg border border-gray-200 dark:border-gray-600"
                       onError={(e) => {
-                        console.error('Failed to load front image:', customItem.frontImageUrl);
                         e.currentTarget.src = 'https://placehold.co/200x200/EFEFEF/AAAAAA?text=Front+View';
                       }}
                     />
@@ -105,7 +99,6 @@ const Cart = () => {
                       alt="Back View" 
                       className="w-full h-20 sm:h-32 object-cover rounded-lg border border-gray-200 dark:border-gray-600"
                       onError={(e) => {
-                        console.error('Failed to load back image:', customItem.backImageUrl);
                         e.currentTarget.src = 'https://placehold.co/200x200/EFEFEF/AAAAAA?text=Back+View';
                       }}
                     />
@@ -183,11 +176,8 @@ const Cart = () => {
                       size="sm"
                       onClick={async () => {
                         try {
-                          console.log('Removing custom jacket:', customItem.id);
                           await removeCustomJacketFromCart(customItem.id);
-                          console.log('Custom jacket removed successfully');
                         } catch (error) {
-                          console.error('Error removing custom jacket:', error);
                         }
                       }}
                       disabled={false}

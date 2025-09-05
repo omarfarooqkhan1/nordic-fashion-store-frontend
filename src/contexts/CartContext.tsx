@@ -62,11 +62,6 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const items: CartItem[] = (cart as any)?.cart?.items || [];
 
-  // Debug logging
-  console.log('🔍 CartContext - cart data:', cart);
-  console.log('🔍 CartContext - cart.cart structure:', (cart as any)?.cart);
-  console.log('🔍 CartContext - items extracted:', items);
-
   // Fetch custom jacket cart data
   const { data: customJacketCart, isLoading: isLoadingCustom } = useQuery({
     queryKey: ['customJacketCart', token ? 'user' : sessionId, token],
@@ -82,10 +77,6 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   });
 
   const customItems: CustomJacketItem[] = customJacketCart || [];
-  
-  // Debug logging
-  console.log('🔍 CartContext - customJacketCart data:', customJacketCart);
-  console.log('🔍 CartContext - customItems extracted:', customItems);
 
   const addMutation = useMutation({
     mutationFn: ({ product_variant_id, quantity }: { product_variant_id: number; quantity: number; }) => {
@@ -97,10 +88,6 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     onSuccess: () => {
       // Invalidate both cart queries to ensure all cart data is refreshed
       const cartIdentifier = token ? 'user' : sessionId;
-      console.log('🔄 addMutation onSuccess - Invalidating queries:', {
-        cartKey: ['cart', cartIdentifier, token],
-        customKey: ['customJacketCart', cartIdentifier, token]
-      });
       
       queryClient.invalidateQueries({ queryKey: ['cart', cartIdentifier, token] });
       queryClient.invalidateQueries({ queryKey: ['customJacketCart', cartIdentifier, token] });
@@ -112,7 +99,6 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       toast({ title: t('toast.addedToCart') });
     },
     onError: (error: any) => {
-      console.error('Error adding to cart:', error);
       
       // Extract the actual error message from the backend response
       let errorMessage = t('toast.error');
@@ -156,7 +142,6 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       toast({ title: t('toast.cartUpdated') });
     },
     onError: (error: any) => {
-      console.error('Error updating cart:', error);
       
       // Extract the actual error message from the backend response
       let errorMessage = t('toast.error');
@@ -195,10 +180,6 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     onSuccess: () => {
       // Invalidate both cart queries to ensure all cart data is refreshed
       const cartIdentifier = token ? 'user' : sessionId;
-      console.log('🔄 removeMutation onSuccess - Invalidating queries:', {
-        cartKey: ['cart', cartIdentifier, token],
-        customKey: ['customJacketCart', cartIdentifier, token]
-      });
       
       queryClient.invalidateQueries({ queryKey: ['cart', cartIdentifier, token] });
       queryClient.invalidateQueries({ queryKey: ['customJacketCart', cartIdentifier, token] });
@@ -210,7 +191,6 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       toast({ title: t('toast.itemRemoved') || 'Item removed from cart' });
     },
     onError: (error) => {
-      console.error('Error removing item:', error);
       toast({ title: t('toast.cartError'), description: error.message || t('toast.error'), variant: 'destructive' });
     }
   });
@@ -227,7 +207,6 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       toast({ title: 'Custom jacket added to cart' });
     },
     onError: (error) => {
-      console.error('Error adding custom jacket to cart:', error);
       toast({ title: 'Error adding custom jacket', description: error.message || 'Failed to add to cart', variant: 'destructive' });
     }
   });
@@ -243,7 +222,6 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       toast({ title: 'Custom jacket removed from cart' });
     },
     onError: (error) => {
-      console.error('Error removing custom jacket from cart:', error);
       toast({ title: 'Error removing custom jacket', description: error.message || 'Failed to remove from cart', variant: 'destructive' });
     }
   });
@@ -259,7 +237,6 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       toast({ title: 'Custom jacket quantity updated' });
     },
     onError: (error) => {
-      console.error('Error updating custom jacket quantity:', error);
       toast({ title: 'Error updating quantity', description: error.message || 'Failed to update quantity', variant: 'destructive' });
     }
   });
@@ -274,10 +251,6 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     onSuccess: () => {
       // Invalidate both cart queries to ensure all cart data is refreshed
       const cartIdentifier = token ? 'user' : sessionId;
-      console.log('🔄 clearMutation onSuccess - Invalidating queries:', {
-        cartKey: ['cart', cartIdentifier, token],
-        customKey: ['customJacketCart', cartIdentifier, token]
-      });
       
       queryClient.invalidateQueries({ queryKey: ['cart', cartIdentifier, token] });
       queryClient.invalidateQueries({ queryKey: ['customJacketCart', cartIdentifier, token] });
@@ -289,7 +262,6 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       toast({ title: t('toast.cartUpdated') });
     },
     onError: (error) => {
-      console.error('Error clearing cart:', error);
       toast({ title: t('toast.cartError'), description: error.message || t('toast.error'), variant: 'destructive' });
     }
   });
@@ -360,32 +332,17 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     
     // Calculate total from regular items
     if (items && items.length > 0) {
-      console.log('Cart items for calculation:', JSON.stringify(items, null, 2));
-      
-      // Log each item's structure to check if actual_price exists
-      items.forEach((item, index) => {
-        console.log(`Item ${index}:`, {
-          id: item.id,
-          quantity: item.quantity,
-          variant_id: item.product_variant_id,
-          variant_obj: item.variant,
-          actual_price: item.variant?.actual_price,
-          calculated_total: (item.variant?.actual_price ?? 0) * (item.quantity ?? 0)
-        });
-      });
       
       const regularItemsTotal = items.reduce((total, item) => {
         const price = getItemPrice(item);
         const quantity = item?.quantity ?? 0;
         const itemTotal = price * quantity;
         
-        console.log(`Item ${item?.id}: price=${price}, quantity=${quantity}, total=${itemTotal}`);
         
         return total + itemTotal;
       }, 0);
       
       totalAmount += regularItemsTotal;
-      console.log('💰 Regular items total:', regularItemsTotal);
     }
     
     // Calculate total from custom jacket items
@@ -395,16 +352,13 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const quantity = item.quantity || 0;
         const itemTotal = price * quantity;
         
-        console.log(`Custom Jacket ${item.id}: price=${price}, quantity=${quantity}, total=${itemTotal}`);
         
         return total + itemTotal;
       }, 0);
       
       totalAmount += customItemsTotal;
-      console.log('💰 Custom items total:', customItemsTotal);
     }
     
-    console.log('💰 Final cart total:', totalAmount);
     return totalAmount;
   };
 
@@ -421,12 +375,6 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       totalCount += customItems.reduce((total, item) => total + (item?.quantity ?? 0), 0);
     }
     
-    console.log('🔢 Cart count calculation:', {
-      regularItems: items?.length || 0,
-      customItems: customItems?.length || 0,
-      totalCount
-    });
-    
     return totalCount;
   };
 
@@ -439,14 +387,11 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
     
     try {
-      console.log(`🔄 Updating custom jacket ${customItemId} quantity to ${quantity}`);
       
       // Use the mutation to update the quantity
       await updateCustomJacketQuantityMutation.mutateAsync({ customItemId, quantity });
       
-      console.log(`✅ Custom jacket quantity updated successfully`);
     } catch (error) {
-      console.error('❌ Error updating custom jacket quantity:', error);
       throw error;
     }
   };

@@ -1,78 +1,39 @@
 import axios from 'axios';
 
-// --- Helper to read cookies ---
-function getCookie(name) {
-  const value = `; ${document.cookie}`;
-  const parts = value.split(`; ${name}=`);
-  if (parts.length === 2) return parts.pop().split(';').shift();
-  return null;
-}
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api';
 
-// --- Create axios instance ---
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || (import.meta.env.DEV ? '/api' : 'https://backend.nordflex.shop/api'),
+  baseURL: API_BASE_URL,
+  timeout: 10000,
   headers: {
-    Accept: 'application/json',
+    'Content-Type': 'application/json',
+    'Accept': 'application/json',
   },
-  withCredentials: true, // Important for Sanctum
+  withCredentials: true,
 });
 
-// --- Interceptor: Always ensure CSRF cookie exists ---
-let csrfFetched = false; // prevent infinite loop
+// Request interceptor to add CSRF token
 api.interceptors.request.use(
-  async (config) => {
-    // Fetch CSRF cookie once if missing
-    if (!csrfFetched || !document.cookie.includes('XSRF-TOKEN')) {
-      try {
-        // For CSRF, we need the root domain (without /api)
-        const csrfBase = import.meta.env.VITE_API_BASE_URL?.replace('/api', '') || (import.meta.env.DEV ? '' : 'https://backend.nordflex.shop');
-        console.log('🔐 Fetching CSRF cookie from:', csrfBase);
-        
-        await axios.get(`${csrfBase}/sanctum/csrf-cookie`, {
-          withCredentials: true,
-        });
-        csrfFetched = true;
-        console.log('✅ CSRF cookie fetched successfully');
-      } catch (error) {
-        console.error('❌ Failed to fetch CSRF cookie:', error.message);
-        // Don't set csrfFetched to true on error, so we can retry
-      }
-    }
-
-    // Attach CSRF token manually (sometimes axios doesn’t do it automatically)
-    const xsrfToken = getCookie('XSRF-TOKEN');
-    if (xsrfToken) {
-      config.headers['X-XSRF-TOKEN'] = decodeURIComponent(xsrfToken);
-    }
-
-    // Add guest cart session ID if available
-    const sessionId = localStorage.getItem('nordic_fashion_cart_session_id');
-    if (sessionId) {
-      config.headers['X-Session-Id'] = sessionId;
-    }
-
-    // Add Bearer token if available
-    const token = localStorage.getItem('token');
+  (config) => {
+    const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
     if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+      config.headers['X-CSRF-TOKEN'] = token;
     }
-
-    console.log('📡 API Request:', config.method?.toUpperCase(), config.url, {
-      hasToken: !!token,
-      xsrfToken: !!xsrfToken,
-      sessionId,
-    });
-
     return config;
   },
-  (error) => Promise.reject(error)
+  (error) => {
+    return Promise.reject(error);
+  }
 );
 
-// --- Response Interceptor (debug errors) ---
+// Response interceptor for error handling
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    console.error('❌ API Error:', error.response?.status, error.response?.data);
+    if (error.response?.status === 419) {
+      // CSRF token mismatch, try to get a new one
+      window.location.reload();
+    }
     return Promise.reject(error);
   }
 );

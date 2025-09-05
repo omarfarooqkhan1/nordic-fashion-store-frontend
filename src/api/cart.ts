@@ -24,18 +24,13 @@ const getHeaders = (sessionId?: string, bearerToken?: string) => {
 export const fetchCart = async (sessionId?: string, bearerToken?: string): Promise<Cart> => {
     try {
         const headers = getHeaders(sessionId, bearerToken);
-        console.log('🔍 fetchCart called with:', { sessionId, hasBearerToken: !!bearerToken, headers });
         
         const response = await api.get('/cart', {
             headers: headers,
         });
         
-        // Debug the raw cart data from API
-        console.log('✅ fetchCart response:', JSON.stringify(response.data, null, 2));
-            
         return response.data;
     } catch (error) {
-        console.error('❌ Error fetching cart:', error);
         throw new Error(error.response?.data?.message || 'Failed to fetch cart');
     }
 };
@@ -48,13 +43,6 @@ export const addOrUpdateCartItem = async (
 ): Promise<CartItem> => {
   try {
     const headers = getHeaders(sessionId, bearerToken);
-    console.log('🚀 addOrUpdateCartItem called with:', {
-      productVariantId,
-      quantity,
-      sessionId: sessionId || 'undefined',
-      hasBearerToken: !!bearerToken,
-      headers
-    });
     
     const response = await api.post(
         '/cart',
@@ -64,10 +52,8 @@ export const addOrUpdateCartItem = async (
         }
     );
     
-    console.log('✅ addOrUpdateCartItem response:', response.data);
     return response.data;
   } catch (error) {
-    console.error('❌ Error adding/updating cart item:', error);
     throw new Error(error.response?.data?.message || 'Failed to add/update cart item');
   }
 };
@@ -89,7 +75,6 @@ export const updateCartItem = async (
         
         return response.data;
     } catch (error) {
-        console.error('Error updating cart item:', error);
         throw new Error(error.response?.data?.message || 'Failed to update cart item');
     }
 };
@@ -104,7 +89,6 @@ export const removeCartItem = async (
             headers: getHeaders(sessionId, bearerToken),
         });
     } catch (error) {
-        console.error('Error removing cart item:', error);
         throw new Error(error.response?.data?.message || 'Failed to remove cart item');
     }
 };
@@ -115,7 +99,6 @@ export const clearCart = async (sessionId?: string, bearerToken?: string): Promi
     headers: getHeaders(sessionId, bearerToken),
   });
   } catch (error) {
-    console.error('Error clearing cart:', error);
     throw new Error(error.response?.data?.message || 'Failed to clear cart');
   }
 };
@@ -126,21 +109,10 @@ export const addCustomJacketToCart = async (
   sessionId: string | undefined,
   token?: string
 ): Promise<CustomJacketItem> => {
-  console.log('🚀 addCustomJacketToCart called with:', {
-    customJacket: { ...customJacket, frontImageUrl: customJacket.frontImageUrl?.substring(0, 100), backImageUrl: customJacket.backImageUrl?.substring(0, 100) },
-    sessionId: sessionId || 'undefined (authenticated user)',
-    hasToken: !!token
-  });
-  
   try {
     // Convert base64 images to blobs
     const frontBlob = await dataURLToBlob(customJacket.frontImageUrl);
     const backBlob = await dataURLToBlob(customJacket.backImageUrl);
-    
-    console.log('🔍 Blobs created:', {
-      frontBlob: { size: frontBlob.size, type: frontBlob.type },
-      backBlob: { size: backBlob.size, type: backBlob.type }
-    });
     
     // Create FormData
     const formData = new FormData();
@@ -157,24 +129,9 @@ export const addCustomJacketToCart = async (
       formData.append('session_id', sessionId);
     }
 
-    console.log('Sending FormData:', {
-      frontImageSize: frontBlob.size,
-      backImageSize: backBlob.size,
-      jacketData: JSON.stringify({
-        ...customJacket,
-        frontImageUrl: undefined,
-        backImageUrl: undefined
-      }),
-      sessionId: sessionId || 'undefined (authenticated user)'
-    });
-
-    // Log FormData contents for debugging
-    console.log('🔍 FormData contents:');
     for (const [key, value] of formData.entries()) {
       if (value instanceof Blob) {
-        console.log(`  ${key}: Blob(size=${value.size}, type=${value.type})`);
       } else {
-        console.log(`  ${key}: ${value}`);
       }
     }
 
@@ -188,7 +145,6 @@ export const addCustomJacketToCart = async (
     
     return response.data;
   } catch (error) {
-    console.error('Error in addCustomJacketToCart:', error);
     throw error;
   }
 };
@@ -214,8 +170,6 @@ const dataURLToBlob = async (dataURL: string): Promise<Blob> => {
     
     return new Blob([u8arr], { type: mime });
   } catch (error) {
-    console.error('Error converting data URL to blob:', error);
-    console.error('Data URL starts with:', dataURL.substring(0, 100));
     throw new Error('Failed to convert image data to blob');
   }
 };
@@ -249,14 +203,12 @@ export const fetchCustomJacketCart = async (
     params.session_id = sessionId;
   }
   
-  console.log('🔍 fetchCustomJacketCart called with:', { sessionId, hasToken: !!token, params });
   
   const response = await api.get('/cart/custom-jackets', {
     headers: token ? { Authorization: `Bearer ${token}` } : {},
     params: params
   });
   
-  console.log('✅ fetchCustomJacketCart response:', response.data);
   return response.data;
 };
 
@@ -266,7 +218,6 @@ export const fetchCombinedCart = async (
   bearerToken?: string
 ): Promise<{ regularItems: CartItem[]; customItems: CustomJacketItem[] }> => {
   try {
-    console.log('🔄 fetchCombinedCart called with:', { sessionId, hasBearerToken: !!bearerToken });
     
     // Fetch both regular cart and custom jacket cart in parallel
     const [regularCart, customItems] = await Promise.all([
@@ -274,17 +225,11 @@ export const fetchCombinedCart = async (
       fetchCustomJacketCart(sessionId, bearerToken) // Pass undefined for authenticated users
     ]);
 
-    console.log('✅ fetchCombinedCart results:', {
-      regularItemsCount: regularCart.cart?.items?.length || 0,
-      customItemsCount: customItems?.length || 0
-    });
-
     return {
       regularItems: regularCart.cart?.items || [],
       customItems: customItems || []
     };
   } catch (error) {
-    console.error('❌ Error fetching combined cart:', error);
     // Return empty arrays if either fetch fails
     return {
       regularItems: [],
@@ -300,7 +245,6 @@ export const updateCustomJacketQuantity = async (
   token?: string
 ): Promise<CustomJacketItem> => {
   try {
-    console.log('🔄 updateCustomJacketQuantity called with:', { customItemId, quantity, sessionId, hasToken: !!token });
     
     const params: any = {};
     
@@ -316,10 +260,8 @@ export const updateCustomJacketQuantity = async (
       params: params
     });
     
-    console.log('✅ updateCustomJacketQuantity response:', response.data);
     return response.data;
   } catch (error) {
-    console.error('❌ Error updating custom jacket quantity:', error);
     throw new Error(error.response?.data?.message || 'Failed to update custom jacket quantity');
   }
 };

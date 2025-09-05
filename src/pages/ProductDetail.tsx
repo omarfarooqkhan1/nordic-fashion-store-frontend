@@ -42,6 +42,9 @@ const ProductDetail = () => {
     enabled: !!id,
     retry: 3,
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    cacheTime: 10 * 60 * 1000, // 10 minutes
+    refetchOnWindowFocus: false,
   });
 
   // Ensure currentImageIndex is within bounds if variantImages change
@@ -61,11 +64,24 @@ const ProductDetail = () => {
     window.scrollTo(0, 0);
   }, []);
 
+  // Preload main product image for better LCP
+  useEffect(() => {
+    if (product && product.images.length > 0) {
+      const link = document.createElement('link');
+      link.rel = 'preload';
+      link.as = 'image';
+      link.href = product.images[0].url;
+      document.head.appendChild(link);
+    }
+  }, [product]);
+
   // Fetch review summary on mount
   useEffect(() => {
+    if (!product?.id) return; // Don't fetch if no product ID
+    
     let isMounted = true;
     import('@/api/reviews').then(({ getProductReviews }) => {
-      getProductReviews(product?.id || 0, 1).then((res) => {
+      getProductReviews(product.id, 1).then((res) => {
         if (isMounted && res.product) {
           // Defensive: ensure average_rating is a number
           let avg = Number(res.product.average_rating);
@@ -73,6 +89,14 @@ const ProductDetail = () => {
           setReviewSummary({
             average_rating: avg,
             review_count: Number(res.product.review_count) || 0,
+          });
+        }
+      }).catch((error) => {
+        // Set default values on error
+        if (isMounted) {
+          setReviewSummary({
+            average_rating: 0,
+            review_count: 0,
           });
         }
       });
@@ -140,7 +164,6 @@ const ProductDetail = () => {
       await addToCart(variant.id, 1);
       toast({ title: t('toast.addedToCart'), description: `${product.name} (${variant.size}, ${variant.color})`, className: "bg-green-500 text-white" });
     } catch (error) {
-      console.error("Failed to add to cart:", error);
       toast({ title: t('toast.error'), description: t('toast.cartError'), variant: 'destructive' });
     }
   };
@@ -236,7 +259,7 @@ const ProductDetail = () => {
           <Separator />
 
           <div>
-            <h3 className="text-base sm:text-lg font-semibold mb-1 sm:mb-2">{t('product.description')}</h3>
+            <h2 className="text-base sm:text-lg font-semibold mb-1 sm:mb-2">{t('product.description')}</h2>
             <p className="text-muted-foreground text-sm sm:text-base">{product.description}</p>
           </div>
 
@@ -244,7 +267,7 @@ const ProductDetail = () => {
           {allSizes.length > 0 && (
             <div>
               <h3 className="text-base sm:text-lg font-semibold mb-2 sm:mb-3">{t('product.size')}</h3>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-2" role="group" aria-label="Select product size">
                 {allSizes.map((size) => {
                   // Check if a variant exists with the current size and selected color, and is in stock
                   const hasStock = product.variants.some((v) => 
@@ -262,6 +285,8 @@ const ProductDetail = () => {
                           : 'border-border text-muted-foreground opacity-50 cursor-not-allowed'
                       }`}
                       disabled={!hasStock && selectedSize !== size}
+                      aria-pressed={selectedSize === size}
+                      aria-label={`Size ${size}${!hasStock ? ' (out of stock)' : ''}`}
                     >
                       {size}
                     </button>
@@ -275,7 +300,7 @@ const ProductDetail = () => {
           {allColors.length > 0 && (
             <div>
               <h3 className="text-base sm:text-lg font-semibold mb-2 sm:mb-3">{t('product.color')}</h3>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-2" role="group" aria-label="Select product color">
                 {allColors.map((color) => {
                   // Check if a variant exists with the current color and selected size, and is in stock
                   const hasStock = product.variants.some((v) => 
@@ -293,7 +318,10 @@ const ProductDetail = () => {
                           : 'border-border text-muted-foreground opacity-50 cursor-not-allowed'
                       }`}
                       disabled={!hasStock && selectedColor !== color}
+                      aria-pressed={selectedColor === color}
+                      aria-label={`Color ${color}${!hasStock ? ' (out of stock)' : ''}`}
                     >
+                      <span className="w-4 h-4 rounded-full border border-gray-300" style={{ backgroundColor: color.toLowerCase() }} aria-hidden="true"></span>
                       {color} {hasStock ? <Check className="h-3 w-3" /> : <X className="h-3 w-3" />}
                     </button>
                   );

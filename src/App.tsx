@@ -1,85 +1,53 @@
-"use client"
-
-import type React from "react"
+import React from "react"
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom"
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
-import { Auth0Provider } from "@auth0/auth0-react"
-import { Toaster } from "@/components/ui/toaster"
-import { Toaster as Sonner } from "@/components/ui/sonner"
-import { TooltipProvider } from "@/components/ui/tooltip"
 import { Header } from "@/components/Layout/Header"
 import { Footer } from "@/components/Layout/Footer"
+import AppProviders from "./providers/AppProviders"
 import ErrorBoundary from "./components/ErrorBoundary"
-
-// Context Providers
-import { AuthProvider } from "./contexts/AuthContext"
-import { ThemeProvider } from "./contexts/ThemeContext"
-import { LanguageProvider } from "./contexts/LanguageContext"
-import { CartProvider } from "./contexts/CartContext"
+import TestComponent from "./TestComponent"
 import ProtectedRoute from "./components/Auth/ProtectedRoute"
 
-// Existing Pages
+// Critical Pages (loaded immediately)
 import Index from "./pages/Index"
 import About from "./pages/About"
 import Contact from "./pages/Contact"
+import TermsAndConditions from "./pages/TermsAndConditions"
+import PrivacyPolicy from "./pages/PrivacyPolicy"
+import FAQ from "./pages/FAQ"
 import Products from "./pages/Products"
 import ProductDetail from "./pages/ProductDetail"
 import Cart from "./pages/Cart"
-import AdminDashboard from "./pages/AdminDashboard"
-import AdminProductEdit from "./pages/AdminProductEdit"
 import AdminLogin from "./pages/AdminLogin"
 import NotFound from "./pages/NotFound"
 
-// New Auth Pages
+// Auth Pages
 import CustomerLogin from "./pages/auth/CustomerLogin"
-import CustomJacketConfigurator from "./pages/CustomJacketConfigurator"
 import CustomerSignup from "./pages/auth/CustomerSignup"
 import VerifyEmail from "./pages/auth/VerifyEmail"
 import Auth0Callback from "./pages/auth/Auth0Callback"
 import ForgotPassword from "./pages/auth/ForgotPassword"
 import ResetPassword from "./pages/auth/ResetPassword"
 
-// Customer Pages
-import Profile from "./pages/Profile"
-import Orders from "./pages/Orders"
-import CheckoutFixed from "./pages/CheckoutFixed"
+// Success Pages
 import CheckoutSuccess from "./pages/CheckoutSuccess"
 
-// Create a client
-const queryClient = new QueryClient()
-
-// Auth0 configuration
-const auth0Domain = import.meta.env.VITE_AUTH0_DOMAIN || 'your-domain.auth0.com'
-const auth0ClientId = import.meta.env.VITE_AUTH0_CLIENT_ID || 'your_client_id'
-const auth0Audience = import.meta.env.VITE_AUTH0_AUDIENCE || 'https://your-domain.auth0.com/api/v2/'
+// Lazy loaded heavy components
+import {
+  LazyCustomJacketConfigurator,
+  LazyAdminDashboard,
+  LazyAdminProductEdit,
+  LazyAdminBlogManagement,
+  LazyCheckoutFixed,
+  LazyProfile,
+  LazyOrders,
+  LazyBlog,
+  LazyBlogDetail
+} from "./components/common/LazyWrapper"
 
 const App: React.FC = () => {
   return (
-    <ErrorBoundary>
-      <QueryClientProvider client={queryClient}>
-        <ThemeProvider>
-          <LanguageProvider>
-            <TooltipProvider>
-              <Toaster />
-              <Sonner />
-              <Auth0Provider
-                domain={auth0Domain}
-                clientId={auth0ClientId}
-                authorizationParams={{
-                  redirect_uri: import.meta.env.VITE_AUTH0_CALLBACK_URL || `${window.location.origin}/auth/callback`,
-                  audience: auth0Audience,
-                }}
-                cacheLocation="localstorage"
-                useRefreshTokens={true}
-                onRedirectCallback={(appState) => {
-                  // Handle the callback and redirect to intended page
-                  const returnTo = appState?.returnTo || window.location.pathname;
-                  window.location.replace(returnTo);
-                }}
-              >
-                <AuthProvider>
-                  <CartProvider>
-                    <Router>
+    <AppProviders>
+      <Router>
                       <div className="min-h-screen flex flex-col">
                         <Header />
                         <main className="flex-1">
@@ -89,12 +57,19 @@ const App: React.FC = () => {
                               <Route path="/" element={<Index />} />
                               <Route path="/about" element={<About />} />
                               <Route path="/contact" element={<Contact />} />
+                              <Route path="/terms" element={<TermsAndConditions />} />
+                              <Route path="/privacy" element={<PrivacyPolicy />} />
+                              <Route path="/faqs" element={<FAQ />} />
                               <Route path="/products" element={<Products />} />
                               <Route path="/product/:id" element={<ProductDetail />} />
+                              
+                              {/* Blog Routes */}
+                              <Route path="/blogs" element={<LazyBlog />} />
+                              <Route path="/blogs/:slug" element={<LazyBlogDetail />} />
 
                               {/* New Auth Routes */}
-        <Route path="/login" element={<CustomerLogin />} />
-        <Route path="/custom-jacket" element={<CustomJacketConfigurator />} />
+                              <Route path="/login" element={<CustomerLogin />} />
+                              <Route path="/custom-jacket" element={<LazyCustomJacketConfigurator />} />
                               <Route path="/signup" element={<CustomerSignup />} />
                               <Route path="/verify-email" element={<VerifyEmail />} />
                               <Route path="/admin/login" element={<AdminLogin />} />
@@ -106,7 +81,7 @@ const App: React.FC = () => {
                               <Route path="/cart" element={<Cart />} />
 
                               {/* Checkout Route - Can be accessed by customers or guests */}
-                              <Route path="/checkout" element={<CheckoutFixed />} />
+                              <Route path="/checkout" element={<LazyCheckoutFixed />} />
                               <Route path="/checkout/success" element={<CheckoutSuccess />} />
 
                               {/* Customer Protected Routes */}
@@ -114,7 +89,7 @@ const App: React.FC = () => {
                                 path="/profile"
                                 element={
                                   <ProtectedRoute requireCustomer>
-                                    <Profile />
+                                    <LazyProfile />
                                   </ProtectedRoute>
                                 }
                               />
@@ -122,13 +97,13 @@ const App: React.FC = () => {
                                 path="/orders"
                                 element={
                                   <ProtectedRoute requireCustomer>
-                                    <Orders />
+                                    <LazyOrders />
                                   </ProtectedRoute>
                                 }
                               />
                               <Route
                                 path="/orders/:id"
-                                element={<Orders />}
+                                element={<LazyOrders />}
                               />
 
                               {/* Admin Routes */}
@@ -136,7 +111,7 @@ const App: React.FC = () => {
                                 path="/admin"
                                 element={
                                   <ProtectedRoute requireAdmin>
-                                    <AdminDashboard />
+                                    <LazyAdminDashboard />
                                   </ProtectedRoute>
                                 }
                               />
@@ -144,7 +119,7 @@ const App: React.FC = () => {
                                 path="/admin/dashboard"
                                 element={
                                   <ProtectedRoute requireAdmin>
-                                    <AdminDashboard />
+                                    <LazyAdminDashboard />
                                   </ProtectedRoute>
                                 }
                               />
@@ -152,7 +127,7 @@ const App: React.FC = () => {
                                 path="/admin/products"
                                 element={
                                   <ProtectedRoute requireAdmin>
-                                    <AdminDashboard />
+                                    <LazyAdminDashboard />
                                   </ProtectedRoute>
                                 }
                               />
@@ -160,7 +135,15 @@ const App: React.FC = () => {
                                 path="/admin/products/:id/edit"
                                 element={
                                   <ProtectedRoute requireAdmin>
-                                    <AdminProductEdit />
+                                    <LazyAdminProductEdit />
+                                  </ProtectedRoute>
+                                }
+                              />
+                              <Route
+                                path="/admin/blogs"
+                                element={
+                                  <ProtectedRoute requireAdmin>
+                                    <LazyAdminBlogManagement />
                                   </ProtectedRoute>
                                 }
                               />
@@ -172,15 +155,8 @@ const App: React.FC = () => {
                         </main>
                         <Footer />
                       </div>
-                    </Router>
-                  </CartProvider>
-                </AuthProvider>
-              </Auth0Provider>
-            </TooltipProvider>
-          </LanguageProvider>
-        </ThemeProvider>
-      </QueryClientProvider>
-    </ErrorBoundary>
+      </Router>
+    </AppProviders>
   )
 }
 

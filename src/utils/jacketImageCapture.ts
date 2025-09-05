@@ -25,11 +25,9 @@ export const captureJacketCanvas = async (
     const threeCanvas = canvasElement.querySelector('canvas');
     
     if (threeCanvas) {
-      console.log('Found Three.js canvas, using direct capture');
       // Use the Three.js canvas directly
       return threeCanvas.toDataURL('image/png', quality);
     } else {
-      console.log('No Three.js canvas found, falling back to html2canvas');
       // Fallback to html2canvas if no Three.js canvas found
       const canvas = await html2canvas(canvasElement, {
         useCORS: true,
@@ -52,7 +50,6 @@ export const captureJacketCanvas = async (
       return canvas.toDataURL('image/png', quality);
     }
   } catch (error) {
-    console.error('Error capturing jacket canvas:', error);
     throw new Error('Failed to capture jacket design');
   }
 };
@@ -66,22 +63,15 @@ export const captureJacketDesign = async (
   options: JacketImageCaptureOptions = {}
 ): Promise<{ frontImage: string; backImage: string }> => {
   try {
-    console.log('Starting jacket design capture...');
-    console.log('Front canvas element:', frontCanvas);
-    console.log('Back canvas element:', backCanvas);
     
     const [frontImage, backImage] = await Promise.all([
       captureJacketCanvas(frontCanvas, options),
       captureJacketCanvas(backCanvas, options)
     ]);
 
-    console.log('Jacket design captured successfully');
-    console.log('Front image length:', frontImage.length);
-    console.log('Back image length:', backImage.length);
 
     return { frontImage, backImage };
   } catch (error) {
-    console.error('Error capturing jacket design:', error);
     throw new Error('Failed to capture jacket design');
   }
 };

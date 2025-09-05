@@ -31,10 +31,12 @@ export interface Product {
   id: number;
   name: string;
   description: string;
-  price: string; // Note: string here; you may want to convert to number in your app
+  price: number; // Changed from string to number to match API response
   category: Category;
   variants: Variant[];
   images: Image[];
+  availability?: Record<string, boolean>; // Added to match API response
+  variantPrices?: Record<string, number>; // Added to match API response
   created_at: string;
   updated_at: string;
   discount?: number;

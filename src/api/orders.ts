@@ -96,16 +96,8 @@ export const createOrder = async (
   try {
     const sessionId = localStorage.getItem('nordic_fashion_cart_session_id');
     
-    console.log('🔧 createOrder function called with:', {
-      orderData,
-      bearerToken: bearerToken ? 'Present' : 'Not provided',
-      sessionId: sessionId ? 'Present' : 'Not found'
-    });
-    
     const headers = buildApiHeaders(sessionId, bearerToken);
-    console.log('📋 Request headers:', headers);
     
-    console.log('📡 Making API request to /orders/test');
     const response = await api.post(
       '/orders',
       orderData,
@@ -115,20 +107,8 @@ export const createOrder = async (
       }
     );
     
-    console.log('📥 API response received:', {
-      status: response.status,
-      data: response.data
-    });
-    
     return response.data;
   } catch (error: any) {
-    console.error('🚨 Error in createOrder:', {
-      message: error.message,
-      status: error.response?.status,
-      statusText: error.response?.statusText,
-      data: error.response?.data,
-      headers: error.response?.headers
-    });
     throw new Error(error.response?.data?.message || 'Failed to create order');
   }
 };
@@ -148,7 +128,6 @@ export const fetchOrders = async (
     
     return response.data;
   } catch (error: any) {
-    console.error('Error fetching orders:', error);
     throw new Error(error.response?.data?.message || 'Failed to fetch orders');
   }
 };
@@ -169,7 +148,6 @@ export const fetchOrder = async (
     
     return response.data;
   } catch (error: any) {
-    console.error('Error fetching order:', error);
     throw new Error(error.response?.data?.message || 'Failed to fetch order');
   }
 };
@@ -186,9 +164,10 @@ export const fetchAllOrders = async (
       }
     );
     
-    return response.data;
+    // The API returns { data: Order[], pagination: {...} }
+    // We need to extract the data array
+    return response.data.data || [];
   } catch (error: any) {
-    console.error('Error fetching all orders:', error);
     throw new Error(error.response?.data?.message || 'Failed to fetch orders');
   }
 };
@@ -216,7 +195,6 @@ export const updateOrderStatus = async (
     
     return response.data;
   } catch (error: any) {
-    console.error('Error updating order:', error);
     throw new Error(error.response?.data?.message || 'Failed to update order');
   }
 };

@@ -106,7 +106,7 @@ const AdminDashboard: React.FC = () => {
   }, [user, navigate]);
 
   // Fetch products
-  const { data: products = [], isLoading: productsLoading } = useQuery({
+  const { data: products = [], isLoading: productsLoading, error: productsError } = useQuery({
     queryKey: ['admin-products'],
     queryFn: async () => {
       const data = await fetchProducts();
@@ -260,7 +260,6 @@ const AdminDashboard: React.FC = () => {
       });
 
       if (result.failed > 0) {
-        console.log('Upload errors:', result.errors);
       }
 
       queryClient.invalidateQueries({ queryKey: ['admin-products'] });
@@ -398,7 +397,6 @@ const AdminDashboard: React.FC = () => {
           }
         } catch (error) {
           // Error handling is already done in the mutation
-          console.error('Delete image error:', error);
         }
       }
     };
@@ -644,7 +642,7 @@ const AdminDashboard: React.FC = () => {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-1">
+        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-1">
           <TabsTrigger 
             value="overview" 
             onClick={() => navigate('/admin/dashboard')}
@@ -675,6 +673,14 @@ const AdminDashboard: React.FC = () => {
           <TabsTrigger value="contact-forms" className="text-xs sm:text-sm">
             <span className="hidden sm:inline">Contact Forms</span>
             <span className="sm:hidden">Contacts</span>
+          </TabsTrigger>
+          <TabsTrigger 
+            value="blogs" 
+            onClick={() => navigate('/admin/blogs')}
+            className="text-xs sm:text-sm"
+          >
+            <span className="hidden sm:inline">Blogs</span>
+            <span className="sm:hidden">Blogs</span>
           </TabsTrigger>
         </TabsList>
 

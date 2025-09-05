@@ -41,11 +41,14 @@ const OrderManagement: React.FC = () => {
 
 
   // Fetch orders query
-  const { data: orders = [], isLoading, error, refetch } = useQuery({
+  const { data: ordersData, isLoading, error, refetch } = useQuery({
     queryKey: ['admin-orders'],
     queryFn: () => fetchAllOrders(token!),
     enabled: !!token,
   });
+
+  // Ensure orders is always an array
+  const orders = Array.isArray(ordersData) ? ordersData : [];
 
   // Update order mutation
   const updateOrderMutation = useMutation({

@@ -14,10 +14,12 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import type { Product } from '@/types/Product';
 import { fetchProducts } from '@/api/products';
 import { LoadingState } from '@/components/common/LoadingState';
+import { usePerformanceOptimization } from '@/hooks/usePerformanceOptimization';
 
 const Index = () => {
   const { t } = useLanguage();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const { getQueryOptions, optimizeImageLoading } = usePerformanceOptimization();
 
   const heroImages = [
     '/lovable-uploads/731fa0a1-188d-4f8d-9829-7fde55e5e458.png',
@@ -46,9 +48,24 @@ const Index = () => {
   } = useQuery({
     queryKey: ['products'],
     queryFn: fetchProducts,
+    ...getQueryOptions(5 * 60 * 1000, 10 * 60 * 1000), // 5 min stale, 10 min cache
   });
 
   const featuredProducts = products.slice(0, 6);
+
+  // Preload hero images for better LCP
+  useEffect(() => {
+    heroImages.forEach((image, index) => {
+      if (index === 0) {
+        // Preload the first hero image for LCP
+        const link = document.createElement('link');
+        link.rel = 'preload';
+        link.as = 'image';
+        link.href = image;
+        document.head.appendChild(link);
+      }
+    });
+  }, []);
 
   return (
     <div className="space-y-16">
@@ -66,7 +83,9 @@ const Index = () => {
                 src={image}
                 alt={`Nord Flex craftsmanship ${index + 1}`}
                 className="w-full h-full object-cover"
-                loading="lazy"
+                loading={index === 0 ? 'eager' : 'lazy'}
+                fetchpriority={index === 0 ? 'high' : 'auto'}
+                sizes="100vw"
               />
             </div>
           ))}
@@ -155,6 +174,7 @@ const Index = () => {
                                 e.currentTarget.src = '/placeholder.svg';
                               }}
                               loading="lazy"
+                              sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
                             />
                           ) : (
                             <div className="w-full h-full flex items-center justify-center">
@@ -162,6 +182,8 @@ const Index = () => {
                                 src="/placeholder.svg" 
                                 alt="No image available" 
                                 className="w-full h-full object-cover opacity-50"
+                                loading="lazy"
+                                sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
                               />
                             </div>
                           )}

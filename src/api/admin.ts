@@ -91,7 +91,6 @@ export const createProduct = async (
     
     return response.data;
   } catch (error: any) {
-    console.error('Error creating product:', error);
     throw new Error(error.response?.data?.message || 'Failed to create product');
   }
 };
@@ -112,7 +111,6 @@ export const updateProduct = async (
     
     return response.data;
   } catch (error: any) {
-    console.error('Error updating product:', error);
     throw new Error(error.response?.data?.message || 'Failed to update product');
   }
 };
@@ -129,7 +127,6 @@ export const deleteProduct = async (
       }
     );
   } catch (error: any) {
-    console.error('Error deleting product:', error);
     throw new Error(error.response?.data?.message || 'Failed to delete product');
   }
 };
@@ -167,7 +164,6 @@ export const bulkUploadProducts = async (
     
     return response.data;
   } catch (error: any) {
-    console.error('Error uploading products:', error);
     throw new Error(error.response?.data?.message || 'Failed to upload products');
   }
 };
@@ -186,7 +182,6 @@ export const getBulkUploadTemplate = async (
     
     return response.data;
   } catch (error: any) {
-    console.error('Error downloading template:', error);
     throw new Error(error.response?.data?.message || 'Failed to download template');
   }
 };
@@ -196,7 +191,6 @@ export const fetchCategories = async (): Promise<Category[]> => {
     const response = await api.get('/categories');
     return response.data.data || response.data;
   } catch (error: any) {
-    console.error('Error fetching categories:', error);
     throw new Error(error.response?.data?.message || 'Failed to fetch categories');
   }
 };
@@ -216,7 +210,6 @@ export const createCategory = async (
     
     return response.data;
   } catch (error: any) {
-    console.error('Error creating category:', error);
     throw new Error(error.response?.data?.message || 'Failed to create category');
   }
 };
@@ -237,7 +230,6 @@ export const updateCategory = async (
     
     return response.data;
   } catch (error: any) {
-    console.error('Error updating category:', error);
     throw new Error(error.response?.data?.message || 'Failed to update category');
   }
 };
@@ -256,7 +248,6 @@ export const deleteCategory = async (
     
     return response.data;
   } catch (error: any) {
-    console.error('Error deleting category:', error);
     throw new Error(error.response?.data?.message || 'Failed to delete category');
   }
 };
@@ -285,7 +276,6 @@ export const uploadProductImage = async (
     
     return response.data;
   } catch (error: any) {
-    console.error('Error uploading image:', error);
     throw new Error(error.response?.data?.message || 'Failed to upload image');
   }
 };
@@ -304,7 +294,6 @@ export const deleteProductImage = async (
     );
     return response.data;
   } catch (error: any) {
-    console.error('Error deleting image:', error);
     throw new Error(error.response?.data?.message || 'Failed to delete image');
   }
 };
@@ -331,7 +320,6 @@ export const getCategorizedImages = async (
     );
     return response.data;
   } catch (error: any) {
-    console.error('Error getting categorized images:', error);
     throw new Error(error.response?.data?.message || 'Failed to get categorized images');
   }
 };
@@ -352,7 +340,6 @@ export const updateProductImageOrder = async (
     
     return response.data;
   } catch (error: any) {
-    console.error('Error updating image order:', error);
     throw new Error(error.response?.data?.message || 'Failed to update image order');
   }
 };
@@ -382,7 +369,6 @@ export const createProductVariant = async (
     
     return response.data;
   } catch (error: any) {
-    console.error('Error creating variant:', error);
     throw new Error(error.response?.data?.message || 'Failed to create variant');
   }
 };
@@ -404,7 +390,6 @@ export const updateProductVariant = async (
     
     return response.data;
   } catch (error: any) {
-    console.error('Error updating variant:', error);
     throw new Error(error.response?.data?.message || 'Failed to update variant');
   }
 };
@@ -423,7 +408,6 @@ export const deleteProductVariant = async (
     
     return response.data;
   } catch (error: any) {
-    console.error('Error deleting variant:', error);
     throw new Error(error.response?.data?.message || 'Failed to delete variant');
   }
 };
@@ -450,7 +434,6 @@ export const updateProductBasicInfo = async (
     
     return response.data;
   } catch (error: any) {
-    console.error('Error updating product:', error);
     throw new Error(error.response?.data?.message || 'Failed to update product');
   }
 };

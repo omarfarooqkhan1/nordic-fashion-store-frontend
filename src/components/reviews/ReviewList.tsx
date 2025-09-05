@@ -64,11 +64,18 @@ const ReviewList: React.FC<ReviewListProps> = ({
   const [isDeleting, setIsDeleting] = useState<number | null>(null);
 
   useEffect(() => {
-    fetchReviews();
+    if (productId && productId > 0) {
+      fetchReviews();
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [productId, currentPage]);
 
   const fetchReviews = async () => {
+    if (!productId || productId <= 0) {
+      setIsLoading(false);
+      return;
+    }
+    
     try {
       setIsLoading(true);
       const response = await getProductReviews(productId, currentPage);
@@ -98,7 +105,6 @@ const ReviewList: React.FC<ReviewListProps> = ({
       setProductInfo(product);
       setTotalPages(totalPages);
     } catch (error) {
-      console.error('Error fetching reviews:', error);
       toast({
         title: 'Error',
         description: 'Failed to load reviews. Please try again.',
@@ -123,7 +129,6 @@ const ReviewList: React.FC<ReviewListProps> = ({
       onReviewDelete(reviewId);
       fetchReviews();
     } catch (error: any) {
-      console.error('Error deleting review:', error);
       toast({
         title: 'Error',
         description: error.response?.data?.message || 'Failed to delete review. Please try again.',

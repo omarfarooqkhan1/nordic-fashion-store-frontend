@@ -126,7 +126,6 @@ const CustomConfigurator = () => {
         
         setAvailableLogos(logoPaths);
       } catch (error) {
-        console.warn('Could not load logos dynamically, using fallback:', error);
         // Fallback to some common logo names if dynamic loading fails
         setAvailableLogos(['logo1.png', 'logo2.png', 'logo3.png']);
       }
@@ -317,11 +316,9 @@ const CustomConfigurator = () => {
               }}
               draggable={false}
               onError={(e) => {
-                console.error('Failed to load logo:', logo.src);
                 e.currentTarget.style.display = 'none';
               }}
               onLoad={() => {
-                console.log('Logo loaded successfully:', logo.src);
               }}
             />
         </div>
@@ -350,7 +347,7 @@ const CustomConfigurator = () => {
         <div className="flex justify-center space-x-2">
           <button
             onClick={() => setCurrentView('front')}
-            className={`px-4 py-20 rounded-lg font-medium transition-all duration-200 ${
+            className={`px-4 py-2 mt-5 mb-10 rounded-lg font-medium transition-all duration-200 ${
               currentView === 'front'
                 ? 'bg-foreground text-background shadow-lg'
                 : 'bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground'
@@ -360,7 +357,7 @@ const CustomConfigurator = () => {
           </button>
           <button
             onClick={() => setCurrentView('back')}
-            className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 ${
+            className={`px-4 py-2 mt-5 mb-10 rounded-lg font-medium transition-all duration-200 ${
               currentView === 'back'
                 ? 'bg-foreground text-background shadow-lg'
                 : 'bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground'
@@ -402,7 +399,6 @@ const CustomConfigurator = () => {
   const [isAddingToCart, setIsAddingToCart] = useState(false);
 
   const handleAddToCart = async () => {
-    console.log('🎯 handleAddToCart called');
     // We'll query the canvas and overlay inside captureView after DOM updates
     setIsAddingToCart(true);
     try {
@@ -510,7 +506,6 @@ const CustomConfigurator = () => {
       toast({ title: 'Success', description: 'Custom jacket added to cart!' });
       resetConfigurator();
     } catch (error) {
-      console.error('Error adding to cart:', error);
       let errorMessage = 'Failed to add custom jacket to cart';
       if (error instanceof Error) {
         errorMessage = error.message;
@@ -615,7 +610,7 @@ const CustomConfigurator = () => {
                   </div>
                   
                   {/* Logo Grid */}
-                  <div className="grid grid-cols-3 gap-2">
+                  <div className="grid grid-cols-2 gap-3">
                     {availableLogos.map((logoName) => (
                       <div
                         key={logoName}
@@ -624,11 +619,25 @@ const CustomConfigurator = () => {
                         onDragStart={(e) => handleLogoDragStart(e, logoName)}
                         onClick={() => selectLogo(logoName)}
                       >
-                        <div className="w-full h-16 bg-muted border-2 border-dashed border-border rounded-lg flex items-center justify-center hover:border-foreground hover:bg-muted/80 transition-all duration-200">
-                          <Image size={20} className="text-muted-foreground group-hover:text-foreground transition-colors" />
+                        <div className="w-full h-14 bg-muted border-2 border-dashed border-border rounded-lg flex items-center justify-center hover:border-foreground hover:bg-muted/80 transition-all duration-200 overflow-hidden">
+                          <img 
+                            src={`/icons/${logoName}`}
+                            alt={logoName}
+                            className="max-w-full max-h-full object-contain group-hover:scale-105 transition-transform duration-200"
+                            onError={(e) => {
+                              // Fallback to icon if image fails to load
+                              e.currentTarget.style.display = 'none';
+                              const parent = e.currentTarget.parentElement;
+                              if (parent) {
+                                const fallbackIcon = document.createElement('div');
+                                fallbackIcon.innerHTML = '<svg class="w-6 h-6 text-muted-foreground group-hover:text-foreground transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>';
+                                parent.appendChild(fallbackIcon);
+                              }
+                            }}
+                          />
                         </div>
                         <div className="text-xs text-muted-foreground text-center mt-1 truncate group-hover:text-foreground transition-colors">
-                          {logoName}
+                          {logoName.replace('.png', '').replace('.jpg', '').replace('.jpeg', '').replace('.svg', '').replace('.gif', '')}
                         </div>
                       </div>
                     ))}

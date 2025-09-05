@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent } from '@/components/ui/card';
@@ -51,23 +51,29 @@ const Products = () => {
     retry: 1,
   });
 
-  // Filtering
-  const filteredProducts = products.filter((product) => {
-    const matchesCategory =
-      selectedCategory === 'all' || product.category.name.toLowerCase() === selectedCategory.toLowerCase();
+  // Get unique categories from products
+  const availableCategories = useMemo(() => {
+    return ['all', ...new Set(products.map(p => p.category.name.toLowerCase()))];
+  }, [products]);
 
-    const matchesSearch =
-      !searchQuery ||
-      product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      product.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      product.category.name.toLowerCase().includes(searchQuery.toLowerCase());
+  // Filtering products
+  const filteredProducts = products; // products.filter((product) => {
+    // const matchesCategory =
+    //   selectedCategory === 'all' || product.category.name.toLowerCase() === selectedCategory.toLowerCase();
 
-    return matchesCategory && matchesSearch;
-  });
+    // const matchesSearch =
+    //   !searchQuery ||
+    //   product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    //   product.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    //   product.category.name.toLowerCase().includes(searchQuery.toLowerCase());
+
+    // return matchesCategory && matchesSearch;
+  // });
+
 
   // Sorting
   const sortedProducts = [...filteredProducts].sort((a, b) => {
-    if (sortBy === 'price') return Number(a.price) - Number(b.price);
+    if (sortBy === 'price') return a.price - b.price;
     if (sortBy === 'name') return a.name.localeCompare(b.name);
     return 0;
   });
@@ -107,7 +113,7 @@ const Products = () => {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Categories</SelectItem>
-              {categories
+              {availableCategories
                 .filter((cat) => cat !== 'all')
                 .map((cat) => (
                   <SelectItem key={cat} value={cat}>
@@ -209,7 +215,7 @@ const Products = () => {
                         {product.discount ? (
                           <>
                             <span className="text-lg font-bold text-cognac-500">
-                              €{Math.round(Number(product.price) * (1 - Number(product.discount) / 100))}
+                              €{Math.round(product.price * (1 - product.discount / 100))}
                             </span>
                             <span className="text-sm text-muted-foreground line-through">€{product.price}</span>
                           </>

@@ -42,20 +42,6 @@ export const ProductReviews: React.FC<ProductReviewsProps> = ({
   const deliveryStatus = reviewStatusData?.deliveryStatus;
   const existingReview = reviewStatusData?.existingReview;
 
-  // Debug logging
-  console.log('🔍 ProductReviews component state:', {
-    productId,
-    isAuthenticated,
-    userId: user?.id,
-    reviewStatus,
-    canReview,
-    hasPurchased,
-    hasDelivered,
-    hasReviewed,
-    deliveryStatus,
-    error: statusError
-  });
-
   const handleWriteReview = () => {
     if (!isAuthenticated) {
       toast({

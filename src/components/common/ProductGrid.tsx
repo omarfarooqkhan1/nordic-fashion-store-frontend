@@ -77,8 +77,8 @@ const ProductGrid: React.FC<ProductGridProps> = ({
     <div className={cn('grid gap-6 max-w-7xl mx-auto', gridClasses[columns], className)}>
       {products.map((product) => {
         const discountedPrice = product.discount 
-          ? Number(product.price) * (1 - product.discount / 100)
-          : Number(product.price);
+          ? product.price * (1 - product.discount / 100)
+          : product.price;
 
         const mainImage = product.images?.[0]?.url || 
           `https://placehold.co/400x400/EFEFEF/AAAAAA?text=${encodeURIComponent(product.name)}`;
@@ -122,7 +122,7 @@ const ProductGrid: React.FC<ProductGridProps> = ({
                 {/* Price */}
                 <PriceDisplay
                   price={discountedPrice}
-                  originalPrice={product.discount ? Number(product.price) : undefined}
+                  originalPrice={product.discount ? product.price : undefined}
                   size="md"
                 />
 

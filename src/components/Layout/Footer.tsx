@@ -16,9 +16,16 @@ export const Footer: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Brand */}
           <div className="space-y-4">
-            <div className="flex items-center space-x-2">
-              <div className="text-xl font-bold text-leather-800 dark:text-leather-100">NORD</div>
-              <div className="text-xl font-light text-gold-500">FLEX</div>
+            <div className="flex items-center space-x-3">
+              <img 
+                src="/logo.png" 
+                alt="Nord Flex Logo" 
+                className="w-20 h-20 object-contain"
+              />
+              <div className="flex items-center space-x-1">
+                <div className="text-xl font-bold text-leather-800 dark:text-leather-100">NORD</div>
+                <div className="text-xl font-light text-gold-500">FLEX</div>
+              </div>
             </div>
             <p className="text-sm text-muted-foreground">
               {t('footer.brand.desc')}
@@ -47,6 +54,16 @@ export const Footer: React.FC = () => {
               <li>
                 <Link to="/contact" className="text-muted-foreground hover:text-gold-500 transition-colors" onClick={scrollToTop}>
                   {t('nav.contact')}
+                </Link>
+              </li>
+              <li>
+                <Link to="/blogs" className="text-muted-foreground hover:text-gold-500 transition-colors" onClick={scrollToTop}>
+                  Blogs
+                </Link>
+              </li>
+              <li>
+                <Link to="/faqs" className="text-muted-foreground hover:text-gold-500 transition-colors" onClick={scrollToTop}>
+                  {t('nav.faq')}
                 </Link>
               </li>
             </ul>
@@ -97,10 +114,10 @@ export const Footer: React.FC = () => {
               {t('footer.copyright')}
             </p>
             <div className="flex space-x-4 mt-4 md:mt-0">
-              <Link to="/privacy" className="text-sm text-muted-foreground hover:text-gold-500 transition-colors">
+              <Link to="/privacy" className="text-sm text-muted-foreground hover:text-gold-500 transition-colors" onClick={scrollToTop}>
                 {t('footer.privacy')}
               </Link>
-              <Link to="/terms" className="text-sm text-muted-foreground hover:text-gold-500 transition-colors">
+              <Link to="/terms" className="text-sm text-muted-foreground hover:text-gold-500 transition-colors" onClick={scrollToTop}>
                 {t('footer.terms')}
               </Link>
             </div>

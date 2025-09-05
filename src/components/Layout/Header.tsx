@@ -1,4 +1,3 @@
-"use client"
 
 import type React from "react"
 import { useState, useMemo, useEffect } from "react"
@@ -146,12 +145,19 @@ export const Header: React.FC = () => {
         <div className="container mx-auto px-4 sm:px-6">
           <div className="flex items-center justify-between h-16 gap-2 sm:gap-4">
             {/* Logo */}
-            <Link to="/" className="flex items-center space-x-1 group flex-shrink-0">
-              <div className="text-lg sm:text-xl md:text-2xl font-bold text-foreground group-hover:text-muted-foreground transition-colors duration-300">
-                NORD
-              </div>
-              <div className="text-lg sm:text-xl md:text-2xl font-light text-primary group-hover:text-primary/80 transition-colors duration-300">
-                FLEX
+            <Link to="/" className="flex items-center space-x-2 group flex-shrink-0">
+              <img 
+                src="/logo.png" 
+                alt="Nord Flex Logo" 
+                className="w-14 h-14 sm:w-10 sm:h-10 md:w-12 md:h-12 object-contain group-hover:scale-105 transition-transform duration-300"
+              />
+              <div className="flex items-center space-x-1">
+                <div className="text-lg sm:text-xl md:text-2xl font-bold text-foreground group-hover:text-muted-foreground transition-colors duration-300">
+                  NORD
+                </div>
+                <div className="text-lg sm:text-xl md:text-2xl font-light text-primary group-hover:text-primary/80 transition-colors duration-300">
+                  FLEX
+                </div>
               </div>
             </Link>
 

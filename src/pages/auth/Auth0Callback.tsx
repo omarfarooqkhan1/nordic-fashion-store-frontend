@@ -1,4 +1,3 @@
-"use client"
 
 import type React from "react"
 import { useEffect } from "react"
@@ -12,7 +11,6 @@ const Auth0Callback: React.FC = () => {
   useEffect(() => {
     if (!isLoading) {
       if (error) {
-        console.error("Auth0 error:", error)
         navigate("/login?error=auth_failed")
         return
       }

@@ -1,4 +1,3 @@
-"use client"
 
 import type React from "react"
 import { useState, useEffect } from "react"
@@ -97,7 +96,6 @@ const Orders: React.FC = () => {
           setOrders(fetchedOrders);
         }
       } catch (error: any) {
-        console.error("Failed to fetch orders:", error);
         toast({
           title: t('orders.error'),
           description: t('orders.loadError'),

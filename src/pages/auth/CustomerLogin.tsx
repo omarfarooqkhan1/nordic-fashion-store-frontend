@@ -1,4 +1,3 @@
-"use client"
 
 import type React from "react"
 import { useState } from "react"
@@ -34,13 +33,8 @@ const CustomerLogin: React.FC = () => {
 
   const handleGoogleLogin = () => {
     const callbackUrl = `${window.location.origin}/auth/callback`;
-    console.log('Auth0 callback URL:', callbackUrl);
-    console.log('Window location origin:', window.location.origin);
-    console.log('Full window location:', window.location.href);
     
     // Also log the Auth0 configuration
-    console.log('Auth0 Domain:', import.meta.env.VITE_AUTH0_DOMAIN);
-    console.log('Auth0 Client ID:', import.meta.env.VITE_AUTH0_CLIENT_ID);
     
     loginWithRedirect({
       authorizationParams: {

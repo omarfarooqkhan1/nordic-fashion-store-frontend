@@ -6,21 +6,17 @@ import {
   createProductVariant, 
   deleteProductVariant, 
   updateProductBasicInfo,
+  deleteProductImage,
   type VariantFormData,
   type ProductVariant 
 } from '../api/admin';
 import { useAuth } from '../contexts/AuthContext';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ArrowLeft, Save, Plus, Trash2, Upload, Eye } from 'lucide-react';
-import { Product, Variant } from '@/types/Product';
+import { Save, Trash2, Upload, Eye } from 'lucide-react';
+import { Product } from '@/types/Product';
 import { useToast } from '@/hooks/use-toast';
 import ProductImage from '@/components/ui/ProductImage';
 import { LoadingState, ErrorState, AccessDenied, PageHeader, FormField, ConfirmationDialog, ProductVariantManager } from '@/components/common';
@@ -98,6 +94,23 @@ const AdminProductEdit = () => {
     entityName: "Variant"
   });
 
+  // Delete image mutation
+  const deleteImageMutation = useMutation({
+    mutationFn: ({ productId, imageId }: { productId: number; imageId: number }) =>
+      deleteProductImage(productId, imageId, token!),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['product', id] });
+      toast({ title: 'Image deleted successfully' });
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Error deleting image',
+        description: error.message,
+        variant: 'destructive'
+      });
+    },
+  });
+
   const handleProductFormChange = (field: string, value: string) => {
     setProductForm(prev => ({
       ...prev,
@@ -115,6 +128,15 @@ const AdminProductEdit = () => {
     };
     
     updateProductMutation.mutate(updatedData);
+  };
+
+  const handleDeleteImage = async (imageId: number) => {
+    if (!product) return;
+    
+    const confirmed = window.confirm('Are you sure you want to delete this image?');
+    if (confirmed) {
+      deleteImageMutation.mutate({ productId: product.id, imageId });
+    }
   };
 
   const handleAddVariant = () => {
@@ -299,13 +321,22 @@ const AdminProductEdit = () => {
                   <h3 className="text-lg font-semibold mb-4">Main Product Images</h3>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     {product.images?.map((image, index) => (
-                      <div key={image.id || index} className="space-y-2">
-                        <div className="aspect-square rounded-lg overflow-hidden border">
+                      <div key={image.id || index} className="space-y-2 relative group">
+                        <div className="aspect-square rounded-lg overflow-hidden border relative">
                           <ProductImage
                             src={image.url}
                             alt={image.alt_text || 'Product image'}
                             className="w-full h-full object-cover"
                           />
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                            onClick={() => handleDeleteImage(image.id)}
+                            disabled={deleteImageMutation.isPending}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
                         </div>
                         <p className="text-sm text-muted-foreground truncate">{image.alt_text}</p>
                       </div>
@@ -325,13 +356,22 @@ const AdminProductEdit = () => {
                       <h4 className="font-medium mb-2">{variant.size} - {variant.color}</h4>
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                         {variant.images?.map((image: any, index: number) => (
-                          <div key={image.id || index} className="space-y-2">
-                            <div className="aspect-square rounded-lg overflow-hidden border">
+                          <div key={image.id || index} className="space-y-2 relative group">
+                            <div className="aspect-square rounded-lg overflow-hidden border relative">
                               <ProductImage
                                 src={image.url}
                                 alt={image.alt_text || 'Variant image'}
                                 className="w-full h-full object-cover"
                               />
+                              <Button
+                                variant="destructive"
+                                size="sm"
+                                className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                                onClick={() => handleDeleteImage(image.id)}
+                                disabled={deleteImageMutation.isPending}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
                             </div>
                             <p className="text-sm text-muted-foreground truncate">{image.alt_text}</p>
                           </div>

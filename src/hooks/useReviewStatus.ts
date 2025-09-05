@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { canUserReview, type CanReviewResponse } from '@/api/reviews';
 
@@ -25,10 +25,14 @@ export const useReviewStatus = (productId: number): UseReviewStatusReturn => {
   const [error, setError] = useState<string | null>(null);
 
   const fetchReviewStatus = useCallback(async () => {
-    console.log('🔍 fetchReviewStatus called:', { productId, isAuthenticated, userId: user?.id });
     
     if (!isAuthenticated || !user) {
-      console.log('❌ User not authenticated, setting review status to null');
+      setReviewStatus(null);
+      setIsLoading(false);
+      return;
+    }
+
+    if (!productId || productId <= 0) {
       setReviewStatus(null);
       setIsLoading(false);
       return;
@@ -37,19 +41,13 @@ export const useReviewStatus = (productId: number): UseReviewStatusReturn => {
     try {
       setIsLoading(true);
       setError(null);
-      console.log('🚀 Calling canUserReview API for product:', productId);
       const response = await canUserReview(productId);
-      console.log('✅ API Response:', response);
       setReviewStatus(response.data);
-      console.log('🟢 reviewStatus set:', response.data);
     } catch (err: any) {
-      console.error('❌ Error fetching review status:', err);
       setError(err.response?.data?.message || 'Failed to check review status');
       setReviewStatus(null);
-      console.log('🔴 Error state set:', err.response?.data?.message || err.message || err);
     } finally {
       setIsLoading(false);
-      console.log('ℹ️ fetchReviewStatus finished. Current reviewStatus:', reviewStatus, 'Current error:', error);
     }
   }, [productId, isAuthenticated, user]);
 

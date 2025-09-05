@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>React Test</title>
+</head>
+<body>
+    <div id="root"></div>
+    <script type="module">
+        import React from 'react';
+        import { createRoot } from 'react-dom/client';
+        
+        const TestComponent = () => {
+            return React.createElement('div', null, 'React is working!');
+        };
+        
+        const root = createRoot(document.getElementById('root'));
+        root.render(React.createElement(TestComponent));
+    </script>
+</body>
+</html>

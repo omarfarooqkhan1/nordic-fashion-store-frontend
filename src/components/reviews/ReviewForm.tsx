@@ -141,7 +141,6 @@ export const ReviewForm: React.FC<ReviewFormProps> = ({
 
       onReviewSubmitted(response.data);
     } catch (error: any) {
-      console.error('Review submission error:', error);
       let description = 'Failed to submit review. Please try again.';
       if (error.response?.status === 422 && error.response?.data?.errors) {
         // Laravel validation errors: { field: [msg, ...], ... }

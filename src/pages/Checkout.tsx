@@ -48,9 +48,6 @@ const Checkout: React.FC = () => {
   const { toast } = useToast();
   const [isProcessing, setIsProcessing] = useState(false);
   
-  // Debug cart state
-  console.log('🏪 Checkout rendered - Cart items:', items?.length || 0, 'Custom items:', customItems?.length || 0, 'isLoading:', isLoading, 'isProcessing:', isProcessing);
-  console.log('🔍 Full cart data:', { items, customItems, getCartTotal: getCartTotal(), getCartItemsCount: getCartItemsCount() });
   
   const [formData, setFormData] = useState<CheckoutFormData>({
     shipping_name: user?.name || '',
@@ -82,21 +79,14 @@ const Checkout: React.FC = () => {
 
   // Wait for cart to load before checking if it's empty
   useEffect(() => {
-    console.log('🔄 useEffect - isLoading:', isLoading, 'items:', items?.length, 'customItems:', customItems?.length, 'isProcessing:', isProcessing);
-    console.log('🔍 useEffect - Full data:', { items, customItems });
-    
     // Only check cart status after loading is complete
     if (!isLoading && !isProcessing) {
       const totalItems = (items?.length || 0) + (customItems?.length || 0);
-      console.log('📊 Total items calculation:', { itemsCount: items?.length || 0, customItemsCount: customItems?.length || 0, totalItems });
       if (totalItems === 0) {
-        console.log('⚠️ Cart is empty after loading, redirecting to cart page');
         navigate('/cart');
       } else {
-        console.log('✅ Cart has items, staying on checkout');
       }
     } else {
-      console.log('🔄 Still loading or processing, waiting...');
     }
   }, [isLoading, items, customItems, navigate, isProcessing]);
 
@@ -140,18 +130,12 @@ const Checkout: React.FC = () => {
   };
 
   const handleSubmit = async (e?: React.FormEvent | React.MouseEvent) => {
-    console.log('🚀 handleSubmit called');
-    console.log('🔍 User:', user);
-    console.log('🔑 Token:', token);
-    console.log('🛒 Cart items:', items);
-    console.log('💳 Form data:', formData);
     
     if (e) {
       e.preventDefault();
     }
     
     if (!validateForm()) {
-      console.log('❌ Form validation failed');
       toast({
         title: 'Please fix the errors',
         description: 'Check the form fields and try again',
@@ -160,18 +144,15 @@ const Checkout: React.FC = () => {
       return;
     }
 
-    console.log('✅ Form validation passed');
     setIsProcessing(true);
 
     try {
-      console.log('💰 Starting payment processing...');
       // Simulate payment processing delay
       await new Promise(resolve => setTimeout(resolve, 2000));
 
       // Save shipping address to user's address book if user is authenticated
       if (user && token) {
         try {
-          console.log('🏠 Saving shipping address to address book...');
           const addressData = {
             type: 'home' as const,
             label: 'Checkout Address',
@@ -183,20 +164,13 @@ const Checkout: React.FC = () => {
           };
           
           await createAddress(addressData);
-          console.log('✅ Shipping address saved to address book');
         } catch (addressError) {
-          console.warn('⚠️ Failed to save address to address book:', addressError);
           // Don't fail the order if address saving fails
         }
       }
 
-      console.log('📝 Creating order with API call...');
-      console.log('📤 Order data being sent:', formData);
-      console.log('🔐 Using token:', token);
-      
       // Create order
       const orderData = await createOrder(formData, token);
-      console.log('✅ Order created successfully:', orderData);
       
       if (!orderData || !orderData.order) {
         throw new Error('Invalid order response from server');
@@ -208,19 +182,15 @@ const Checkout: React.FC = () => {
         className: "bg-green-500 text-white"
       });
 
-      console.log('🧭 Navigating to order page...');
       // Navigate to order confirmation
       navigate(`/orders/${orderData.order.id}`, { 
         state: { orderData: orderData.order, fromCheckout: true }
       });
 
-      console.log('🧹 Clearing cart...');
       // Clear cart after successful navigation
       await clearCartItems();
-      console.log('✅ Cart cleared');
 
     } catch (error: any) {
-      console.error('💥 Checkout error details:', {
         error,
         message: error.message,
         response: error.response,
@@ -235,7 +205,6 @@ const Checkout: React.FC = () => {
       });
     } finally {
       setIsProcessing(false);
-      console.log('🏁 handleSubmit finished, isProcessing set to false');
     }
   };
 
@@ -246,7 +215,6 @@ const Checkout: React.FC = () => {
 
   // Show loading while cart is loading
   if (isLoading) {
-    console.log('🔄 Showing loading state');
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="flex items-center justify-center h-64">
@@ -259,7 +227,6 @@ const Checkout: React.FC = () => {
 
   // Don't render if cart is empty and we're not processing
   if ((!items || items.length === 0) && !isProcessing) {
-    console.log('🚫 Cart is empty, not rendering checkout');
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="text-center py-8">
@@ -631,7 +598,6 @@ const Checkout: React.FC = () => {
               <Button
                 type="button"
                 onClick={() => {
-                  console.log('🔘 Checkout button clicked!');
                   handleSubmit();
                 }}
                 disabled={isProcessing}

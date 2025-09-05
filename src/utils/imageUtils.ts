@@ -1,0 +1,35 @@
+// Utility functions for image URL handling
+
+/**
+ * Get the backend base URL for images
+ */
+export const getBackendBaseUrl = (): string => {
+  const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api';
+  // Remove '/api' from the end to get the base URL
+  return apiBaseUrl.replace('/api', '');
+};
+
+/**
+ * Convert a relative image path to a full URL
+ * @param imagePath - The relative path (e.g., '/storage/images/blogs/1.jpeg')
+ * @returns Full URL (e.g., 'http://localhost:8000/storage/images/blogs/1.jpeg')
+ */
+export const getImageUrl = (imagePath: string | null | undefined): string | null => {
+  if (!imagePath) return null;
+  
+  // If it's already a full URL, return as is
+  if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
+    return imagePath;
+  }
+  
+  // If it's a relative path, prepend the backend base URL
+  const baseUrl = getBackendBaseUrl();
+  return `${baseUrl}${imagePath}`;
+};
+
+/**
+ * Get a placeholder image URL
+ */
+export const getPlaceholderImageUrl = (text: string = 'No Image'): string => {
+  return `https://placehold.co/400x400/EFEFEF/AAAAAA?text=${encodeURIComponent(text)}`;
+};

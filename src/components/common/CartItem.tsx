@@ -32,15 +32,6 @@ const CartItem: React.FC<CartItemProps> = ({
     item.variant?.product?.images?.[0]?.url ||
     `https://placehold.co/96x96/EFEFEF/AAAAAA?text=Product`;
 
-  // Debug logging for image loading
-  console.log('🖼️ CartItem image debug:', {
-    itemId: item.id,
-    variantImages: item.variant?.images,
-    productImages: item.variant?.product?.images,
-    selectedImage: productImage,
-    variant: item.variant
-  });
-
   return (
     <Card className="bg-card border-border rounded-lg shadow-md">
       <CardContent className="p-6">
@@ -53,11 +44,9 @@ const CartItem: React.FC<CartItemProps> = ({
                 alt={item.variant?.product?.name || 'Product'} 
                 className="w-full h-full object-cover rounded-lg"
                 onError={(e) => { 
-                  console.warn(`🖼️ Failed to load image for item ${item.id}:`, productImage);
                   e.currentTarget.src = 'https://placehold.co/96x96/EFEFEF/AAAAAA?text=No+Image'; 
                 }}
                 onLoad={() => {
-                  console.log(`✅ Image loaded successfully for item ${item.id}:`, productImage);
                 }}
               />
             ) : (

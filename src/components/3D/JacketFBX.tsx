@@ -65,21 +65,11 @@ const JacketGLTF: React.FC<JacketGLTFProps> = ({
   // Load new FBX model
   const fbx = useFBX('/models/model.fbx');
 
-  // Debug: Log every time colors change
-  useEffect(() => {
-    console.log('🎨 Color props changed:', { bodyColor, leftArmColor, rightArmColor });
-  }, [bodyColor, leftArmColor, rightArmColor]);
 
   useEffect(() => {
     if (fbx) {
-      console.log('🎯 Processing new FBX model...');
       setModelLoaded(true);
       
-      // Log model information for debugging
-      console.log('🎯 New Leather Jacket FBX loaded:', fbx);
-      console.log('📏 Model scale:', scale);
-      console.log('📍 Model position:', position);
-      console.log('🎨 Colors to apply:', { bodyColor, leftArmColor, rightArmColor });
       
       // Get model bounds for centering and auto-scaling
       try {
@@ -87,32 +77,20 @@ const JacketGLTF: React.FC<JacketGLTFProps> = ({
         const size = box.getSize(new THREE.Vector3());
         const center = box.getCenter(new THREE.Vector3());
         
-        console.log('📦 Model bounds:', {
-          size: size.toArray(),
-          center: center.toArray(),
-          min: box.min.toArray(),
-          max: box.max.toArray()
-        });
-        
         // Auto-scale large models
         if (size.x > 100 || size.y > 100 || size.z > 100) {
-          console.log('⚠️ Model is very large, auto-scaling down');
           setAutoScale(0.01); // Scale down by 100x
         } else if (size.x < 0.1 || size.y < 0.1 || size.z < 0.1) {
-          console.log('⚠️ Model is very small, auto-scaling up');
           setAutoScale(100); // Scale up by 100x
         }
         
         // Auto-position to center
         if (Math.abs(center.x) > 10 || Math.abs(center.y) > 10 || Math.abs(center.z) > 10) {
-          console.log('⚠️ Model is far from center, auto-centering');
           const newPosition = [-center.x * autoScale, -center.y * autoScale, -center.z * autoScale];
           setAutoPosition(newPosition);
-          console.log('📍 Auto-position:', newPosition);
         }
         
       } catch (error) {
-        console.error('❌ Error calculating model bounds:', error);
       }
       
       // Apply colors and setup materials with proper leather textures
@@ -126,10 +104,6 @@ const JacketGLTF: React.FC<JacketGLTFProps> = ({
             obj.castShadow = true;
             obj.receiveShadow = true;
             
-            console.log(`🔍 Processing mesh: "${obj.name || 'unnamed'}"`);
-            console.log(`   - Position: ${obj.position.x.toFixed(2)}, ${obj.position.y.toFixed(2)}, ${obj.position.z.toFixed(2)}`);
-            console.log(`   - Scale: ${obj.scale.x.toFixed(2)}, ${obj.scale.y.toFixed(2)}, ${obj.scale.z.toFixed(2)}`);
-            console.log(`   - Geometry vertices: ${obj.geometry.attributes.position.count}`);
             
             // For now, let's use body color for everything to see the base behavior
             let appliedColor = bodyColor;
@@ -189,25 +163,19 @@ const JacketGLTF: React.FC<JacketGLTFProps> = ({
             obj.material = newMaterial;
             materialCount++;
             
-            console.log(`✅ Applied ${colorType} color: ${appliedColor} to mesh "${obj.name || 'unnamed'}"`);
             
           }
         });
         
-        console.log(`📊 Processed ${meshCount} meshes and ${materialCount} materials with leather textures`);
         
-        // Log mesh names for debugging
-        console.log('✅ New Leather Jacket FBX loaded successfully with leather textures!');
         const meshNames: string[] = [];
         fbx.traverse((obj: any) => {
           if (obj.isMesh) {
             meshNames.push(obj.name || 'unnamed');
           }
         });
-        console.log('📋 All mesh names:', meshNames);
         
       } catch (error) {
-        console.error('❌ Error processing materials with textures:', error);
       }
     }
   }, [fbx, bodyColor, leftArmColor, rightArmColor, scale, position, autoScale, jacketTextures, borderLTextures, borderRTextures, stitchesTextures, zipperTextures]);
@@ -243,7 +211,6 @@ const JacketGLTF: React.FC<JacketGLTFProps> = ({
       finalRotation = [Math.PI/2, Math.PI, 0];
     }
     
-    console.log('🎯 Rendering FBX with:', { finalScale, finalPosition, finalRotation, view });
     
     return (
       <primitive 
