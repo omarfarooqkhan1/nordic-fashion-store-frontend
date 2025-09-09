@@ -229,7 +229,7 @@ const Products = () => {
                         className="border-primary text-primary hover:bg-primary hover:text-primary-foreground transition-all duration-300 font-semibold shadow-md hover:shadow-lg hover:border-primary/40"
                       >
                         <Link to={`/product/${product.id}`}>
-                          {t('common.viewDetails')}
+                          {t('common.buyNow')}
                         </Link>
                       </Button>
                     </div>

@@ -207,7 +207,7 @@ const Index = () => {
                             className="border-primary text-primary hover:bg-primary hover:text-primary-foreground transition-all duration-300 w-full sm:w-auto"
                           >
                             <Link to={`/product/${product.id}`}>
-                              {t('common.viewDetails')}
+                              {t('common.buyNow')}
                             </Link>
                           </Button>
                         </div>
