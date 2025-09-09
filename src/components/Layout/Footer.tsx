@@ -13,7 +13,7 @@ export const Footer: React.FC = () => {
   return (
     <footer className="border-t border-border bg-background">
       <div className="container py-12">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-8">
           {/* Brand */}
           <div className="space-y-4">
             <div className="flex items-center space-x-3">
@@ -32,9 +32,76 @@ export const Footer: React.FC = () => {
             </p>
           </div>
 
+          {/* Social Media */}
+          <div className="space-y-4">
+            <h3 className="text-base font-semibold text-foreground">{t('footer.social')}</h3>
+            <ul className="space-y-2 text-sm">
+              <li>
+                <a 
+                  href="https://www.instagram.com/nordflex.official" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-muted-foreground hover:text-gold-500 transition-colors"
+                >
+                  Instagram
+                </a>
+              </li>
+              <li>
+                <a 
+                  href="https://www.tiktok.com/@nordflex" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-muted-foreground hover:text-gold-500 transition-colors"
+                >
+                  TikTok
+                </a>
+              </li>
+              <li>
+                <a 
+                  href="https://www.facebook.com/profile.php?id=61580805110962" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-muted-foreground hover:text-gold-500 transition-colors"
+                >
+                  Facebook
+                </a>
+              </li>
+              <li>
+                <a 
+                  href="https://www.x.com/@NordFlex" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-muted-foreground hover:text-gold-500 transition-colors"
+                >
+                  X
+                </a>
+              </li>
+              <li>
+                <a 
+                  href="https://www.youtube.com/@NordFlex" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-muted-foreground hover:text-gold-500 transition-colors"
+                >
+                  YouTube
+                </a>
+              </li>
+              <li>
+                <a 
+                  href="https://www.pinterest.com/nordflexshop" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-muted-foreground hover:text-gold-500 transition-colors"
+                >
+                  Pinterest
+                </a>
+              </li>
+            </ul>
+          </div>
+
           {/* Quick Links */}
           <div className="space-y-4">
-            <h3 className="text-sm font-semibold text-foreground">{t('footer.quicklinks')}</h3>
+            <h3 className="text-base font-semibold text-foreground">{t('footer.quicklinks')}</h3>
             <ul className="space-y-2 text-sm">
               <li>
                 <Link to="/" className="text-muted-foreground hover:text-gold-500 transition-colors" onClick={scrollToTop}>
@@ -71,7 +138,7 @@ export const Footer: React.FC = () => {
 
           {/* Categories */}
           <div className="space-y-4">
-            <h3 className="text-sm font-semibold text-foreground">{t('footer.categories')}</h3>
+            <h3 className="text-base font-semibold text-foreground">{t('footer.categories')}</h3>
             <ul className="space-y-2 text-sm">
               <li>
                 <Link to="/products?category=bags" className="text-muted-foreground hover:text-gold-500 transition-colors" onClick={scrollToTop}>
@@ -98,7 +165,7 @@ export const Footer: React.FC = () => {
 
           {/* Contact Info */}
           <div className="space-y-4">
-            <h3 className="text-sm font-semibold text-foreground">{t('footer.contact')}</h3>
+            <h3 className="text-base font-semibold text-foreground">{t('footer.contact')}</h3>
             <div className="space-y-2 text-sm text-muted-foreground">
               <p>{t('footer.company')}</p>
               <p>{t('footer.location')}</p>
