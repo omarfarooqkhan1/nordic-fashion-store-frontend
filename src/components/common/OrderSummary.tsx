@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useCurrency } from '@/contexts/CurrencyContext';
 import PriceDisplay from './PriceDisplay';
 
 interface OrderSummaryProps {
@@ -27,14 +28,20 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
   checkoutText,
   checkoutDisabled = false,
   showCheckoutButton = true,
-  features = [
-    'Free shipping on orders over €100',
-    '30-day return policy',
-    'Secure payment processing'
-  ],
+  features,
   className
 }) => {
   const { t } = useLanguage();
+  const { getCurrencySymbol, convertPrice } = useCurrency();
+  
+  // Default features with dynamic currency
+  const defaultFeatures = [
+    `Free shipping on orders over ${getCurrencySymbol()}${convertPrice(100).toFixed(0)}`,
+    '30-day return policy',
+    'Secure payment processing'
+  ];
+  
+  const displayFeatures = features || defaultFeatures;
 
   return (
     <Card className={`bg-card border-border rounded-lg shadow-md sticky top-4 ${className}`}>
@@ -51,7 +58,7 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
             <span className="text-muted-foreground">
               {t('cart.subtotal') || 'Subtotal'}
             </span>
-            <span className="text-foreground">€{subtotal.toFixed(2)}</span>
+            <span className="text-foreground">{getCurrencySymbol()}{subtotal.toFixed(2)}</span>
           </div>
           
           {/* Shipping */}
@@ -60,7 +67,7 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
               {t('cart.shipping') || 'Shipping'}
             </span>
             <span className="text-foreground">
-              {shipping === 0 ? 'Free' : `€${shipping.toFixed(2)}`}
+              {shipping === 0 ? 'Free' : `${getCurrencySymbol()}${shipping.toFixed(2)}`}
             </span>
           </div>
           
@@ -69,7 +76,7 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
             <span className="text-muted-foreground">
               {t('cart.tax') || 'Tax (VAT 25%)'}
             </span>
-            <span className="text-foreground">€{tax.toFixed(2)}</span>
+            <span className="text-foreground">{getCurrencySymbol()}{tax.toFixed(2)}</span>
           </div>
           
           <Separator className="my-4" />
@@ -79,7 +86,7 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
             <span className="text-foreground">
               {t('cart.total') || 'Total'}
             </span>
-            <span className="text-gold-500">€{total.toFixed(2)}</span>
+            <span className="text-gold-500">{getCurrencySymbol()}{total.toFixed(2)}</span>
           </div>
         </div>
 
@@ -95,9 +102,9 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
         )}
 
         {/* Features */}
-        {features.length > 0 && (
+        {displayFeatures.length > 0 && (
           <div className="text-xs text-muted-foreground space-y-1">
-            {features.map((feature, index) => (
+            {displayFeatures.map((feature, index) => (
               <p key={index}>• {feature}</p>
             ))}
           </div>

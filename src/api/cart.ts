@@ -110,9 +110,23 @@ export const addCustomJacketToCart = async (
   token?: string
 ): Promise<CustomJacketItem> => {
   try {
+    console.log('Starting addCustomJacketToCart', {
+      frontImageLength: customJacket.frontImageUrl?.length,
+      backImageLength: customJacket.backImageUrl?.length,
+      hasSessionId: !!sessionId,
+      hasToken: !!token
+    });
+
     // Convert base64 images to blobs
     const frontBlob = await dataURLToBlob(customJacket.frontImageUrl);
     const backBlob = await dataURLToBlob(customJacket.backImageUrl);
+    
+    console.log('Blobs created', {
+      frontBlobSize: frontBlob.size,
+      backBlobSize: backBlob.size,
+      frontBlobType: frontBlob.type,
+      backBlobType: backBlob.type
+    });
     
     // Create FormData
     const formData = new FormData();
@@ -129,22 +143,26 @@ export const addCustomJacketToCart = async (
       formData.append('session_id', sessionId);
     }
 
-    for (const [key, value] of formData.entries()) {
-      if (value instanceof Blob) {
-      } else {
-      }
-    }
+    console.log('Sending request to backend...', {
+      formDataEntries: Array.from(formData.entries()).map(([key, value]) => ({
+        key,
+        valueType: value instanceof Blob ? 'Blob' : typeof value,
+        size: value instanceof Blob ? value.size : undefined
+      }))
+    });
 
+    // Don't set Content-Type header - let axios handle it for FormData
+    // The axios interceptor will automatically remove Content-Type for FormData
     const response = await api.post('/cart/custom-jacket', formData, {
-      headers: {
-        ...(token ? { Authorization: `Bearer ${token}` } : {})
-      },
       maxContentLength: Infinity,
-      maxBodyLength: Infinity
+      maxBodyLength: Infinity,
+      transformRequest: [(data) => data] // Prevent axios from transforming FormData
     });
     
+    console.log('Success:', response.data);
     return response.data;
   } catch (error) {
+    console.error('Error in addCustomJacketToCart:', error);
     throw error;
   }
 };
@@ -152,15 +170,36 @@ export const addCustomJacketToCart = async (
 // Helper function to convert base64 to blob
 const dataURLToBlob = async (dataURL: string): Promise<Blob> => {
   try {
+    // Validate input
+    if (!dataURL || typeof dataURL !== 'string') {
+      throw new Error('Invalid data URL: empty or not a string');
+    }
+
     // Parse the data URL
     const arr = dataURL.split(',');
     if (arr.length !== 2) {
-      throw new Error('Invalid data URL format');
+      throw new Error(`Invalid data URL format: expected 2 parts, got ${arr.length}`);
     }
     
     const mime = arr[0].match(/:(.*?);/)?.[1] || 'image/png';
-    const bstr = atob(arr[1]);
     
+    // Validate mime type
+    if (!mime.startsWith('image/')) {
+      throw new Error(`Invalid mime type: ${mime}`);
+    }
+
+    // Decode base64
+    let bstr: string;
+    try {
+      bstr = atob(arr[1]);
+    } catch (e) {
+      throw new Error('Failed to decode base64 data: ' + (e instanceof Error ? e.message : 'unknown error'));
+    }
+    
+    if (bstr.length === 0) {
+      throw new Error('Decoded base64 data is empty');
+    }
+
     let n = bstr.length;
     const u8arr = new Uint8Array(n);
     
@@ -168,9 +207,23 @@ const dataURLToBlob = async (dataURL: string): Promise<Blob> => {
       u8arr[n] = bstr.charCodeAt(n);
     }
     
-    return new Blob([u8arr], { type: mime });
+    const blob = new Blob([u8arr], { type: mime });
+    
+    if (blob.size === 0) {
+      throw new Error('Created blob has zero size');
+    }
+    
+    console.log('Blob created successfully:', {
+      size: blob.size,
+      type: blob.type,
+      originalDataLength: dataURL.length
+    });
+    
+    return blob;
   } catch (error) {
-    throw new Error('Failed to convert image data to blob');
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    console.error('Failed to convert data URL to blob:', errorMessage);
+    throw new Error(`Failed to convert image data to blob: ${errorMessage}`);
   }
 };
 

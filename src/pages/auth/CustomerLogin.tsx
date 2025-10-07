@@ -27,7 +27,11 @@ const CustomerLogin: React.FC = () => {
       await loginCustomer(data.email, data.password);
       navigate(from, { replace: true });
     } catch (err: any) {
-      setError(t('toast.loginError'));
+      // Only set local error for non-verification related errors
+      // Let AuthContext handle verification redirects
+      if (err.response?.status !== 403 || !err.response?.data?.require_verification) {
+        setError(t('toast.loginError'));
+      }
     }
   };
 
@@ -45,10 +49,10 @@ const CustomerLogin: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 p-4">
-      <div className="w-full max-w-md">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 p-4 sm:p-6 lg:p-8">
+      <div className="w-full max-w-md sm:max-w-lg lg:max-w-xl">
         {/* Google Login Button */}
-        <Button onClick={handleGoogleLogin} variant="outline" className="w-full mb-4" type="button">
+        <Button onClick={handleGoogleLogin} variant="outline" className="w-full mb-4 dark:border-slate-600 dark:bg-slate-700 dark:text-white dark:hover:bg-slate-600" type="button">
           <svg className="w-4 h-4 mr-2" viewBox="0 0 24 24">
             <path
               fill="currentColor"
@@ -71,15 +75,15 @@ const CustomerLogin: React.FC = () => {
         </Button>
         <div className="relative mb-4">
           <div className="absolute inset-0 flex items-center">
-            <Separator className="w-full" />
+            <Separator className="w-full dark:bg-slate-600" />
           </div>
           <div className="relative flex justify-center text-xs uppercase">
-            <span className="bg-background px-2 text-muted-foreground">{t('auth.email')}</span>
+            <span className="bg-background dark:bg-slate-800 px-2 text-muted-foreground dark:text-slate-400">{t('auth.email')}</span>
           </div>
         </div>
         <AuthForm
           title={t('auth.loginCustomer')}
-          description={t('auth.login')}
+          description="Enter your credentials to access your account"
           submitText={t('auth.login')}
           isLoading={loading}
           error={error}

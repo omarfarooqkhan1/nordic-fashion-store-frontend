@@ -222,10 +222,10 @@ const BlogDetail: React.FC = () => {
       <Separator />
 
       {/* Blog Content */}
-      <div className="prose prose-lg max-w-none dark:prose-invert">
+      <div className="prose prose-lg max-w-none dark:prose-invert bg-background text-foreground dark:bg-background dark:text-foreground rounded-xl p-4 shadow">
         <div 
           dangerouslySetInnerHTML={{ __html: blog.content || '' }}
-          className="blog-content text-foreground leading-relaxed"
+          className="blog-content text-foreground dark:text-foreground leading-relaxed"
         />
       </div>
 

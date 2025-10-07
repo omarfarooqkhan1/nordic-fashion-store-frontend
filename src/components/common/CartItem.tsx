@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Trash2 } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useCurrency } from '@/contexts/CurrencyContext';
 import QuantitySelector from './QuantitySelector';
 import PriceDisplay from './PriceDisplay';
 
@@ -23,6 +24,7 @@ const CartItem: React.FC<CartItemProps> = ({
   disabled = false
 }) => {
   const { t } = useLanguage();
+  const { getCurrencySymbol } = useCurrency();
 
   const itemPrice = getItemPrice(item);
   const totalPrice = itemPrice * item.quantity;
@@ -108,7 +110,7 @@ const CartItem: React.FC<CartItemProps> = ({
                   className="mb-1"
                 />
                 <p className="text-sm text-muted-foreground">
-                  €{itemPrice.toFixed(2)} {t('common.each') || 'each'}
+                  {getCurrencySymbol()}{itemPrice.toFixed(2)} {t('common.each') || 'each'}
                 </p>
               </div>
             </div>

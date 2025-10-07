@@ -61,6 +61,9 @@
   .dark {
     --background: 0 0% 3.9%;
     --foreground: 0 0% 98%;
+    
+    /* Ensure error text is black in dark mode */
+    --destructive-foreground: 0 0% 0%;
 
     --card: 0 0% 3.9%;
     --card-foreground: 0 0% 98%;
@@ -117,6 +120,11 @@
 
   body {
     @apply bg-background text-foreground;
+  }
+
+  /* Add margin-top to all h1 elements in pages */
+  h1 {
+    @apply mt-20;
   }
 }
 

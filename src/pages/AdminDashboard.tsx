@@ -1,47 +1,46 @@
-import React, { useState, useEffect } from 'react';
-import MediaPreviewModal from '@/components/MediaPreviewModal';
-import MediaThumbnail from '@/components/MediaThumbnail';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useAuth } from '@/contexts/AuthContext';
-import { useToast } from '@/hooks/use-toast';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Checkbox } from '@/components/ui/checkbox';
-import { 
-  Package, 
-  Upload, 
-  Download, 
-  Edit, 
-  Trash2, 
-  Plus, 
-  Euro, 
-  Users, 
+"use client"
+
+import React, { useState, useEffect } from "react"
+import MediaPreviewModal from "@/components/MediaPreviewModal"
+import MediaThumbnail from "@/components/MediaThumbnail"
+import { useNavigate, useLocation } from "react-router-dom"
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
+import { useAuth } from "@/contexts/AuthContext"
+import { useLanguage } from "@/contexts/LanguageContext"
+import { useToast } from "@/hooks/use-toast"
+import api from "@/api/axios"
+import { buildApiHeaders } from "@/api/api-headers"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Badge } from "@/components/ui/badge"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Checkbox } from "@/components/ui/checkbox"
+import {
+  Package,
+  Upload,
+  Download,
+  Edit,
+  Trash2,
+  Plus,
+  Euro,
+  Users,
   ShoppingCart,
-  TrendingUp,
-  AlertCircle,
-  CheckCircle,
   FileSpreadsheet,
   X,
-  Image as ImageIcon,
-  Truck
-} from 'lucide-react';
+} from "lucide-react"
 
-import { fetchProducts } from '@/api/products';
-import type { Product, Category } from '@/api/admin';
-import { 
-  createProduct, 
-  updateProduct, 
-  deleteProduct, 
-  bulkUploadProducts, 
+import { fetchProducts } from "@/api/products"
+import type { Product, Category } from "@/api/admin"
+import {
+  createProduct,
+  updateProduct,
+  deleteProduct,
+  bulkUploadProducts,
   getBulkUploadTemplate,
   fetchCategories,
   createCategory,
@@ -49,612 +48,659 @@ import {
   deleteCategory,
   uploadProductImage,
   deleteProductImage,
-  updateProductImageOrder,
-  getCategorizedImages,
+  createProductVariant,
+  uploadProductImages,
   type ProductFormData,
-} from '@/api/admin';
-import OrderManagement from '@/components/admin/OrderManagement';
-import ContactForms from '@/components/admin/ContactForms';
-import { getPendingReviews, approveReview, rejectReview, type ProductReview } from '@/api/reviews';
-import { fetchProductById } from '@/api/products';
-import { LoadingState } from '@/components/common';
-
+} from "@/api/admin"
+import OrderManagement from "@/components/admin/OrderManagement"
+import ContactForms from "@/components/admin/ContactForms"
+import { ProductForm } from "@/components/admin/ProductForm"
+import { getPendingReviews, approveReview, rejectReview, type ProductReview } from "@/api/reviews"
+import { fetchProductById } from "@/api/products"
+import { LoadingState } from "@/components/common"
 const AdminDashboard: React.FC = () => {
   // State for which review modal is open (by review id)
-  const [openReviewModalId, setOpenReviewModalId] = useState<number | null>(null);
-  const navigate = useNavigate();
-  const location = useLocation();
-  const { user, token } = useAuth();
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
+  const [openReviewModalId, setOpenReviewModalId] = useState<number | null>(null)
+  const navigate = useNavigate()
+  const location = useLocation()
+  const { token } = useAuth()
+  const { t } = useLanguage()
   
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
-  const [isAddingProduct, setIsAddingProduct] = useState(false);
-  const [isUploading, setIsUploading] = useState(false);
-  const [uploadFile, setUploadFile] = useState<File | null>(null);
-  const [updateExisting, setUpdateExisting] = useState(false);
+  // Check for duplicate variants based on size and color
+  const hasDuplicateVariants = (variants: any[]) => {
+    const variantKeys = new Set()
+    for (const variant of variants) {
+      const key = `${variant.size}-${variant.color}`.toLowerCase()
+      if (variantKeys.has(key)) {
+        return true
+      }
+      variantKeys.add(key)
+    }
+    return false
+  }
+
+  // Handle save product
+  const handleSaveProduct = async (data: ProductFormData, images?: File[], variants: any[] = []) => {
+    // Check for duplicate variants
+    if (hasDuplicateVariants(variants)) {
+      toast({
+        title: "Error",
+        description: "Duplicate variants found. Each variant must have a unique combination of size and color.",
+        variant: "destructive",
+      })
+      return
+    }
+
+    try {
+      if (editingProduct) {
+        await updateProductMutation.mutateAsync({
+          id: editingProduct.id,
+          data,
+          variants: variants || []
+        })
+      } else if (images) {
+        await createProductMutation.mutateAsync({ data, images, variants })
+      }
+    } catch (error) {
+      console.error('Error saving product:', error)
+      toast({
+        title: "Error",
+        description: "Failed to save product. Please try again.",
+        variant: "destructive",
+      })
+    }
+  }
+
+  const { toast } = useToast()
+  const queryClient = useQueryClient()
+
+  const { isAuthenticated, loading: authLoading } = useAuth()
+  const [isLoading, setIsLoading] = useState(true)
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null)
+  const [isAddingProduct, setIsAddingProduct] = useState(false)
+  const [isUploading, setIsUploading] = useState(false)
+  const [uploadFile, setUploadFile] = useState<File | null>(null)
+  const [updateExisting, setUpdateExisting] = useState(false)
+
+  // Loading state for product creation
+  const [isCreatingProduct, setIsCreatingProduct] = useState(false)
+  const [creationProgress, setCreationProgress] = useState({
+    step: "",
+    progress: 0,
+    total: 0,
+  })
 
   // Pending Reviews State
-  const [pendingReviews, setPendingReviews] = useState<ProductReview[]>([]);
-  const [pendingLoading, setPendingLoading] = useState(false);
-  const [pendingError, setPendingError] = useState<string | null>(null);
-  const [reviewProductNames, setReviewProductNames] = useState<Record<number, string>>({});
+  const [pendingReviews, setPendingReviews] = useState<ProductReview[]>([])
+  const [pendingLoading, setPendingLoading] = useState(false)
+  const [pendingError, setPendingError] = useState<string | null>(null)
+  const [reviewProductNames, setReviewProductNames] = useState<Record<number, string>>({})
 
   // Determine active tab based on URL
   const getActiveTab = () => {
-    const path = location.pathname;
-    if (path.includes('/admin/products')) return 'products';
-    if (path.includes('/admin/dashboard')) return 'overview';
-    return 'overview'; // default
-  };
+    const path = location.pathname
+    if (path.includes("/admin/products")) return "products"
+    if (path.includes("/admin/dashboard")) return "overview"
+    return "overview" // default
+  }
 
-  const [activeTab, setActiveTab] = useState(getActiveTab());
+  const [activeTab, setActiveTab] = useState(getActiveTab())
 
   // Update active tab when location changes
   useEffect(() => {
-    setActiveTab(getActiveTab());
-  }, [location.pathname]);
+    setActiveTab(getActiveTab())
+  }, [location.pathname])
 
-  // Check authentication
+  // Handle authentication state changes
   useEffect(() => {
-    if (!user || user.role !== 'admin') {
-      navigate('/admin/login');
-    } else {
-      setIsAuthenticated(true);
+    if (!authLoading) {
+      setIsLoading(false);
+      if (!isAuthenticated) {
+        // If we're not on the login page and not authenticated, redirect to login
+        if (!window.location.pathname.includes('/login')) {
+          navigate("/admin/login");
+        }
+      } else if (window.location.pathname === '/admin/login') {
+        // If we're logged in but on the login page, redirect to admin dashboard
+        navigate("/admin");
+      }
     }
-  }, [user, navigate]);
+  }, [isAuthenticated, authLoading, navigate]);
 
   // Fetch products
-  const { data: products = [], isLoading: productsLoading, error: productsError } = useQuery({
-    queryKey: ['admin-products'],
+  const {
+    data: products = [],
+    isLoading: productsLoading,
+    error: productsError,
+  } = useQuery({
+    queryKey: ["admin-products"],
     queryFn: async () => {
-      const data = await fetchProducts();
+      const data = await fetchProducts()
       // Cast to admin Product type for compatibility
-      return data as unknown as Product[];
+      return data as unknown as Product[]
     },
     enabled: isAuthenticated,
-  });
+  })
 
   // Fetch categories
   const { data: categories = [] } = useQuery({
-    queryKey: ['categories'],
+    queryKey: ["categories"],
     queryFn: () => fetchCategories(),
     enabled: isAuthenticated,
-  });
+  })
 
   // Create product mutation
   const createProductMutation = useMutation({
-    mutationFn: (data: ProductFormData) => createProduct(data, token!),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin-products'] });
-      toast({ title: 'Product created successfully' });
-      setIsAddingProduct(false);
-    },
-    onError: (error: any) => {
-      toast({ 
-        title: 'Error creating product', 
-        description: error.message,
-        variant: 'destructive' 
-      });
-    },
-  });
+    mutationFn: async ({ data, images, variants }: { data: ProductFormData; images?: File[]; variants?: any[] }) => {
+      setIsCreatingProduct(true)
 
-  // Update product mutation
-  const updateProductMutation = useMutation({
-    mutationFn: ({ id, data }: { id: number; data: ProductFormData }) => 
-      updateProduct(id, data, token!),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin-products'] });
-      toast({ title: 'Product updated successfully' });
-      setEditingProduct(null);
+      // Calculate total steps
+      const totalSteps = 1 + (variants?.length || 0) + (images?.length || 0)
+      let currentStep = 0
+
+      // Step 1: Create product
+      setCreationProgress({ step: "Creating product...", progress: currentStep, total: totalSteps })
+      const newProduct = await createProduct(data, token!)
+      currentStep++
+
+      // Debug: Check if product was created successfully
+      console.log("Created product:", newProduct)
+
+      if (!newProduct || !newProduct.id) {
+        throw new Error("Product creation failed - no product ID returned")
+      }
+
+      // Step 2: Create variants
+      if (variants && variants.length > 0) {
+        try {
+          for (let i = 0; i < variants.length; i++) {
+            const variant = variants[i]
+            setCreationProgress({
+              step: `Creating variant ${i + 1}/${variants.length}...`,
+              progress: currentStep,
+              total: totalSteps,
+            })
+
+            const variantData = {
+              size: variant.size,
+              color: variant.color,
+              sku: "", // Let backend generate SKU
+              actual_price: variant.actual_price,
+              stock: variant.stock,
+            }
+            console.log("Creating variant for product ID:", newProduct.id, "with data:", variantData)
+            await createProductVariant(newProduct.id, variantData, token!)
+            currentStep++
+          }
+        } catch (error: any) {
+          console.error("Variant creation failed:", error)
+          throw new Error(`Product created but variant creation failed: ${error.message}`)
+        }
+      }
+
+      // Step 3: Upload images (batch)
+      const imageUploadResults = { success: 0, failed: 0, errors: [] as string[] }
+      if (images && images.length > 0) {
+        setCreationProgress({ step: `Uploading ${images.length} images...`, progress: currentStep, total: totalSteps })
+        try {
+          const result = await uploadProductImages(newProduct.id, images, token!)
+          imageUploadResults.success = images.length
+        } catch (error: any) {
+          imageUploadResults.failed = images.length
+          imageUploadResults.errors.push(error.message)
+        }
+        currentStep++
+      }
+
+      setCreationProgress({ step: "Finalizing...", progress: totalSteps, total: totalSteps })
+      return { newProduct, imageUploadResults }
+    },
+    onSuccess: ({ newProduct, imageUploadResults }, { images, variants }) => {
+      queryClient.invalidateQueries({ queryKey: ["admin-products"] })
+
+      let message = "Product created successfully"
+      const parts = []
+
+      if (variants && variants.length > 0) {
+        parts.push(`${variants.length} variant(s)`)
+      }
+      if (images && images.length > 0) {
+        if (imageUploadResults.success > 0) {
+          parts.push(`${imageUploadResults.success} image(s)`)
+        }
+        if (imageUploadResults.failed > 0) {
+          parts.push(`${imageUploadResults.failed} image(s) failed`)
+        }
+      }
+
+      if (parts.length > 0) {
+        message = `Product with ${parts.join(" and ")} created successfully`
+      }
+
+      let description = ""
+      if (imageUploadResults.failed > 0) {
+        description = `${imageUploadResults.failed} image(s) failed to upload. Check console for details.`
+      }
+
+      toast({
+        title: message,
+        description: description || undefined,
+        variant: imageUploadResults.failed > 0 ? "default" : "default",
+      })
+      setIsAddingProduct(false)
+      setIsCreatingProduct(false)
     },
     onError: (error: any) => {
-      toast({ 
-        title: 'Error updating product', 
+      toast({
+        title: "Error creating product",
         description: error.message,
-        variant: 'destructive' 
-      });
+        variant: "destructive",
+      })
+      setIsCreatingProduct(false)
     },
-  });
+  })
+
+  // Update product mutation with variant handling
+  const updateProductMutation = useMutation({
+    mutationFn: async ({ id, data, variants = [] }: { id: number; data: ProductFormData; variants: any[] }) => {
+      // First update the basic product info
+      const updatedProduct = await updateProduct(id, data, token!)
+      
+      // Then handle variants if any
+      if (variants && variants.length > 0) {
+        // Get existing variants to compare
+        const response = await api.get(`/products/${id}/variants`, {
+          headers: buildApiHeaders(undefined, token!)
+        });
+        
+        console.log('Variants API Response:', response); // Debug log
+        
+        // Handle different possible response structures
+        let variantsData = [];
+        if (Array.isArray(response.data)) {
+          variantsData = response.data;
+        } else if (response.data && Array.isArray(response.data.data)) {
+          variantsData = response.data.data;
+        } else if (response.data && response.data.variants) {
+          variantsData = Array.isArray(response.data.variants) 
+            ? response.data.variants 
+            : [];
+        }
+        
+        console.log('Processed variants data:', variantsData); // Debug log
+        
+        // Create a map of existing variants by size and color
+        const existingVariantMap = new Map(
+          variantsData.map((v: any) => [
+            `${v.size || ''}-${v.color || ''}`, 
+            v
+          ])
+        )
+        
+        // First, collect all variant keys from the new variants
+        const newVariantKeys = new Set(
+          variants
+            .filter(v => v.size && v.color)
+            .map(v => `${v.size}-${v.color}`)
+        );
+        
+        // Find variants that exist in the database but not in the new variants
+        const variantsToDelete = Array.from(existingVariantMap.entries())
+          .filter(([key]) => !newVariantKeys.has(key))
+          .map(([_, variant]) => variant);
+        
+        // Delete variants that were removed
+        for (const variantToDelete of variantsToDelete) {
+          try {
+            const variantKey = `${variantToDelete.size}-${variantToDelete.color}`;
+            console.log('Attempting to delete variant:', {
+              variantId: variantToDelete.id,
+              productId: id,
+              variantKey,
+              existingVariantMap: Array.from(existingVariantMap.entries())
+            });
+            
+            // First try the standalone endpoint (as per routes/api.php)
+            try {
+              console.log('Trying standalone endpoint...');
+              const response = await api.delete(
+                `/variants/${variantToDelete.id}`,
+                { 
+                  headers: buildApiHeaders(undefined, token!),
+                  validateStatus: (status) => status < 500
+                }
+              );
+              console.log('Delete successful with standalone endpoint:', response.data);
+              continue; // If successful, move to next variant
+            } catch (standaloneError) {
+              console.log('Standalone endpoint failed, trying nested...', {
+                error: (standaloneError as any).response?.data || (standaloneError as Error).message
+              });
+            }
+            
+            // If standalone endpoint fails, try the nested endpoint
+            try {
+              console.log('Trying nested endpoint...');
+              const response = await api.delete(
+                `/products/${id}/variants/${variantToDelete.id}`,
+                { 
+                  headers: buildApiHeaders(undefined, token!),
+                  validateStatus: (status) => status < 500
+                }
+              );
+              console.log('Delete successful with nested endpoint:', response.data);
+            } catch (nestedError) {
+              console.error('Both delete attempts failed for variant:', {
+                variantId: variantToDelete.id,
+                error: (nestedError as any).response?.data || (nestedError as Error).message,
+                response: (nestedError as any).response
+              });
+              
+              // Try a direct fetch as a last resort
+              try {
+                console.log('Trying direct fetch...');
+                const response = await fetch(
+                  `${window.location.origin}/api/variants/${variantToDelete.id}`,
+                  {
+                    method: 'DELETE',
+                    headers: {
+                      'Authorization': `Bearer ${token}`,
+                      'Accept': 'application/json',
+                      'Content-Type': 'application/json',
+                      'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+                    },
+                    credentials: 'include'
+                  }
+                );
+                
+                const data = await response.json();
+                if (!response.ok) throw new Error(data.message || 'Failed to delete variant');
+                console.log('Direct fetch delete successful:', data);
+              } catch (fetchError) {
+                console.error('All delete attempts failed for variant:', {
+                  variantId: variantToDelete.id,
+                  error: fetchError instanceof Error ? fetchError.message : 'Unknown error'
+                });
+              }
+            }
+          } catch (error) {
+            console.error('Unexpected error during variant deletion:', {
+              variantId: variantToDelete.id,
+              error: (error as any).response?.data || (error as Error).message,
+              stack: (error as Error).stack
+            });
+          }
+        }
+        
+        // Process each new/updated variant
+        for (const variant of variants) {
+          try {
+            if (!variant.size || !variant.color) {
+              console.error('Variant is missing required fields (size or color):', variant);
+              continue;
+            }
+            
+            const variantKey = `${variant.size}-${variant.color}`;
+            const existingVariant = existingVariantMap.get(variantKey);
+            
+            if (existingVariant?.id) {
+              // Update existing variant
+              console.log('Updating variant:', { variantKey, existingVariant });
+              await api.put(
+                `/products/${id}/variants/${existingVariant.id}`,
+                {
+                  size: variant.size,
+                  color: variant.color,
+                  actual_price: variant.price || 0, // Changed from price to actual_price
+                  stock: variant.stock || 0,
+                  sku: variant.sku || `variant-${variant.size}-${variant.color}`,
+                },
+                { 
+                  headers: buildApiHeaders(undefined, token!),
+                  validateStatus: (status) => status < 500 // Don't throw on 4xx errors
+                }
+              ).catch(error => {
+                console.error('Error updating variant:', {
+                  variantKey,
+                  variantId: existingVariant.id,
+                  error: error.response?.data || error.message
+                });
+                throw error;
+              });
+            } else {
+              // Create new variant
+              console.log('Creating new variant:', variantKey);
+              await api.post(
+                `/products/${id}/variants`,
+                {
+                  size: variant.size,
+                  color: variant.color,
+                  actual_price: variant.price || 0, // Changed from price to actual_price
+                  stock: variant.stock || 0,
+                  sku: variant.sku || `variant-${variant.size}-${variant.color}`,
+                },
+                { 
+                  headers: buildApiHeaders(undefined, token!),
+                  validateStatus: (status) => status < 500 // Don't throw on 4xx errors
+                }
+              ).catch(error => {
+                console.error('Error creating variant:', {
+                  variantKey,
+                  error: error.response?.data || error.message
+                });
+                throw error;
+              });
+            }
+          } catch (error) {
+            console.error('Error processing variant:', {
+              variant,
+              error: error instanceof Error ? error.message : 'Unknown error'
+            });
+            // Continue with next variant even if one fails
+            continue;
+          }
+        }
+      }
+      
+      return updatedProduct;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-products"] })
+      toast({ title: "Product and variants updated successfully" })
+      setEditingProduct(null)
+    },
+    onError: (error: any) => {
+      console.error('Update product error:', error)
+      toast({
+        title: "Error updating product",
+        description: error.response?.data?.message || error.message || 'Failed to update product',
+        variant: "destructive",
+      })
+    },
+  })
 
   // Delete product mutation
   const deleteProductMutation = useMutation({
     mutationFn: (id: number) => deleteProduct(id, token!),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin-products'] });
-      toast({ title: 'Product deleted successfully' });
+      queryClient.invalidateQueries({ queryKey: ["admin-products"] })
+      toast({ title: "Product deleted successfully" })
     },
     onError: (error: any) => {
-      toast({ 
-        title: 'Error deleting product', 
+      toast({
+        title: "Error deleting product",
         description: error.message,
-        variant: 'destructive' 
-      });
+        variant: "destructive",
+      })
     },
-  });
+  })
 
   // Approve review mutation
   const approveReviewMutation = useMutation({
     mutationFn: (reviewId: number) => approveReview(reviewId, token),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin-products'] });
-      toast({ title: 'Review approved' });
+      queryClient.invalidateQueries({ queryKey: ["admin-products"] })
+      toast({ title: "Review approved" })
     },
     onError: (error: any) => {
-      toast({ 
-        title: 'Error approving review', 
+      toast({
+        title: "Error approving review",
         description: error.message,
-        variant: 'destructive' 
-      });
+        variant: "destructive",
+      })
     },
-  });
+  })
 
   // Reject review mutation
   const rejectReviewMutation = useMutation({
     mutationFn: (reviewId: number) => rejectReview(reviewId, token),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin-products'] });
-      toast({ title: 'Review rejected' });
+      queryClient.invalidateQueries({ queryKey: ["admin-products"] })
+      toast({ title: "Review rejected" })
     },
     onError: (error: any) => {
-      toast({ 
-        title: 'Error rejecting review', 
+      toast({
+        title: "Error rejecting review",
         description: error.message,
-        variant: 'destructive' 
-      });
+        variant: "destructive",
+      })
     },
-  });
+  })
 
   // Fetch pending reviews on mount
   useEffect(() => {
-    if (!isAuthenticated) return;
-    setPendingLoading(true);
+    if (!isAuthenticated) return
+    setPendingLoading(true)
     getPendingReviews()
       .then(async (reviews) => {
-        setPendingReviews(reviews);
+        setPendingReviews(reviews)
         // Fetch product names for each review
-        const names: Record<number, string> = {};
+        const names: Record<number, string> = {}
         await Promise.all(
           reviews.map(async (review) => {
             try {
-              const product = await fetchProductById(review.product_id.toString());
-              names[review.id] = product.name;
+              const product = await fetchProductById(review.product_id.toString())
+              names[review.id] = product.name
             } catch {
-              names[review.id] = 'Product';
+              names[review.id] = "Product"
             }
-          })
-        );
-        setReviewProductNames(names);
+          }),
+        )
+        setReviewProductNames(names)
       })
-      .catch(e => setPendingError(e.message || 'Failed to load pending reviews'))
-      .finally(() => setPendingLoading(false));
-  }, [isAuthenticated]);
+      .catch((e) => setPendingError(e.message || "Failed to load pending reviews"))
+      .finally(() => setPendingLoading(false))
+  }, [isAuthenticated])
 
   const handleDeleteProduct = (product: Product) => {
     if (confirm(`Are you sure you want to delete "${product.name}"?`)) {
-      deleteProductMutation.mutate(product.id);
+      deleteProductMutation.mutate(product.id)
     }
-  };
+  }
 
   const handleBulkUpload = async () => {
     if (!uploadFile) {
       toast({
-        title: 'No file selected',
-        description: 'Please select a CSV file to upload',
-        variant: 'destructive'
-      });
-      return;
+        title: "No file selected",
+        description: "Please select a CSV file to upload",
+        variant: "destructive",
+      })
+      return
     }
 
-    setIsUploading(true);
+    setIsUploading(true)
     try {
-      const result = await bulkUploadProducts(uploadFile, updateExisting, token!);
-      
-      const uniqueProducts = result.unique_products || Math.ceil(result.successful / 2); // Fallback estimate
-      
+      const result = await bulkUploadProducts(uploadFile, updateExisting, token!)
+
+      const uniqueProducts = result.unique_products || Math.ceil(result.successful / 2) // Fallback estimate
+
       toast({
-        title: 'Bulk upload completed',
-        description: `${uniqueProducts} unique products with ${result.successful} variants uploaded successfully${result.failed > 0 ? `, ${result.failed} failed` : ''}`,
-        className: result.failed > 0 ? 'bg-yellow-500 text-white' : 'bg-green-500 text-white'
-      });
+        title: "Bulk upload completed",
+        description: `${uniqueProducts} unique products with ${result.successful} variants uploaded successfully${result.failed > 0 ? `, ${result.failed} failed` : ""}`,
+        className: result.failed > 0 ? "bg-yellow-500 text-white" : "bg-green-500 text-white",
+      })
 
       if (result.failed > 0) {
       }
 
-      queryClient.invalidateQueries({ queryKey: ['admin-products'] });
-      setUploadFile(null);
+      queryClient.invalidateQueries({ queryKey: ["admin-products"] })
+      setUploadFile(null)
     } catch (error: any) {
       toast({
-        title: 'Upload failed',
+        title: "Upload failed",
         description: error.message,
-        variant: 'destructive'
-      });
+        variant: "destructive",
+      })
     } finally {
-      setIsUploading(false);
+      setIsUploading(false)
     }
-  };
+  }
 
   const handleDownloadTemplate = async () => {
     try {
-      const blob = await getBulkUploadTemplate(token!);
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'product-upload-template.csv';
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
+      const blob = await getBulkUploadTemplate(token!)
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement("a")
+      a.href = url
+      a.download = "product-upload-template.csv"
+      document.body.appendChild(a)
+      a.click()
+      window.URL.revokeObjectURL(url)
+      document.body.removeChild(a)
     } catch (error: any) {
       toast({
-        title: 'Error downloading template',
+        title: "Error downloading template",
         description: error.message,
-        variant: 'destructive'
-      });
+        variant: "destructive",
+      })
     }
-  };
-
-  if (!isAuthenticated) {
-    return <LoadingState message="Loading..." className="min-h-screen" />;
   }
 
-  // Product Form Component
-  const ProductForm = ({ product, onSave, onCancel }: { 
-    product?: Product; 
-    onSave: (data: ProductFormData) => void; 
-    onCancel: () => void;
-  }) => {
-    const [formData, setFormData] = useState<ProductFormData>({
-      name: product?.name || '',
-      description: product?.description || '',
-      price: product ? parseFloat(product.price) : 0,
-      category_id: product?.category?.id || (categories[0]?.id || 1),
-    });
-
-    const [selectedImages, setSelectedImages] = useState<File[]>([]);
-    const [imagesToDelete, setImagesToDelete] = useState<number[]>([]);
-    const [isUploadingImages, setIsUploadingImages] = useState(false);
-
-    // Image upload mutation
-    const uploadImageMutation = useMutation({
-      mutationFn: ({ productId, imageFile }: { productId: number; imageFile: File }) =>
-        uploadProductImage(productId, imageFile, token!),
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: ['admin-products'] });
-        toast({ title: 'Image uploaded successfully' });
-      },
-      onError: (error: any) => {
-        toast({
-          title: 'Error uploading image',
-          description: error.message,
-          variant: 'destructive'
-        });
-      },
-    });
-
-    // Image delete mutation with enhanced feedback
-    const deleteImageMutation = useMutation({
-      mutationFn: ({ productId, imageId }: { productId: number; imageId: number }) =>
-        deleteProductImage(productId, imageId, token!),
-      onSuccess: (data) => {
-        queryClient.invalidateQueries({ queryKey: ['admin-products'] });
-        
-        if (data.warning && data.variant_info) {
-          toast({
-            title: 'Image deleted with warning',
-            description: `${data.warning}. Variant: ${data.variant_info.color} (${data.variant_info.size})`,
-            variant: 'default'
-          });
-        } else {
-          toast({ title: 'Image deleted successfully' });
-        }
-      },
-      onError: (error: any) => {
-        toast({
-          title: 'Error deleting image',
-          description: error.message,
-          variant: 'destructive'
-        });
-      },
-    });
-
-    const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-      if (e.target.files) {
-        const files = Array.from(e.target.files);
-        setSelectedImages(prev => [...prev, ...files]);
-      }
-    };
-
-    const handleRemoveSelectedImage = (index: number) => {
-      setSelectedImages(prev => prev.filter((_, i) => i !== index));
-    };
-
-    const handleDeleteExistingImage = async (imageId: number, imageCategory?: string) => {
-      if (!product) return;
-
-      // Enhanced confirmation dialog with warnings
-      let confirmMessage = "Are you sure you want to delete this image?";
-      if (imageCategory && imageCategory.includes("Variant:")) {
-        confirmMessage = `⚠️ WARNING: This appears to be a variant-specific image (${imageCategory}).\n\nDeleting it may affect the product variant's visual representation.\n\nAre you sure you want to proceed?`;
-      }
-
-      const confirmed = window.confirm(confirmMessage);
-      if (confirmed) {
-        try {
-          const result = await deleteImageMutation.mutateAsync({ productId: product.id, imageId });
-          
-          // Additional warning if it was indeed a variant image
-          if (result.warning) {
-            const followUpConfirm = window.confirm(
-              `✅ Image deleted successfully.\n\n${result.warning}\n\nWould you like to review the remaining images for this product?`
-            );
-            
-            if (followUpConfirm) {
-              // Could trigger a refresh or scroll to images section
-              queryClient.invalidateQueries({ queryKey: ['admin-products'] });
-            }
-          }
-        } catch (error) {
-          // Error handling is already done in the mutation
-        }
-      }
-    };
-
-    const handleUploadImages = async () => {
-      if (!product || selectedImages.length === 0) return;
-      
-      setIsUploadingImages(true);
-      try {
-        for (const imageFile of selectedImages) {
-          await uploadImageMutation.mutateAsync({ productId: product.id, imageFile });
-        }
-        setSelectedImages([]);
-      } finally {
-        setIsUploadingImages(false);
-      }
-    };
-
-    const handleSubmit = (e: React.FormEvent) => {
-      e.preventDefault();
-      onSave(formData);
-    };
-
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle>{product ? 'Edit Product' : 'Add New Product'}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="name">Product Name *</Label>
-                <Input
-                  id="name"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  required
-                />
-              </div>
-              <div>
-                <Label htmlFor="category">Category *</Label>
-                <Select 
-                  value={formData.category_id.toString()} 
-                  onValueChange={(value) => setFormData({ ...formData, category_id: parseInt(value) })}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {categories.map((category) => (
-                      <SelectItem key={category.id} value={category.id.toString()}>
-                        {category.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            <div>
-              <Label htmlFor="description">Description</Label>
-              <Textarea
-                id="description"
-                value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                rows={3}
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="price">Price (€) *</Label>
-              <Input
-                id="price"
-                type="number"
-                step="0.01"
-                min="0"
-                value={formData.price}
-                onChange={(e) => setFormData({ ...formData, price: parseFloat(e.target.value) })}
-                required
-              />
-            </div>
-
-            {/* Image Management Section */}
-            <div className="space-y-4">
-              <Label>Product Images</Label>
-              
-              {/* Existing Images */}
-              {product && product.images && product.images.length > 0 && (
-                <div>
-                  <h4 className="text-sm font-medium mb-2">Current Images ({product.images.length})</h4>
-                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                    {product.images.map((image) => {
-                      // Determine image category (this is a simplified version - ideally we'd use the categorized endpoint)
-                      const isVariantImage = image.alt_text?.includes('variant') || image.alt_text?.includes('color') || image.alt_text?.includes('size');
-                      const imageCategory = isVariantImage ? `Variant Image` : `General Product Image`;
-                      
-                      return (
-                        <div key={image.id} className="relative group">
-                          <img
-                            src={image.url}
-                            alt={image.alt_text || product.name}
-                            className="w-full h-32 object-cover rounded-lg border"
-                          />
-                          
-                          {/* Enhanced delete button with warning indicator */}
-                          <Button
-                            type="button"
-                            variant={isVariantImage ? "destructive" : "secondary"}
-                            size="sm"
-                            className={`absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity ${
-                              isVariantImage ? 'bg-red-600 hover:bg-red-700' : 'bg-gray-600 hover:bg-gray-700'
-                            }`}
-                            onClick={() => handleDeleteExistingImage(image.id, imageCategory)}
-                            disabled={deleteImageMutation.isPending}
-                            title={isVariantImage ? "⚠️ Variant-specific image - delete with caution" : "Delete image"}
-                          >
-                            {isVariantImage ? (
-                              <span className="text-xs">⚠️</span>
-                            ) : (
-                              <X className="h-4 w-4" />
-                            )}
-                          </Button>
-                          
-                          {/* Enhanced info overlay */}
-                          <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-70 text-white text-xs p-1 rounded-b-lg">
-                            <div className="flex justify-between items-center">
-                              <span>Order: {image.sort_order}</span>
-                              {isVariantImage && (
-                                <span className="bg-yellow-600 px-1 rounded text-xs">VAR</span>
-                              )}
-                            </div>
-                            <div className="text-xs opacity-75 truncate" title={imageCategory}>
-                              {imageCategory}
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                  
-                  {/* Warning notice */}
-                  <div className="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded-md">
-                    <p className="text-xs text-yellow-800">
-                      <strong>⚠️ Note:</strong> Images marked with "VAR" may be variant-specific. 
-                      Deleting them could affect product variant display. Use caution when removing these images.
-                    </p>
-                  </div>
-                </div>
-              )}
-
-              {/* Add New Images */}
-              <div>
-                <h4 className="text-sm font-medium mb-2">Add New Images</h4>
-                <Input
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  onChange={handleImageSelect}
-                  className="mb-2"
-                />
-                
-                {/* Preview Selected Images */}
-                {selectedImages.length > 0 && (
-                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mt-2">
-                    {selectedImages.map((file, index) => (
-                      <div key={index} className="relative group">
-                        <img
-                          src={URL.createObjectURL(file)}
-                          alt={file.name}
-                          className="w-full h-32 object-cover rounded-lg border"
-                        />
-                        <Button
-                          type="button"
-                          variant="destructive"
-                          size="sm"
-                          className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
-                          onClick={() => handleRemoveSelectedImage(index)}
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
-                        <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white text-xs p-1 rounded-b-lg">
-                          {file.name}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {/* Upload Images Button */}
-                {product && selectedImages.length > 0 && (
-                  <Button
-                    type="button"
-                    onClick={handleUploadImages}
-                    disabled={isUploadingImages}
-                    className="mt-2"
-                    variant="outline"
-                  >
-                    {isUploadingImages ? (
-                      <>
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-900 mr-2"></div>
-                        Uploading...
-                      </>
-                    ) : (
-                      <>
-                        <Upload className="h-4 w-4 mr-2" />
-                        Upload {selectedImages.length} Image{selectedImages.length > 1 ? 's' : ''}
-                      </>
-                    )}
-                  </Button>
-                )}
-
-                {!product && selectedImages.length > 0 && (
-                  <p className="text-sm text-muted-foreground mt-2">
-                    Save the product first to upload images
-                  </p>
-                )}
-              </div>
-            </div>
-
-            <div className="flex gap-4 pt-4">
-              <Button 
-                type="submit"
-                disabled={createProductMutation.isPending || updateProductMutation.isPending}
-                className="bg-gold-500 hover:bg-gold-600 text-leather-900 font-semibold"
-              >
-                {product ? 'Update Product' : 'Add Product'}
-              </Button>
-              <Button type="button" variant="outline" onClick={onCancel}>
-                Cancel
-              </Button>
-            </div>
-          </form>
-        </CardContent>
-      </Card>
-    );
-  };
+  if (!isAuthenticated) {
+    return <LoadingState message="Loading..." className="min-h-screen" />
+  }
 
   return (
-    <div className="container mx-auto px-2 sm:px-4 py-4 sm:py-8 space-y-4 sm:space-y-8">
+    <div className="container mx-auto px-2 sm:px-4 py-0 sm:py-0 space-y-4 sm:space-y-8">
+      {/* Loading Overlay */}
+      {isCreatingProduct && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-8 max-w-md w-full mx-4">
+            <div className="text-center space-y-4">
+              <div className="flex justify-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+              </div>
+              <h3 className="text-lg font-semibold">Creating Product</h3>
+              <p className="text-sm text-muted-foreground">{creationProgress.step}</p>
+
+              {/* Progress Bar */}
+              <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                <div
+                  className="bg-blue-500 h-2 rounded-full transition-all duration-300"
+                  style={{
+                    width: `${(creationProgress.progress / creationProgress.total) * 100}%`,
+                  }}
+                ></div>
+              </div>
+
+              <p className="text-xs text-muted-foreground">
+                Step {creationProgress.progress} of {creationProgress.total}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
         <h1 className="text-2xl sm:text-4xl font-bold text-foreground">Admin Dashboard</h1>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
         <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-1">
-          <TabsTrigger 
-            value="overview" 
-            onClick={() => navigate('/admin/dashboard')}
-            className="text-xs sm:text-sm"
-          >
+          <TabsTrigger value="overview" onClick={() => navigate("/admin/dashboard")} className="text-xs sm:text-sm">
             Overview
           </TabsTrigger>
-          <TabsTrigger 
-            value="products" 
-            onClick={() => navigate('/admin/products')}
-            className="text-xs sm:text-sm"
-          >
+          <TabsTrigger value="products" onClick={() => navigate("/admin/products")} className="text-xs sm:text-sm">
             Products
           </TabsTrigger>
           <TabsTrigger value="categories" className="text-xs sm:text-sm">
@@ -674,11 +720,7 @@ const AdminDashboard: React.FC = () => {
             <span className="hidden sm:inline">Contact Forms</span>
             <span className="sm:hidden">Contacts</span>
           </TabsTrigger>
-          <TabsTrigger 
-            value="blogs" 
-            onClick={() => navigate('/admin/blogs')}
-            className="text-xs sm:text-sm"
-          >
+          <TabsTrigger value="blogs" onClick={() => navigate("/admin/blogs")} className="text-xs sm:text-sm">
             <span className="hidden sm:inline">Blogs</span>
             <span className="sm:hidden">Blogs</span>
           </TabsTrigger>
@@ -698,7 +740,7 @@ const AdminDashboard: React.FC = () => {
                 </div>
               </CardContent>
             </Card>
-            
+
             <Card>
               <CardContent className="p-3 sm:p-6">
                 <div className="flex items-center space-x-2">
@@ -710,7 +752,7 @@ const AdminDashboard: React.FC = () => {
                 </div>
               </CardContent>
             </Card>
-            
+
             <Card>
               <CardContent className="p-3 sm:p-6">
                 <div className="flex items-center space-x-2">
@@ -722,7 +764,7 @@ const AdminDashboard: React.FC = () => {
                 </div>
               </CardContent>
             </Card>
-            
+
             <Card>
               <CardContent className="p-3 sm:p-6">
                 <div className="flex items-center space-x-2">
@@ -759,7 +801,7 @@ const AdminDashboard: React.FC = () => {
         <TabsContent value="products" className="space-y-6">
           <div className="flex justify-between items-center">
             <h2 className="text-2xl font-semibold">Manage Products</h2>
-            <Button 
+            <Button
               onClick={() => setIsAddingProduct(true)}
               className="bg-gold-500 hover:bg-gold-600 text-leather-900 font-semibold"
             >
@@ -769,16 +811,29 @@ const AdminDashboard: React.FC = () => {
           </div>
 
           {isAddingProduct && (
-            <ProductForm 
-              onSave={(data) => createProductMutation.mutate(data)}
+            <ProductForm
+              onSave={handleSaveProduct}
               onCancel={() => setIsAddingProduct(false)}
+              categories={categories}
+              token={token}
+              isCreatingProduct={isCreatingProduct}
             />
           )}
 
           {editingProduct && (
-            <ProductForm 
+            <ProductForm
+              key={`edit-product-${editingProduct.id}`}
               product={editingProduct}
-              onSave={(data) => updateProductMutation.mutate({ id: editingProduct.id, data })}
+              categories={categories}
+              token={token}
+              isCreatingProduct={isCreatingProduct}
+              onSave={(data, images, variants = []) => {
+                updateProductMutation.mutate({ 
+                  id: editingProduct.id, 
+                  data,
+                  variants: variants || []
+                })
+              }}
               onCancel={() => setEditingProduct(null)}
             />
           )}
@@ -801,11 +856,7 @@ const AdminDashboard: React.FC = () => {
                             <p className="text-sm text-muted-foreground">{product.category.name}</p>
                           </div>
                           <div className="flex gap-2">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => setEditingProduct(product)}
-                            >
+                            <Button variant="outline" size="sm" onClick={() => setEditingProduct(product)}>
                               <Edit className="h-4 w-4" />
                             </Button>
                             <Button
@@ -821,9 +872,7 @@ const AdminDashboard: React.FC = () => {
                         <p className="text-sm text-muted-foreground">{product.description}</p>
                         <div className="flex items-center gap-4">
                           <span className="font-semibold text-gold-500">€{product.price}</span>
-                          <Badge variant="default">
-                            {product.variants?.length || 0} variants
-                          </Badge>
+                          <Badge variant="default">{product.variants?.length || 0} variants</Badge>
                           <span className="text-sm text-muted-foreground">
                             Stock: {product.variants?.reduce((total, v) => total + v.stock, 0) || 0}
                           </span>
@@ -839,11 +888,11 @@ const AdminDashboard: React.FC = () => {
 
         {/* Categories Tab */}
         <TabsContent value="categories" className="space-y-6">
-          <CategoryManagement 
+          <CategoryManagement
             categories={categories}
-            onCategoryCreated={() => queryClient.invalidateQueries({ queryKey: ['categories'] })}
-            onCategoryUpdated={() => queryClient.invalidateQueries({ queryKey: ['categories'] })}
-            onCategoryDeleted={() => queryClient.invalidateQueries({ queryKey: ['categories'] })}
+            onCategoryCreated={() => queryClient.invalidateQueries({ queryKey: ["categories"] })}
+            onCategoryUpdated={() => queryClient.invalidateQueries({ queryKey: ["categories"] })}
+            onCategoryDeleted={() => queryClient.invalidateQueries({ queryKey: ["categories"] })}
           />
         </TabsContent>
 
@@ -898,11 +947,11 @@ const AdminDashboard: React.FC = () => {
                       </>
                     )}
                   </Button>
-                  
+
                   <Button
                     variant="outline"
                     onClick={handleDownloadTemplate}
-                    className="flex-1 sm:flex-none"
+                    className="flex-1 sm:flex-none bg-transparent"
                   >
                     <Download className="h-4 w-4 mr-2" />
                     <span className="hidden sm:inline">Download Template</span>
@@ -926,7 +975,9 @@ const AdminDashboard: React.FC = () => {
                     <li>• Create a ZIP file containing:</li>
                     <li className="ml-4">- One CSV file with product data</li>
                     <li className="ml-4">- Image files (JPG, PNG, GIF, WebP)</li>
-                    <li>• Use <strong>image_file_1</strong>, <strong>image_file_2</strong>, etc. columns in CSV</li>
+                    <li>
+                      • Use <strong>image_file_1</strong>, <strong>image_file_2</strong>, etc. columns in CSV
+                    </li>
                     <li>• Reference image files by name (e.g., "red-shirt-front.jpg")</li>
                     <li>• Images are automatically uploaded to Cloudinary</li>
                   </ul>
@@ -935,25 +986,47 @@ const AdminDashboard: React.FC = () => {
                 <div className="bg-blue-50 p-4 rounded-lg">
                   <h4 className="font-medium mb-2">CSV Required Columns:</h4>
                   <ul className="text-sm space-y-1">
-                    <li>• <strong>name</strong> - Product name</li>
-                    <li>• <strong>description</strong> - Product description</li>
-                    <li>• <strong>price</strong> - Base price (decimal)</li>
-                    <li>• <strong>category_name</strong> - Category name (must exist)</li>
+                    <li>
+                      • <strong>name</strong> - Product name
+                    </li>
+                    <li>
+                      • <strong>description</strong> - Product description
+                    </li>
+                    <li>
+                      • <strong>price</strong> - Base price (decimal)
+                    </li>
+                    <li>
+                      • <strong>category_name</strong> - Category name (must exist)
+                    </li>
                   </ul>
-                  
+
                   <h4 className="font-medium mb-2 mt-4">Optional Variant Columns:</h4>
                   <ul className="text-sm space-y-1">
-                    <li>• <strong>sku</strong> - Stock keeping unit (unique)</li>
-                    <li>• <strong>color</strong> - Product color</li>
-                    <li>• <strong>size</strong> - Product size</li>
-                    <li>• <strong>price_difference</strong> - Price adjustment from base (default: 0.00)</li>
-                    <li>• <strong>stock</strong> - Quantity in stock (default: 0)</li>
+                    <li>
+                      • <strong>sku</strong> - Stock keeping unit (unique)
+                    </li>
+                    <li>
+                      • <strong>color</strong> - Product color
+                    </li>
+                    <li>
+                      • <strong>size</strong> - Product size
+                    </li>
+                    <li>
+                      • <strong>price_difference</strong> - Price adjustment from base (default: 0.00)
+                    </li>
+                    <li>
+                      • <strong>stock</strong> - Quantity in stock (default: 0)
+                    </li>
                   </ul>
-                  
+
                   <h4 className="font-medium mb-2 mt-4">Image Columns:</h4>
                   <ul className="text-sm space-y-1">
-                    <li>• <strong>image_file_1-5</strong> - Image file names (for ZIP upload)</li>
-                    <li>• <strong>image_url_1-5</strong> - Direct image URLs (for CSV-only)</li>
+                    <li>
+                      • <strong>image_file_1</strong> - Image file names (for ZIP upload)
+                    </li>
+                    <li>
+                      • <strong>image_url_1</strong> - Direct image URLs (for CSV-only)
+                    </li>
                   </ul>
                 </div>
 
@@ -975,11 +1048,16 @@ const AdminDashboard: React.FC = () => {
                 <div className="bg-yellow-50 p-4 rounded-lg">
                   <h4 className="font-medium mb-2">Example ZIP Structure:</h4>
                   <div className="text-xs font-mono bg-white p-2 rounded border">
-                    products.zip<br/>
-                    ├── products.csv<br/>
-                    ├── red-shirt-front.jpg<br/>
-                    ├── red-shirt-back.jpg<br/>
-                    ├── blue-shirt-front.jpg<br/>
+                    products.zip
+                    <br />
+                    ├── products.csv
+                    <br />
+                    ├── red-shirt-front.jpg
+                    <br />
+                    ├── red-shirt-back.jpg
+                    <br />
+                    ├── blue-shirt-front.jpg
+                    <br />
                     └── blue-shirt-back.jpg
                   </div>
                 </div>
@@ -987,9 +1065,13 @@ const AdminDashboard: React.FC = () => {
                 <div className="bg-yellow-50 p-4 rounded-lg">
                   <h4 className="font-medium mb-2">Example CSV Format:</h4>
                   <div className="text-xs font-mono bg-white p-2 rounded border">
-                    name,description,price,category_name,sku,color,size,stock,image_file_1,image_file_2<br/>
-                    "Nordic Sweater","Wool sweater","89.99","Clothing","NS-RED-M","Red","M","50","https://example.com/image1.jpg","https://example.com/image2.jpg"<br/>
-                    "Nordic Sweater","Wool sweater","89.99","Clothing","NS-RED-L","Red","L","30","https://example.com/image1.jpg",""
+                    name,description,price,category_name,sku,color,size,stock,image_file_1,image_file_2
+                    <br />
+                    "Nordic Sweater","Wool
+                    sweater","89.99","Clothing","NS-RED-M","Red","M","50","https://example.com/image1.jpg","https://example.com/image2.jpg"
+                    <br />
+                    "Nordic Sweater","Wool
+                    sweater","89.99","Clothing","NS-RED-L","Red","L","30","https://example.com/image1.jpg",""
                   </div>
                 </div>
               </CardContent>
@@ -1013,25 +1095,23 @@ const AdminDashboard: React.FC = () => {
               ) : pendingError ? (
                 <div className="text-red-500 text-center py-4">{pendingError}</div>
               ) : pendingReviews.length === 0 ? (
-                <div className="text-center py-4 text-muted-foreground">
-                  No pending reviews
-                </div>
+                <div className="text-center py-4 text-muted-foreground">No pending reviews</div>
               ) : (
                 <div className="space-y-4">
                   {pendingReviews.map((review) => {
                     // Use first image in media as thumbnail, fallback to icon
-                    const mainMedia = review.media && review.media.length > 0 ? review.media[0] : null;
-                    const productName = reviewProductNames[review.id] || 'Product';
-                    const userName = (review as any).userName || (review as any).customer_name || 'User';
-                    const handleApprove = (id: number) => approveReviewMutation.mutate(id);
-                    const handleReject = (id: number) => rejectReviewMutation.mutate(id);
-                    const isModalOpen = openReviewModalId === review.id;
+                    const mainMedia = review.media && review.media.length > 0 ? review.media[0] : null
+                    const productName = reviewProductNames[review.id] || "Product"
+                    const userName = (review as any).userName || (review as any).customer_name || "User"
+                    const handleApprove = (id: number) => approveReviewMutation.mutate(id)
+                    const handleReject = (id: number) => rejectReviewMutation.mutate(id)
+                    const isModalOpen = openReviewModalId === review.id
                     return (
                       <div key={review.id} className="p-4 border rounded-lg bg-white shadow-sm">
                         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                           {/* Thumbnail */}
                           <MediaThumbnail
-                            media={mainMedia ? { url: mainMedia.url, type: mainMedia.type as 'image' | 'video' } : null}
+                            media={mainMedia ? { url: mainMedia.url, type: mainMedia.type as "image" | "video" } : null}
                             onClick={() => mainMedia && setOpenReviewModalId(review.id)}
                             className="mr-4"
                           />
@@ -1039,32 +1119,51 @@ const AdminDashboard: React.FC = () => {
                           <MediaPreviewModal
                             open={isModalOpen}
                             onClose={() => setOpenReviewModalId(null)}
-                            media={mainMedia ? { url: mainMedia.url, type: mainMedia.type as 'image' | 'video' } : null}
+                            media={mainMedia ? { url: mainMedia.url, type: mainMedia.type as "image" | "video" } : null}
                           />
                           {/* Review Details */}
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 mb-1">
                               <span className="font-semibold text-lg truncate">{productName}</span>
                               <a
-                                href={review.product_id ? `/product/${review.product_id}` : '#'}
+                                href={review.product_id ? `/product/${review.product_id}` : "#"}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="ml-1 text-blue-500 hover:text-blue-700"
                                 title="View product in new tab"
-                                onClick={e => e.stopPropagation()}
+                                onClick={(e) => e.stopPropagation()}
                               >
                                 {/* Lucide ExternalLink icon for robust UI */}
-                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path d="M18 13v6a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                                <svg
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  width="18"
+                                  height="18"
+                                  fill="none"
+                                  viewBox="0 0 24 24"
+                                  stroke="currentColor"
+                                  strokeWidth="2"
+                                >
+                                  <path d="M18 13v6a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+                                  <polyline points="15 3 21 3 21 9" />
+                                  <line x1="10" y1="14" x2="21" y2="3" />
+                                </svg>
                               </a>
                               <span className="text-xs text-muted-foreground">#{review.id}</span>
                             </div>
                             <div className="flex items-center gap-2 mb-1">
                               <span className="text-sm text-muted-foreground">By {userName}</span>
-                              <span className="text-xs text-muted-foreground">{new Date(review.created_at).toLocaleString()}</span>
+                              <span className="text-xs text-muted-foreground">
+                                {new Date(review.created_at).toLocaleString()}
+                              </span>
                             </div>
                             <div className="flex items-center gap-1 mb-2">
-                              {[1,2,3,4,5].map(star => (
-                                <span key={star} className={star <= review.rating ? 'text-yellow-400' : 'text-gray-300'}>★</span>
+                              {[1, 2, 3, 4, 5].map((star) => (
+                                <span
+                                  key={star}
+                                  className={star <= review.rating ? "text-yellow-400" : "text-gray-300"}
+                                >
+                                  ★
+                                </span>
                               ))}
                               <span className="ml-2 text-xs text-muted-foreground">{review.rating}/5</span>
                             </div>
@@ -1098,7 +1197,7 @@ const AdminDashboard: React.FC = () => {
                           </div>
                         </div>
                       </div>
-                    );
+                    )
                   })}
                 </div>
               )}
@@ -1112,15 +1211,15 @@ const AdminDashboard: React.FC = () => {
         </TabsContent>
       </Tabs>
     </div>
-  );
-};
+  )
+}
 
 // Category Management Component
 interface CategoryManagementProps {
-  categories: Category[];
-  onCategoryCreated: () => void;
-  onCategoryUpdated: () => void;
-  onCategoryDeleted: () => void;
+  categories: Category[]
+  onCategoryCreated: () => void
+  onCategoryUpdated: () => void
+  onCategoryDeleted: () => void
 }
 
 const CategoryManagement: React.FC<CategoryManagementProps> = ({
@@ -1129,97 +1228,95 @@ const CategoryManagement: React.FC<CategoryManagementProps> = ({
   onCategoryUpdated,
   onCategoryDeleted,
 }) => {
-  const { user, token } = useAuth();
-  const { toast } = useToast();
-  const [editingCategory, setEditingCategory] = useState<Category | null>(null);
-  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const { user, token } = useAuth()
+  const { toast } = useToast()
+  const [editingCategory, setEditingCategory] = useState<Category | null>(null)
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
   const [categoryForm, setCategoryForm] = useState({
-    name: '',
-    description: '',
-  });
+    name: "",
+    description: "",
+  })
 
   // Create category mutation
   const createCategoryMutation = useMutation({
-    mutationFn: (data: { name: string; description?: string }) =>
-      createCategory(data, token || ''),
+    mutationFn: (data: { name: string; description?: string }) => createCategory(data, token || ""),
     onSuccess: () => {
       toast({
-        title: 'Success',
-        description: 'Category created successfully',
-      });
-      setIsCreateDialogOpen(false);
-      setCategoryForm({ name: '', description: '' });
-      onCategoryCreated();
+        title: "Success",
+        description: "Category created successfully",
+      })
+      setIsCreateDialogOpen(false)
+      setCategoryForm({ name: "", description: "" })
+      onCategoryCreated()
     },
     onError: (error: Error) => {
       toast({
-        title: 'Error',
+        title: "Error",
         description: error.message,
-        variant: 'destructive',
-      });
+        variant: "destructive",
+      })
     },
-  });
+  })
 
   // Update category mutation
   const updateCategoryMutation = useMutation({
     mutationFn: ({ id, data }: { id: number; data: { name: string; description?: string } }) =>
-      updateCategory(id, data, token || ''),
+      updateCategory(id, data, token || ""),
     onSuccess: () => {
       toast({
-        title: 'Success',
-        description: 'Category updated successfully',
-      });
-      setEditingCategory(null);
-      onCategoryUpdated();
+        title: "Success",
+        description: "Category updated successfully",
+      })
+      setEditingCategory(null)
+      onCategoryUpdated()
     },
     onError: (error: Error) => {
       toast({
-        title: 'Error',
+        title: "Error",
         description: error.message,
-        variant: 'destructive',
-      });
+        variant: "destructive",
+      })
     },
-  });
+  })
 
   // Delete category mutation
   const deleteCategoryMutation = useMutation({
-    mutationFn: (categoryId: number) =>
-      deleteCategory(categoryId, token || ''),
+    mutationFn: (categoryId: number) => deleteCategory(categoryId, token || ""),
     onSuccess: () => {
       toast({
-        title: 'Success',
-        description: 'Category deleted successfully',
-      });
-      onCategoryDeleted();
+        title: "Success",
+        description: "Category deleted successfully",
+      })
+      onCategoryDeleted()
     },
     onError: (error: Error) => {
       toast({
-        title: 'Error',
+        title: "Error",
         description: error.message,
-        variant: 'destructive',
-      });
+        variant: "destructive",
+      })
     },
-  });
+  })
 
   const handleCreateCategory = () => {
     if (!categoryForm.name.trim()) {
       toast({
-        title: 'Error',
-        description: 'Category name is required',
-        variant: 'destructive',
-      });
-      return;
+        title: "Error",
+        description: "Category name is required",
+        variant: "destructive",
+      })
+      return
     }
 
     createCategoryMutation.mutate({
       name: categoryForm.name.trim(),
       description: categoryForm.description.trim() || undefined,
-    });
-  };
+    })
+  }
 
   const handleUpdateCategory = () => {
     if (!editingCategory || !categoryForm.name.trim()) {
-      return;
+      return
     }
 
     updateCategoryMutation.mutate({
@@ -1228,27 +1325,29 @@ const CategoryManagement: React.FC<CategoryManagementProps> = ({
         name: categoryForm.name.trim(),
         description: categoryForm.description.trim() || undefined,
       },
-    });
-  };
+    })
+  }
 
   const handleDeleteCategory = (category: Category) => {
-    if (window.confirm(`Are you sure you want to delete the "${category.name}" category? This action cannot be undone.`)) {
-      deleteCategoryMutation.mutate(category.id);
+    if (
+      window.confirm(`Are you sure you want to delete the "${category.name}" category? This action cannot be undone.`)
+    ) {
+      deleteCategoryMutation.mutate(category.id)
     }
-  };
+  }
 
   const openEditDialog = (category: Category) => {
-    setEditingCategory(category);
+    setEditingCategory(category)
     setCategoryForm({
       name: category.name,
-      description: category.description || '',
-    });
-  };
+      description: category.description || "",
+    })
+  }
 
   const closeEditDialog = () => {
-    setEditingCategory(null);
-    setCategoryForm({ name: '', description: '' });
-  };
+    setEditingCategory(null)
+    setCategoryForm({ name: "", description: "" })
+  }
 
   return (
     <div className="space-y-6">
@@ -1288,11 +1387,8 @@ const CategoryManagement: React.FC<CategoryManagementProps> = ({
                 <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
                   Cancel
                 </Button>
-                <Button 
-                  onClick={handleCreateCategory}
-                  disabled={createCategoryMutation.isPending}
-                >
-                  {createCategoryMutation.isPending ? 'Creating...' : 'Create Category'}
+                <Button onClick={handleCreateCategory} disabled={createCategoryMutation.isPending}>
+                  {createCategoryMutation.isPending ? "Creating..." : "Create Category"}
                 </Button>
               </div>
             </div>
@@ -1310,17 +1406,15 @@ const CategoryManagement: React.FC<CategoryManagementProps> = ({
               <div key={category.id} className="flex items-center justify-between p-4 border rounded-lg">
                 <div className="flex-1">
                   <h3 className="font-medium">{category.name}</h3>
-                  {category.description && (
-                    <p className="text-sm text-muted-foreground mt-1">{category.description}</p>
-                  )}
+                  {category.description && <p className="text-sm text-muted-foreground mt-1">{category.description}</p>}
                 </div>
                 <div className="flex space-x-2">
                   <Button variant="outline" size="sm" onClick={() => openEditDialog(category)}>
                     <Edit className="h-4 w-4" />
                   </Button>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
+                  <Button
+                    variant="outline"
+                    size="sm"
                     onClick={() => handleDeleteCategory(category)}
                     disabled={deleteCategoryMutation.isPending}
                   >
@@ -1367,18 +1461,15 @@ const CategoryManagement: React.FC<CategoryManagementProps> = ({
               <Button variant="outline" onClick={closeEditDialog}>
                 Cancel
               </Button>
-              <Button 
-                onClick={handleUpdateCategory}
-                disabled={updateCategoryMutation.isPending}
-              >
-                {updateCategoryMutation.isPending ? 'Updating...' : 'Update Category'}
+              <Button onClick={handleUpdateCategory} disabled={updateCategoryMutation.isPending}>
+                {updateCategoryMutation.isPending ? "Updating..." : "Update Category"}
               </Button>
             </div>
           </div>
         </DialogContent>
       </Dialog>
     </div>
-  );
-};
+  )
+}
 
 export default AdminDashboard;

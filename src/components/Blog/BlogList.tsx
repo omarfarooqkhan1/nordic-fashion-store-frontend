@@ -132,6 +132,23 @@ const BlogList: React.FC<BlogListProps> = ({
     }
   };
 
+  const handleView = async (slug: string) => {
+    try {
+      const response = await blogApi.viewBlog(slug);
+      setBlogs(prev => prev.map(blog => 
+        blog.slug === slug 
+          ? { ...blog, views_count: response.views_count }
+          : blog
+      ));
+    } catch (err) {}
+  };
+
+  useEffect(() => {
+    blogs.forEach(blog => {
+      handleView(blog.slug);
+    });
+  }, [blogs]);
+
   if (loading && blogs.length === 0) {
     return (
       <div className="flex items-center justify-center py-12">

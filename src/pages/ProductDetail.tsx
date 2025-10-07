@@ -5,6 +5,7 @@ import { fetchProductById } from '../api/products';
 import { useAuth } from '../contexts/AuthContext';
 import { useCart } from '../contexts/CartContext';
 import { useLanguage } from '../contexts/LanguageContext';
+import { useCurrency } from '../contexts/CurrencyContext';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -29,6 +30,7 @@ const ProductDetail = () => {
   const { addToCart } = useCart();
   const { user } = useAuth(); // Add auth context
   const { toast } = useToast(); // Initialize useToast at the top level
+  const { convertPrice, getCurrencySymbol } = useCurrency(); // Add currency context
 
   const isAdmin = user?.role === 'admin'; // Check if user is admin
 
@@ -47,16 +49,12 @@ const ProductDetail = () => {
     refetchOnWindowFocus: false,
   });
 
-  // Ensure currentImageIndex is within bounds if variantImages change
+  // Ensure currentImageIndex is within bounds if product images change
   React.useEffect(() => {
-    if (product && product.variants.length > 0) {
-      const variant = product.variants.find((v) => v.size === selectedSize && v.color === selectedColor);
-      const variantImages = variant?.images.length ? variant.images : product.images;
-      if (currentImageIndex >= variantImages.length) {
-        setCurrentImageIndex(0);
-      }
+    if (product && currentImageIndex >= product.images.length) {
+      setCurrentImageIndex(0);
     }
-  }, [product, selectedSize, selectedColor, currentImageIndex]);
+  }, [product, currentImageIndex]);
 
   const [reviewSummary, setReviewSummary] = useState<{ average_rating: number; review_count: number } | null>(null);
   // Scroll to top when component mounts
@@ -130,15 +128,21 @@ const ProductDetail = () => {
   const variant = getSelectedVariant();
   const isVariantSelected = !!variant;
   const isInStock = variant ? variant.stock > 0 : false;
-  const variantImages = variant?.images.length ? variant.images : product.images;
+  // Always use product images for thumbnails - don't filter based on variant
+  const variantImages = product.images;
   // Determine if main media is video or image
   const mainMedia = variantImages[currentImageIndex];
 
   const basePrice = parseFloat(product.price);
   const finalPrice = variant ? variant.actual_price : basePrice;
   const discountedPrice = product.discount
-    ? (finalPrice * (1 - product.discount / 100)).toFixed(2) // Format to 2 decimal places
-    : finalPrice.toFixed(2); // Format to 2 decimal places
+    ? (finalPrice * (1 - product.discount / 100))
+    : finalPrice;
+  
+  // Convert prices using currency context
+  const convertedFinalPrice = convertPrice(finalPrice);
+  const convertedDiscountedPrice = convertPrice(discountedPrice);
+  const currencySymbol = getCurrencySymbol();
 
   const handleAddToCart = async () => { // Made async to await addToCart
     if (!variant) {
@@ -170,15 +174,14 @@ const ProductDetail = () => {
 
   return (
     <div className="container mx-auto px-2 sm:px-4 py-6 sm:py-10 md:py-12">
-      <Button variant="ghost" onClick={() => navigate('/products')} className="mb-3 sm:mb-6 hover:bg-accent text-base sm:text-lg">
-        <ArrowLeft className="h-4 w-4 mr-2" />
-        {t('common.back')} {t('nav.products')}
-      </Button>
-
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-10 lg:gap-12">
         {/* Image Gallery */}
-        <div className="space-y-3 sm:space-y-4">
-          <div className="aspect-square rounded-lg overflow-hidden shadow-lg relative bg-muted flex items-center justify-center min-h-[260px] sm:min-h-[340px] md:min-h-[400px]">
+        <div className="space-y-4 sm:space-y-6 lg:px-8 xl:px-12">
+          <Button variant="ghost" onClick={() => navigate('/products')} className="mb-4 sm:mb-6 hover:bg-accent text-base sm:text-lg transition-colors duration-200">
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back to Products
+          </Button>
+          <div className="aspect-[3/4] rounded-xl overflow-hidden relative bg-white flex items-center justify-center min-h-[320px] sm:min-h-[420px] md:min-h-[500px] max-h-[600px] mx-auto max-w-md lg:max-w-lg border border-gray-200 dark:border-slate-600">
             {product.discount && (
               <Badge className="absolute top-2 sm:top-4 right-2 sm:right-4 z-10 bg-red-500 text-white text-xs sm:text-sm md:text-base">
                 -{product.discount}%
@@ -204,13 +207,15 @@ const ProductDetail = () => {
           </div>
 
           {variantImages.length > 1 && (
-            <div className="flex flex-wrap gap-2 justify-center">
+            <div className="flex flex-wrap gap-3 justify-center mt-4">
               {variantImages.map((img, i) => (
                 <button
                   key={img.id || i}
                   onClick={() => setCurrentImageIndex(i)}
-                  className={`w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 rounded-lg overflow-hidden border-2 ${
-                    i === currentImageIndex ? 'border-primary' : 'border-transparent hover:border-primary/50'
+                  className={`w-16 h-20 sm:w-18 sm:h-24 md:w-20 md:h-24 rounded-xl overflow-hidden border-2 transition-all duration-200 hover:scale-105 ${
+                    i === currentImageIndex 
+                      ? 'border-primary shadow-lg ring-2 ring-primary/20' 
+                      : 'border-gray-200 dark:border-slate-600 hover:border-primary/50 shadow-md hover:shadow-lg'
                   }`}
                 >
                   <ProductImage
@@ -225,32 +230,32 @@ const ProductDetail = () => {
         </div>
 
         {/* Product Info */}
-        <div className="space-y-4 sm:space-y-6">
-          <div>
-            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold break-words">{product.name}</h1>
-            <p className="text-muted-foreground capitalize text-sm sm:text-base">{product.category.name}</p>
+        <div className="space-y-6 sm:space-y-8">
+          <div className="space-y-3">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold break-words text-gray-900 dark:text-white leading-tight">{product.name}</h1>
+            <p className="text-gray-600 dark:text-slate-300 capitalize text-base sm:text-lg font-medium">{product.category.name}</p>
             {/* Product Rating Display */}
-            <div className="flex items-center gap-2 sm:gap-3 mt-2">
+            <div className="flex items-center gap-3 mt-3">
               {reviewSummary && reviewSummary.review_count > 0 ? (
                 <>
                   <StarRating rating={reviewSummary.average_rating} size="sm" />
-                  <span className="text-xs sm:text-sm text-muted-foreground">
+                  <span className="text-sm text-gray-600 dark:text-slate-300">
                     {reviewSummary.average_rating.toFixed(1)} out of 5 ({reviewSummary.review_count} review{reviewSummary.review_count !== 1 ? 's' : ''})
                   </span>
                 </>
               ) : (
-                <span className="text-xs sm:text-sm text-muted-foreground">No reviews yet</span>
+                <span className="text-sm text-gray-500 dark:text-slate-400">No reviews yet</span>
               )}
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2 sm:gap-4">
-            <span className="text-2xl sm:text-3xl font-bold text-primary">€{discountedPrice}</span>
+          <div className="flex flex-wrap items-center gap-3 sm:gap-4 p-4 bg-gray-50 dark:bg-slate-800 rounded-xl">
+            <span className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white">{currencySymbol}{convertedDiscountedPrice.toFixed(2)}</span>
             {product.discount && (
               <>
-                <span className="text-base sm:text-xl line-through text-muted-foreground">€{finalPrice.toFixed(2)}</span>
-                <Badge className="bg-red-500 text-white text-xs sm:text-sm">
-                  {t('common.save')} €{Math.round(finalPrice * (product.discount / 100)).toFixed(2)}
+                <span className="text-lg sm:text-xl line-through text-gray-500 dark:text-slate-400">{currencySymbol}{convertedFinalPrice.toFixed(2)}</span>
+                <Badge className="bg-red-500 text-white text-sm font-semibold px-3 py-1">
+                  {t('common.save')} {currencySymbol}{convertPrice(finalPrice * (product.discount / 100)).toFixed(2)}
                 </Badge>
               </>
             )}
@@ -258,16 +263,16 @@ const ProductDetail = () => {
 
           <Separator />
 
-          <div>
-            <h2 className="text-base sm:text-lg font-semibold mb-1 sm:mb-2">{t('product.description')}</h2>
-            <p className="text-muted-foreground text-sm sm:text-base">{product.description}</p>
+          <div className="space-y-3">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">{t('product.description')}</h2>
+            <p className="text-gray-600 dark:text-slate-300 text-base leading-relaxed">{product.description}</p>
           </div>
 
           {/* Size Selector */}
           {allSizes.length > 0 && (
-            <div>
-              <h3 className="text-base sm:text-lg font-semibold mb-2 sm:mb-3">{t('product.size')}</h3>
-              <div className="flex flex-wrap gap-2" role="group" aria-label="Select product size">
+            <div className="space-y-3">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{t('product.size')}</h3>
+              <div className="flex flex-wrap gap-3" role="group" aria-label="Select product size">
                 {allSizes.map((size) => {
                   // Check if a variant exists with the current size and selected color, and is in stock
                   const hasStock = product.variants.some((v) => 
@@ -277,12 +282,12 @@ const ProductDetail = () => {
                     <button
                       key={size}
                       onClick={() => setSelectedSize(size)}
-                      className={`px-3 sm:px-4 py-1.5 sm:py-2 border rounded-lg text-sm sm:text-base ${
+                      className={`px-4 py-3 border-2 rounded-xl text-base font-semibold transition-all duration-200 min-w-[60px] ${
                         selectedSize === size
-                          ? 'border-primary bg-primary/10 text-primary'
+                          ? 'border-2 border-green-500 bg-green-500 text-white shadow-lg ring-2 ring-green-500/30 font-bold'
                           : hasStock
-                          ? 'border-border hover:border-primary/50'
-                          : 'border-border text-muted-foreground opacity-50 cursor-not-allowed'
+                          ? 'border-gray-300 dark:border-slate-600 hover:border-primary hover:bg-primary/5 text-gray-700 dark:text-white hover:text-primary'
+                          : 'border-gray-200 dark:border-slate-700 text-gray-400 dark:text-slate-500 opacity-50 cursor-not-allowed'
                       }`}
                       disabled={!hasStock && selectedSize !== size}
                       aria-pressed={selectedSize === size}
@@ -298,9 +303,9 @@ const ProductDetail = () => {
 
           {/* Color Selector */}
           {allColors.length > 0 && (
-            <div>
-              <h3 className="text-base sm:text-lg font-semibold mb-2 sm:mb-3">{t('product.color')}</h3>
-              <div className="flex flex-wrap gap-2" role="group" aria-label="Select product color">
+            <div className="space-y-3">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{t('product.color')}</h3>
+              <div className="flex flex-wrap gap-3" role="group" aria-label="Select product color">
                 {allColors.map((color) => {
                   // Check if a variant exists with the current color and selected size, and is in stock
                   const hasStock = product.variants.some((v) => 
@@ -310,19 +315,19 @@ const ProductDetail = () => {
                     <button
                       key={color}
                       onClick={() => setSelectedColor(color)}
-                      className={`px-3 sm:px-4 py-1.5 sm:py-2 border rounded-lg flex items-center gap-2 text-sm sm:text-base ${
+                      className={`px-4 py-3 border-2 rounded-xl flex items-center gap-3 text-base font-semibold transition-all duration-200 ${
                         selectedColor === color
-                          ? 'border-primary bg-primary/10 text-primary'
+                          ? 'border-2 border-green-500 bg-green-500 text-white shadow-lg ring-2 ring-green-500/30 font-bold'
                           : hasStock
-                          ? 'border-border hover:border-primary/50'
-                          : 'border-border text-muted-foreground opacity-50 cursor-not-allowed'
+                          ? 'border-gray-300 dark:border-slate-600 hover:border-primary hover:bg-primary/5 text-gray-700 dark:text-white hover:text-primary'
+                          : 'border-gray-200 dark:border-slate-700 text-gray-400 dark:text-slate-500 opacity-50 cursor-not-allowed'
                       }`}
                       disabled={!hasStock && selectedColor !== color}
                       aria-pressed={selectedColor === color}
                       aria-label={`Color ${color}${!hasStock ? ' (out of stock)' : ''}`}
                     >
-                      <span className="w-4 h-4 rounded-full border border-gray-300" style={{ backgroundColor: color.toLowerCase() }} aria-hidden="true"></span>
-                      {color} {hasStock ? <Check className="h-3 w-3" /> : <X className="h-3 w-3" />}
+                      <span className="w-5 h-5 rounded-full border-2 border-gray-300 shadow-sm" style={{ backgroundColor: color.toLowerCase() }} aria-hidden="true"></span>
+                      {color} {hasStock ? <Check className="h-4 w-4" /> : <X className="h-4 w-4" />}
                     </button>
                   );
                 })}
@@ -355,12 +360,12 @@ const ProductDetail = () => {
                   isInStock ? (
                     <>
                       <Check className="text-green-500 h-5 w-5" />
-                      <span className="text-green-600 font-medium text-sm sm:text-base">{t('product.inStock')}</span>
+                      <span className="text-green-600 dark:text-green-400 font-medium text-sm sm:text-base">{t('product.inStock')}</span>
                     </>
                   ) : (
                     <>
                       <X className="text-red-500 h-5 w-5" />
-                      <span className="text-red-600 font-medium text-sm sm:text-base">{t('product.outOfStock')}</span>
+                      <span className="text-red-600 dark:text-red-400 font-medium text-sm sm:text-base">{t('product.outOfStock')}</span>
                     </>
                   )
                 ) : (
@@ -387,22 +392,22 @@ const ProductDetail = () => {
                 <Button
                   onClick={handleAddToCart}
                   disabled={!isVariantSelected || !isInStock}
-                  className="w-full py-4 sm:py-6 text-base sm:text-lg font-bold disabled:opacity-50 rounded-md bg-gold-500 hover:bg-gold-600 text-leather-900 border border-gold-400 hover:border-gold-500"
+                  className="w-full py-4 sm:py-6 text-lg font-bold disabled:opacity-50 rounded-xl bg-white hover:bg-gray-50 dark:hover:bg-slate-100 text-black border-2 border-gray-300 dark:border-slate-600 hover:border-gray-400 dark:hover:border-slate-500 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02] disabled:hover:scale-100"
                 >
                   {!isVariantSelected ? t('product.chooseVariant') : !isInStock ? t('product.outOfStock') : t('product.addToCart')}
                 </Button>
 
-                <div className="flex flex-col sm:flex-row gap-2 sm:gap-4">
+                <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
                   <Button
                     variant="outline"
-                    className="flex-1 gap-2 border-primary text-primary rounded-md cursor-not-allowed opacity-60"
+                    className="flex-1 gap-2 border-2 border-gray-300 dark:border-slate-600 text-gray-600 dark:text-slate-400 rounded-xl cursor-not-allowed opacity-60 hover:bg-gray-50 dark:hover:bg-slate-800"
                     disabled
                     title="Stay tuned, wishlist coming soon!"
                   >
                     <Heart className="h-4 w-4" />
                     {t('nav.wishlist')}
                   </Button>
-                  <Button variant="outline" className="flex-1 gap-2 border-primary text-primary rounded-md">
+                  <Button variant="outline" className="flex-1 gap-2 border-2 border-gray-300 dark:border-slate-600 text-gray-600 dark:text-slate-400 rounded-xl hover:bg-gray-50 dark:hover:bg-slate-800 hover:border-primary hover:text-primary transition-all duration-200">
                     <Share2 className="h-4 w-4" />
                     {t('common.share')}
                   </Button>
@@ -413,20 +418,24 @@ const ProductDetail = () => {
 
           <Separator />
 
-          <div className="space-y-2 sm:space-y-3">
-            <h3 className="text-base sm:text-lg font-semibold">Features</h3>
-            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-2 sm:gap-4 text-xs sm:text-sm text-muted-foreground">
-              <div className="flex items-center gap-2">
-                <Check className="h-4 w-4 text-green-500" /> Handcrafted
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Features</h3>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="flex items-center gap-3 p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                <Check className="h-5 w-5 text-green-600 dark:text-green-400 flex-shrink-0" />
+                <span className="text-sm font-medium text-gray-700 dark:text-slate-300">Handcrafted</span>
               </div>
-              <div className="flex items-center gap-2">
-                <Check className="h-4 w-4 text-green-500" /> Premium Leather
+              <div className="flex items-center gap-3 p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                <Check className="h-5 w-5 text-green-600 dark:text-green-400 flex-shrink-0" />
+                <span className="text-sm font-medium text-gray-700 dark:text-slate-300">Premium Leather</span>
               </div>
-              <div className="flex items-center gap-2">
-                <Check className="h-4 w-4 text-green-500" /> 30-Day Returns
+              <div className="flex items-center gap-3 p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                <Check className="h-5 w-5 text-green-600 dark:text-green-400 flex-shrink-0" />
+                <span className="text-sm font-medium text-gray-700 dark:text-slate-300">30-Day Returns</span>
               </div>
-              <div className="flex items-center gap-2">
-                <Check className="h-4 w-4 text-green-500" /> Free Shipping
+              <div className="flex items-center gap-3 p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                <Check className="h-5 w-5 text-green-600 dark:text-green-400 flex-shrink-0" />
+                <span className="text-sm font-medium text-gray-700 dark:text-slate-300">Free Shipping</span>
               </div>
             </div>
           </div>

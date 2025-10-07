@@ -6,6 +6,7 @@ const scrollToTop = () => {
   window.scrollTo({ top: 0, behavior: 'smooth' });
 };
 import { useLanguage } from '@/contexts/LanguageContext';
+import { SocialMediaIcons } from '@/components/common/SocialMediaIcons';
 
 export const Footer: React.FC = () => {
   const { t } = useLanguage();
@@ -20,7 +21,7 @@ export const Footer: React.FC = () => {
               <img 
                 src="/logo.png" 
                 alt="Nord Flex Logo" 
-                className="w-20 h-20 object-contain"
+                className="w-20 h-20 object-contain dark:brightness-0 dark:invert"
               />
               <div className="flex items-center space-x-1">
                 <div className="text-xl font-bold text-leather-800 dark:text-leather-100">NORD</div>
@@ -35,68 +36,12 @@ export const Footer: React.FC = () => {
           {/* Social Media */}
           <div className="space-y-4">
             <h3 className="text-base font-semibold text-foreground">{t('footer.social')}</h3>
-            <ul className="space-y-2 text-sm">
-              <li>
-                <a 
-                  href="https://www.instagram.com/nordflex.official" 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="text-muted-foreground hover:text-gold-500 transition-colors"
-                >
-                  Instagram
-                </a>
-              </li>
-              <li>
-                <a 
-                  href="https://www.tiktok.com/@nordflex" 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="text-muted-foreground hover:text-gold-500 transition-colors"
-                >
-                  TikTok
-                </a>
-              </li>
-              <li>
-                <a 
-                  href="https://www.facebook.com/profile.php?id=61580805110962" 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="text-muted-foreground hover:text-gold-500 transition-colors"
-                >
-                  Facebook
-                </a>
-              </li>
-              <li>
-                <a 
-                  href="https://www.x.com/@NordFlex" 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="text-muted-foreground hover:text-gold-500 transition-colors"
-                >
-                  X
-                </a>
-              </li>
-              <li>
-                <a 
-                  href="https://www.youtube.com/@NordFlex" 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="text-muted-foreground hover:text-gold-500 transition-colors"
-                >
-                  YouTube
-                </a>
-              </li>
-              <li>
-                <a 
-                  href="https://www.pinterest.com/nordflexshop" 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="text-muted-foreground hover:text-gold-500 transition-colors"
-                >
-                  Pinterest
-                </a>
-              </li>
-            </ul>
+            <p className="text-sm text-muted-foreground mb-4">{t('footer.social.desc')}</p>
+            <SocialMediaIcons 
+              className="flex flex-wrap gap-3" 
+              iconSize={28}
+              showLabels={false}
+            />
           </div>
 
           {/* Quick Links */}
@@ -170,7 +115,6 @@ export const Footer: React.FC = () => {
               <p>{t('footer.company')}</p>
               <p>{t('footer.location')}</p>
               <p>+358 44 9782549</p>
-              <a href="mailto:support@nordflex.shop">support@nordflex.shop</a>
             </div>
           </div>
         </div>

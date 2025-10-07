@@ -6,34 +6,45 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useCurrency } from '@/contexts/CurrencyContext';
 import type { Product } from '@/types/Product';
 import { fetchProducts } from '@/api/products';
 import { LoadingState } from '@/components/common/LoadingState';
 
 const Products = () => {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
+  const { convertPrice, getCurrencySymbol } = useCurrency();
   const [searchParams, setSearchParams] = useSearchParams();
 
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [selectedGender, setSelectedGender] = useState<string>('all');
   const [sortBy, setSortBy] = useState<string>('name');
   const [searchQuery, setSearchQuery] = useState<string>('');
 
   const categories = ['all', 'bags', 'wallets', 'belts', 'jackets', 'accessories'];
+  const genders = ['all', 'male', 'female', 'unisex'];
 
   // Scroll to top when component mounts or search parameters change
   useEffect(() => {
     window.scrollTo(0, 0);
-  }, [searchQuery, selectedCategory]);
+  }, [searchQuery, selectedCategory, selectedGender]);
 
   // Sync URL params with state
   useEffect(() => {
     const categoryParam = searchParams.get('category');
+    const genderParam = searchParams.get('gender');
     const searchParam = searchParams.get('search');
 
     if (categoryParam && categories.includes(categoryParam)) {
       setSelectedCategory(categoryParam);
     } else {
       setSelectedCategory('all');
+    }
+
+    if (genderParam && genders.includes(genderParam)) {
+      setSelectedGender(genderParam);
+    } else {
+      setSelectedGender('all');
     }
 
     if (searchParam) {
@@ -57,18 +68,23 @@ const Products = () => {
   }, [products]);
 
   // Filtering products
-  const filteredProducts = products; // products.filter((product) => {
-    // const matchesCategory =
-    //   selectedCategory === 'all' || product.category.name.toLowerCase() === selectedCategory.toLowerCase();
+  const filteredProducts = products.filter((product) => {
+    const matchesCategory =
+      selectedCategory === 'all' || product.category.name.toLowerCase() === selectedCategory.toLowerCase();
 
-    // const matchesSearch =
-    //   !searchQuery ||
-    //   product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    //   product.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    //   product.category.name.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesGender =
+      selectedGender === 'all' || 
+      product.gender === selectedGender || 
+      product.gender === 'unisex';
 
-    // return matchesCategory && matchesSearch;
-  // });
+    const matchesSearch =
+      !searchQuery ||
+      product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      product.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      product.category.name.toLowerCase().includes(searchQuery.toLowerCase());
+
+    return matchesCategory && matchesGender && matchesSearch;
+  });
 
 
   // Sorting
@@ -79,7 +95,7 @@ const Products = () => {
   });
 
   return (
-    <div className="container mx-auto px-2 sm:px-4 py-10 sm:py-16 space-y-8">
+    <div className="container mx-auto px-2 sm:px-4 py-0 sm:py-0 space-y-8">
       {/* Header */}
       <section className="text-center space-y-4 sm:space-y-6">
         <h1 className="text-2xl sm:text-4xl md:text-6xl font-bold text-leather-900 dark:text-leather-100">
@@ -120,6 +136,30 @@ const Products = () => {
                     {cat.charAt(0).toUpperCase() + cat.slice(1)}
                   </SelectItem>
                 ))}
+            </SelectContent>
+          </Select>
+
+          <Select
+            value={selectedGender}
+            onValueChange={(value) => {
+              setSelectedGender(value);
+              const newParams = new URLSearchParams(searchParams);
+              if (value === 'all') {
+                newParams.delete('gender');
+              } else {
+                newParams.set('gender', value);
+              }
+              setSearchParams(newParams);
+            }}
+          >
+            <SelectTrigger className="w-full sm:w-[180px]">
+              <SelectValue placeholder="Gender" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">{language === 'en' ? 'All Genders' : t('gender.all')}</SelectItem>
+              <SelectItem value="male">{language === 'en' ? 'Male' : t('gender.male')}</SelectItem>
+              <SelectItem value="female">{language === 'en' ? 'Female' : t('gender.female')}</SelectItem>
+              <SelectItem value="unisex">{language === 'en' ? 'Unisex' : t('gender.unisex')}</SelectItem>
             </SelectContent>
           </Select>
 
@@ -167,11 +207,11 @@ const Products = () => {
       {!isLoading && !isError && (
         <>
           {sortedProducts.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 max-w-7xl mx-auto">
+            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-6 lg:gap-8 max-w-7xl mx-auto px-2 sm:px-4">
               {sortedProducts.map((product) => (
                 <Card
                   key={product.id}
-                  className="bg-gradient-to-br from-card to-leather-100/50 dark:from-card dark:to-leather-800/30 border-border overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 group"
+                  className="bg-gradient-to-br from-card to-leather-100/50 dark:from-card dark:to-leather-800/30 border-border overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 group rounded-xl md:rounded-2xl"
                 >
                   <Link to={`/product/${product.id}`}>
                     <div className="aspect-square bg-gradient-to-br from-leather-200 to-leather-300 dark:from-leather-800 dark:to-leather-900 relative overflow-hidden">
@@ -200,7 +240,7 @@ const Products = () => {
                       )}
                     </div>
                   </Link>
-                  <CardContent className="p-4 space-y-3">
+                  <CardContent className="p-4 md:p-6 space-y-3">
                     <Link to={`/product/${product.id}`}>
                       <div>
                         <h3 className="font-semibold text-foreground hover:text-cognac-500 transition-colors">
@@ -210,23 +250,25 @@ const Products = () => {
                       </div>
                     </Link>
                     <p className="text-sm text-muted-foreground line-clamp-2">{product.description}</p>
-                    <div className="flex justify-between items-center">
-                      <div className="flex items-center gap-2">
-                        {product.discount ? (
-                          <>
-                            <span className="text-lg font-bold text-cognac-500">
-                              €{Math.round(product.price * (1 - product.discount / 100))}
-                            </span>
-                            <span className="text-sm text-muted-foreground line-through">€{product.price}</span>
-                          </>
-                        ) : (
-                          <span className="text-lg font-bold text-cognac-500">€{product.price}</span>
-                        )}
+                    <div className="flex flex-col gap-3 pt-2">
+                      <div className="flex items-center justify-center">
+                        <div className="flex items-center gap-2">
+                          {product.discount ? (
+                            <>
+                              <span className="text-lg font-bold text-cognac-500">
+                                {getCurrencySymbol()}{Math.round(Number(convertPrice(product.price)) * (1 - Number(product.discount) / 100))}
+                              </span>
+                              <span className="text-sm text-muted-foreground line-through">{getCurrencySymbol()}{convertPrice(product.price).toFixed(2)}</span>
+                            </>
+                          ) : (
+                            <span className="text-lg font-bold text-cognac-500">{getCurrencySymbol()}{convertPrice(product.price).toFixed(2)}</span>
+                          )}
+                        </div>
                       </div>
                       <Button
                         variant="outline"
                         asChild
-                        className="border-primary text-primary hover:bg-primary hover:text-primary-foreground transition-all duration-300 font-semibold shadow-md hover:shadow-lg hover:border-primary/40"
+                        className="w-full border-primary text-primary hover:bg-primary hover:text-primary-foreground transition-all duration-300 font-semibold shadow-md hover:shadow-lg hover:border-primary/40"
                       >
                         <Link to={`/product/${product.id}`}>
                           {t('common.buyNow')}
@@ -239,7 +281,7 @@ const Products = () => {
             </div>
           ) : (
             <div className="text-center py-12">
-              <p className="text-muted-foreground">No products found in this category.</p>
+              <p className="text-muted-foreground">{t('products.noProductsFound')}</p>
             </div>
           )}
         </>

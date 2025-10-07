@@ -12,6 +12,7 @@ import { AuthProvider } from '@/contexts/AuthContext';
 import { ThemeProvider } from '@/contexts/ThemeContext';
 import { LanguageProvider } from '@/contexts/LanguageContext';
 import { CartProvider } from '@/contexts/CartContext';
+import { CurrencyProvider } from '@/contexts/CurrencyContext';
 
 // Auth0 configuration
 const auth0Domain = import.meta.env.VITE_AUTH0_DOMAIN || 'your-domain.auth0.com';
@@ -57,10 +58,12 @@ export const AppProviders: React.FC<AppProvidersProps> = ({ children }) => {
                 }}
               >
                 <AuthProvider>
-                  <CartProvider>
-                    <PerformanceMonitor enabled={import.meta.env.PROD} />
-                    {children}
-                  </CartProvider>
+                  <CurrencyProvider>
+                    <CartProvider>
+                      <PerformanceMonitor enabled={import.meta.env.PROD} />
+                      {children}
+                    </CartProvider>
+                  </CurrencyProvider>
                 </AuthProvider>
               </Auth0Provider>
             </TooltipProvider>

@@ -117,17 +117,38 @@ export const fetchOrders = async (
   bearerToken?: string
 ): Promise<Order[]> => {
   try {
-    const sessionId = localStorage.getItem('nordic_fashion_cart_session_id');
+    // Get session ID from localStorage with fallback to sessionStorage
+    let sessionId = localStorage.getItem('nordic_fashion_cart_session_id') || 
+                   sessionStorage.getItem('nordic_fashion_cart_session_id') ||
+                   localStorage.getItem('cart_session_id') ||
+                   sessionStorage.getItem('cart_session_id');
+    
+    console.log('Fetching orders with session ID:', sessionId);
     
     const response = await api.get(
       '/orders',
       {
-        headers: buildApiHeaders(sessionId, bearerToken),
+        headers: buildApiHeaders(sessionId || undefined, bearerToken),
       }
     );
     
-    return response.data;
+    console.log('Orders API response:', response.data);
+    
+    // Handle both paginated and non-paginated responses
+    if (response.data && Array.isArray(response.data)) {
+      // If the response is already an array, return it directly
+      return response.data;
+    } else if (response.data && response.data.data && Array.isArray(response.data.data)) {
+      // If the response has a data property that's an array, return that
+      return response.data.data;
+    }
+    
+    // If we get here, the response format is unexpected
+    console.warn('Unexpected API response format:', response.data);
+    return [];
+    
   } catch (error: any) {
+    console.error('Error fetching orders:', error);
     throw new Error(error.response?.data?.message || 'Failed to fetch orders');
   }
 };

@@ -31,6 +31,7 @@ export interface Product {
   id: number;
   name: string;
   description: string;
+  gender: 'male' | 'female' | 'unisex';
   price: number; // Changed from string to number to match API response
   category: Category;
   variants: Variant[];

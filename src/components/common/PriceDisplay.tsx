@@ -1,5 +1,6 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
+import { useCurrency } from '@/contexts/CurrencyContext';
 
 interface PriceDisplayProps {
   price: number;
@@ -13,14 +14,20 @@ interface PriceDisplayProps {
 const PriceDisplay: React.FC<PriceDisplayProps> = ({
   price,
   originalPrice,
-  currency = '€',
+  currency,
   size = 'md',
   showDiscount = true,
   className
 }) => {
-  const hasDiscount = originalPrice && originalPrice > price;
+  const { convertPrice, getCurrencySymbol } = useCurrency();
+  
+  // Use currency from context if not provided
+  const displayCurrency = currency || getCurrencySymbol();
+  const convertedPrice = convertPrice(price);
+  const convertedOriginalPrice = originalPrice ? convertPrice(originalPrice) : undefined;
+  const hasDiscount = convertedOriginalPrice && convertedOriginalPrice > convertedPrice;
   const discountPercentage = hasDiscount 
-    ? Math.round(((originalPrice - price) / originalPrice) * 100)
+    ? Math.round(((convertedOriginalPrice - convertedPrice) / convertedOriginalPrice) * 100)
     : 0;
 
   const sizeClasses = {
@@ -52,7 +59,7 @@ const PriceDisplay: React.FC<PriceDisplayProps> = ({
         'font-semibold text-gold-500',
         sizeClasses[size].price
       )}>
-        {currency}{price.toFixed(2)}
+        {displayCurrency}{convertedPrice.toFixed(2)}
       </span>
       
       {hasDiscount && (
@@ -61,7 +68,7 @@ const PriceDisplay: React.FC<PriceDisplayProps> = ({
             'text-muted-foreground line-through',
             sizeClasses[size].original
           )}>
-            {currency}{originalPrice.toFixed(2)}
+            {displayCurrency}{convertedOriginalPrice!.toFixed(2)}
           </span>
           
           {showDiscount && (

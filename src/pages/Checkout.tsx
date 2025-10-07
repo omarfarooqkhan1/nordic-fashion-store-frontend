@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '@/contexts/CartContext';
 import { useAuth } from '@/contexts/AuthContext';
+import { useCurrency } from '@/contexts/CurrencyContext';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -12,7 +13,9 @@ import { Separator } from '@/components/ui/separator';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { CreditCard, Truck, Shield, ArrowLeft, Plus, MapPin } from 'lucide-react';
 import { createOrder } from '@/api/orders';
-import { createAddress } from '@/api/addresses';
+import { createAddress, fetchUserAddresses, setDefaultAddress } from '@/api/addresses';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Address } from '@/types/address';
 
 interface CheckoutFormData {
   shipping_name: string;
@@ -45,10 +48,117 @@ const Checkout: React.FC = () => {
   const navigate = useNavigate();
   const { items, customItems, getCartTotal, getCartItemsCount, clearCartItems, isLoading } = useCart();
   const { user, token } = useAuth();
+  const { convertPrice, getCurrencySymbol } = useCurrency();
   const { toast } = useToast();
   const [isProcessing, setIsProcessing] = useState(false);
+  const [savedAddresses, setSavedAddresses] = useState<Address[]>([]);
+  const [isLoadingAddresses, setIsLoadingAddresses] = useState(true);
+  const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
   
+  // Fetch saved addresses when component mounts or user changes
+  useEffect(() => {
+    const loadAddresses = async () => {
+      if (user && token) {
+        try {
+          setIsLoadingAddresses(true);
+          const addresses = await fetchUserAddresses();
+          setSavedAddresses(addresses);
+          
+          // Find and set the default address
+          const defaultAddress = addresses.find(addr => addr.is_default);
+          if (defaultAddress) {
+            setSelectedAddressId(defaultAddress.id);
+            fillFormWithAddress(defaultAddress);
+          }
+        } catch (error) {
+          console.error('Error loading addresses:', error);
+          toast({
+            title: 'Error',
+            description: 'Failed to load saved addresses',
+            variant: 'destructive',
+          });
+        } finally {
+          setIsLoadingAddresses(false);
+        }
+      } else {
+        setIsLoadingAddresses(false);
+      }
+    };
+    
+    loadAddresses();
+  }, [user, token, toast]);
   
+  // Fill form with address data
+  const fillFormWithAddress = (address: Address) => {
+    setFormData(prev => ({
+      ...prev,
+      shipping_name: address.name || user?.name || '',
+      shipping_address: address.street || '',
+      shipping_city: address.city || '',
+      shipping_state: address.state || 'Turku',
+      shipping_postal_code: address.postal_code || '',
+      shipping_country: address.country || 'Finland',
+      shipping_phone: address.phone || '',
+    }));
+  };
+  
+  // Handle address selection
+  const handleAddressSelect = (addressId: string) => {
+    setSelectedAddressId(addressId);
+    const selectedAddress = savedAddresses.find(addr => addr.id === addressId);
+    if (selectedAddress) {
+      fillFormWithAddress(selectedAddress);
+    }
+  };
+  
+  // Save current address to user's address book if logged in
+  const saveCurrentAddress = async (): Promise<Address | null> => {
+    if (!user || !token) return null;
+    
+    try {
+      const addressData = {
+        type: 'home' as const,
+        label: 'My Address',
+        street: formData.shipping_address,
+        city: formData.shipping_city,
+        state: formData.shipping_state,
+        postal_code: formData.shipping_postal_code,
+        country: formData.shipping_country,
+        phone: formData.shipping_phone,
+      };
+
+      const newAddress = await createAddress(addressData);
+      
+      // Update the addresses list
+      setSavedAddresses(prev => [...prev, newAddress]);
+      
+      // Set as default
+      await setDefaultAddress(newAddress.id);
+      setSelectedAddressId(newAddress.id);
+      
+      return newAddress;
+    } catch (error) {
+      console.error('Error saving address:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to save address',
+        variant: 'destructive',
+      });
+      return null;
+    }
+  };
+  
+  // Update form data when user changes
+  useEffect(() => {
+    if (user) {
+      setFormData(prev => ({
+        ...prev,
+        shipping_name: user.name || '',
+        shipping_email: user.email || '',
+      }));
+    }
+  }, [user]);
+
   const [formData, setFormData] = useState<CheckoutFormData>({
     shipping_name: user?.name || '',
     shipping_email: user?.email || '',
@@ -550,7 +660,7 @@ const Checkout: React.FC = () => {
                         {item.variant?.size} - {item.variant?.color} × {item.quantity}
                       </p>
                     </div>
-                    <span className="font-medium">€{(getCartTotal() / getCartItemsCount() * item.quantity).toFixed(2)}</span>
+                    <span className="font-medium">{getCurrencySymbol()}{convertPrice(getCartTotal() / getCartItemsCount() * item.quantity).toFixed(2)}</span>
                   </div>
                 ))}
                 
@@ -568,7 +678,7 @@ const Checkout: React.FC = () => {
                         </p>
                       )}
                     </div>
-                    <span className="font-medium">€{(Number(customItem.price) || 0).toFixed(2)}</span>
+                    <span className="font-medium">{getCurrencySymbol()}{convertPrice(Number(customItem.price) || 0).toFixed(2)}</span>
                   </div>
                 ))}
               </div>
@@ -578,28 +688,26 @@ const Checkout: React.FC = () => {
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
                   <span>Subtotal</span>
-                  <span>€{subtotal.toFixed(2)}</span>
+                  <span>{getCurrencySymbol()}{convertPrice(subtotal).toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Shipping</span>
-                  <span>{shipping === 0 ? 'Free' : `€${shipping.toFixed(2)}`}</span>
+                  <span>{shipping === 0 ? 'Free' : `${getCurrencySymbol()}${convertPrice(shipping).toFixed(2)}`}</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Tax (25% VAT)</span>
-                  <span>€{tax.toFixed(2)}</span>
+                  <span>{getCurrencySymbol()}{convertPrice(tax).toFixed(2)}</span>
                 </div>
                 <Separator />
                 <div className="flex justify-between font-bold text-lg">
                   <span>Total</span>
-                  <span>€{total.toFixed(2)}</span>
+                  <span>{getCurrencySymbol()}{convertPrice(total).toFixed(2)}</span>
                 </div>
               </div>
 
               <Button
-                type="button"
-                onClick={() => {
-                  handleSubmit();
-                }}
+                type="submit"
+                form="checkout-form"
                 disabled={isProcessing}
                 className="w-full bg-gold-500 hover:bg-gold-600 text-leather-900 font-semibold py-3 border border-gold-400 hover:border-gold-500"
               >
@@ -609,19 +717,20 @@ const Checkout: React.FC = () => {
                     Processing Payment...
                   </>
                 ) : (
-                  `Complete Order - €${total.toFixed(2)}`
+                  `Complete Order - ${getCurrencySymbol()}${convertPrice(total).toFixed(2)}`
                 )}
               </Button>
 
               <div className="text-xs text-muted-foreground space-y-1">
                 <p>• Secure payment processing</p>
-                <p>• Free shipping on orders over €100</p>
+                <p>• Free shipping on orders over {getCurrencySymbol()}100</p>
                 <p>• 30-day return policy</p>
               </div>
             </CardContent>
           </Card>
         </div>
       </div>
+      </form>
     </div>
   );
 };

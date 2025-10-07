@@ -169,6 +169,7 @@ const translations = {
     'products.belts': 'Belts',
     'products.jackets': 'Jackets',
     'products.accessories': 'Accessories',
+    'products.noProductsFound': 'No products found in this category.',
     'product.addToCart': 'Add to Cart',
     'product.price': 'Price',
     'product.size': 'Size',
@@ -540,6 +541,70 @@ const translations = {
     'country.norway': 'Norway',
     'country.denmark': 'Denmark',
     'country.iceland': 'Iceland',
+    
+    // Additional missing translations
+    'nav.profile': 'Profile',
+    'theme.switchToDark': 'Switch to dark mode',
+    'theme.switchToLight': 'Switch to light mode',
+    'theme.darkMode': 'Dark Mode',
+    'theme.lightMode': 'Light Mode',
+    
+    // Validation messages
+    'validation.nameMinLength': 'Name must be at least 2 characters',
+    'validation.emailInvalid': 'Please enter a valid email address',
+    'validation.currentPasswordRequired': 'Current password is required',
+    'validation.passwordMinLength': 'Password must be at least 8 characters',
+    'validation.passwordsDontMatch': 'Passwords don\'t match',
+    'validation.streetMinLength': 'Street address must be at least 5 characters',
+    'validation.cityMinLength': 'City must be at least 2 characters',
+    'validation.stateMinLength': 'State/Province must be at least 2 characters',
+    'validation.postalCodeMinLength': 'Postal code must be at least 4 characters',
+    'validation.countryMinLength': 'Country must be at least 2 characters',
+    
+    // Email verification
+    'auth.userIdRequired': 'User ID is required for email verification',
+    'auth.failedToResendCode': 'Failed to resend verification code',
+    'auth.sending': 'Sending...',
+    'auth.resend': 'Resend',
+    'auth.resendCode': 'Resend Code',
+    'auth.resendTimer': 'Resend ({timer}s)',
+    'auth.newCodeSent': 'A new verification code has been sent to your email.',
+    'auth.enterCredentials': 'Enter your credentials to access your account',
+    'auth.loginRequired': 'Login Required',
+    'auth.signIn': 'Sign In',
+    'auth.emailNotVerified': 'Email Not Verified',
+    
+    // Currency names
+    'currency.euro': 'Euro',
+    'currency.swedishKrona': 'Swedish Krona',
+    'currency.norwegianKrone': 'Norwegian Krone',
+    'currency.danishKrone': 'Danish Krone',
+    'currency.icelandicKrona': 'Icelandic Krona',
+    
+    // Accessibility labels
+    'aria.selectSize': 'Select product size',
+    'aria.selectColor': 'Select product color',
+    'aria.nordFlexLogo': 'Nord Flex Logo',
+    
+    // Language names
+    'language.english': 'English',
+    'language.finnish': 'Suomi',
+    'language.swedish': 'Svenska',
+    'language.norwegian': 'Norsk',
+    'language.danish': 'Dansk',
+    'language.icelandic': 'Íslenska',
+    
+    // Gender translations
+    'gender.male': 'Male',
+    'gender.female': 'Female',
+    'gender.unisex': 'Unisex',
+    'gender.all': 'All Genders',
+    
+    // Shop navigation
+    'nav.shopMen': 'Shop Men',
+    'nav.shopWomen': 'Shop Women',
+    'nav.ourStory': 'Our Story',
+    
     // Error pages
     'error.404.title': 'Page Not Found',
     'error.404.desc': 'The page you\'re looking for doesn\'t exist or has been moved.',
@@ -696,6 +761,7 @@ const translations = {
     'products.belts': 'Bälten',
     'products.jackets': 'Jackor',
     'products.accessories': 'Tillbehör',
+    'products.noProductsFound': 'Inga produkter hittades i denna kategori.',
     'product.addToCart': 'Lägg i Kundvagn',
     'product.price': 'Pris',
     'product.size': 'Storlek',
@@ -1049,7 +1115,70 @@ const translations = {
     'country.finland': 'Finland',
     'country.norway': 'Norge',
     'country.denmark': 'Danmark',
-    'country.iceland': 'Island'
+    'country.iceland': 'Island',
+    
+    // Additional missing translations
+    'nav.profile': 'Profil',
+    'theme.switchToDark': 'Växla till mörkt läge',
+    'theme.switchToLight': 'Växla till ljust läge',
+    'theme.darkMode': 'Mörkt läge',
+    'theme.lightMode': 'Ljust läge',
+    
+    // Validation messages
+    'validation.nameMinLength': 'Namnet måste vara minst 2 tecken',
+    'validation.emailInvalid': 'Vänligen ange en giltig e-postadress',
+    'validation.currentPasswordRequired': 'Nuvarande lösenord krävs',
+    'validation.passwordMinLength': 'Lösenordet måste vara minst 8 tecken',
+    'validation.passwordsDontMatch': 'Lösenorden matchar inte',
+    'validation.streetMinLength': 'Gatuadressen måste vara minst 5 tecken',
+    'validation.cityMinLength': 'Staden måste vara minst 2 tecken',
+    'validation.stateMinLength': 'Stat/Provins måste vara minst 2 tecken',
+    'validation.postalCodeMinLength': 'Postnummer måste vara minst 4 tecken',
+    'validation.countryMinLength': 'Landet måste vara minst 2 tecken',
+    
+    // Email verification
+    'auth.userIdRequired': 'Användar-ID krävs för e-postverifiering',
+    'auth.failedToResendCode': 'Misslyckades med att skicka verifieringskod',
+    'auth.sending': 'Skickar...',
+    'auth.resend': 'Skicka igen',
+    'auth.resendCode': 'Skicka kod igen',
+    'auth.resendTimer': 'Skicka igen ({timer}s)',
+    'auth.newCodeSent': 'En ny verifieringskod har skickats till din e-post.',
+    'auth.enterCredentials': 'Ange dina uppgifter för att komma åt ditt konto',
+    'auth.loginRequired': 'Inloggning krävs',
+    'auth.signIn': 'Logga in',
+    'auth.emailNotVerified': 'E-post inte verifierad',
+    
+    // Currency names
+    'currency.euro': 'Euro',
+    'currency.swedishKrona': 'Svensk krona',
+    'currency.norwegianKrone': 'Norsk krona',
+    'currency.danishKrone': 'Dansk krona',
+    'currency.icelandicKrona': 'Isländsk krona',
+    
+    // Accessibility labels
+    'aria.selectSize': 'Välj produktstorlek',
+    'aria.selectColor': 'Välj produktfärg',
+    'aria.nordFlexLogo': 'Nord Flex Logotyp',
+    
+    // Language names
+    'language.english': 'Engelska',
+    'language.finnish': 'Finska',
+    'language.swedish': 'Svenska',
+    'language.norwegian': 'Norska',
+    'language.danish': 'Danska',
+    'language.icelandic': 'Isländska',
+    
+    // Gender translations
+    'gender.male': 'Man',
+    'gender.female': 'Kvinna',
+    'gender.unisex': 'Unisex',
+    'gender.all': 'Alla kön',
+    
+    // Shop navigation
+    'nav.shopMen': 'Herrkläder',
+    'nav.shopWomen': 'Damkläder',
+    'nav.ourStory': 'Vår historia'
   },
   no: {
     'nav.home': 'Hjem',
@@ -1201,6 +1330,7 @@ const translations = {
     'products.belts': 'Belter',
     'products.jackets': 'Jakker',
     'products.accessories': 'Tilbehør',
+    'products.noProductsFound': 'Ingen produkter funnet i denne kategorien.',
     'product.addToCart': 'Legg i Handlekurv',
     'product.price': 'Pris',
     'product.size': 'Størrelse',
@@ -1542,7 +1672,70 @@ const translations = {
     'error.notFoundTitle': 'Siden ble ikke funnet',
     'error.notFoundDesc': 'Siden du leter etter eksisterer ikke eller har blitt flyttet.',
     'error.goHome': 'Gå til startsiden',
-    'error.goBack': 'Gå tilbake'
+    'error.goBack': 'Gå tilbake',
+    
+    // Additional missing translations
+    'nav.profile': 'Profil',
+    'theme.switchToDark': 'Bytt til mørk modus',
+    'theme.switchToLight': 'Bytt til lys modus',
+    'theme.darkMode': 'Mørk modus',
+    'theme.lightMode': 'Lys modus',
+    
+    // Validation messages
+    'validation.nameMinLength': 'Navnet må være minst 2 tegn',
+    'validation.emailInvalid': 'Vennligst oppgi en gyldig e-postadresse',
+    'validation.currentPasswordRequired': 'Nåværende passord kreves',
+    'validation.passwordMinLength': 'Passordet må være minst 8 tegn',
+    'validation.passwordsDontMatch': 'Passordene stemmer ikke overens',
+    'validation.streetMinLength': 'Gateadressen må være minst 5 tegn',
+    'validation.cityMinLength': 'Byen må være minst 2 tegn',
+    'validation.stateMinLength': 'Stat/Provins må være minst 2 tegn',
+    'validation.postalCodeMinLength': 'Postnummer må være minst 4 tegn',
+    'validation.countryMinLength': 'Landet må være minst 2 tegn',
+    
+    // Email verification
+    'auth.userIdRequired': 'Bruker-ID kreves for e-postverifisering',
+    'auth.failedToResendCode': 'Kunne ikke sende verifiseringskode på nytt',
+    'auth.sending': 'Sender...',
+    'auth.resend': 'Send på nytt',
+    'auth.resendCode': 'Send kode på nytt',
+    'auth.resendTimer': 'Send på nytt ({timer}s)',
+    'auth.newCodeSent': 'En ny verifiseringskode er sendt til din e-post.',
+    'auth.enterCredentials': 'Oppgi dine legitimasjoner for å få tilgang til kontoen din',
+    'auth.loginRequired': 'Innlogging påkrevd',
+    'auth.signIn': 'Logg inn',
+    'auth.emailNotVerified': 'E-post ikke verifisert',
+    
+    // Currency names
+    'currency.euro': 'Euro',
+    'currency.swedishKrona': 'Svensk krone',
+    'currency.norwegianKrone': 'Norsk krone',
+    'currency.danishKrone': 'Dansk krone',
+    'currency.icelandicKrona': 'Islandsk krone',
+    
+    // Accessibility labels
+    'aria.selectSize': 'Velg produktstørrelse',
+    'aria.selectColor': 'Velg produktfarge',
+    'aria.nordFlexLogo': 'Nord Flex Logo',
+    
+    // Language names
+    'language.english': 'Engelsk',
+    'language.finnish': 'Finsk',
+    'language.swedish': 'Svensk',
+    'language.norwegian': 'Norsk',
+    'language.danish': 'Dansk',
+    'language.icelandic': 'Islandsk',
+    
+    // Gender translations
+    'gender.male': 'Mann',
+    'gender.female': 'Kvinne',
+    'gender.unisex': 'Unisex',
+    'gender.all': 'Alle kjønn',
+    
+    // Shop navigation
+    'nav.shopMen': 'Herreklær',
+    'nav.shopWomen': 'Dameklær',
+    'nav.ourStory': 'Vår historie'
   },
   da: {
     'nav.home': 'Hjem',
@@ -1694,6 +1887,7 @@ const translations = {
     'products.belts': 'Bælter',
     'products.jackets': 'Jakker',
     'products.accessories': 'Tilbehør',
+    'products.noProductsFound': 'Ingen produkter fundet i denne kategori.',
     'product.addToCart': 'Tilføj til Kurv',
     'product.price': 'Pris',
     'product.size': 'Størrelse',
@@ -2009,7 +2203,64 @@ const translations = {
     'error.notFoundTitle': 'Siden blev ikke fundet',
     'error.notFoundDesc': 'Siden du leter efter eksisterer ikke eller har blevet flyttet.',
     'error.goHome': 'Gå til startsiden',
-    'error.goBack': 'Gå tilbage'
+    'error.goBack': 'Gå tilbage',
+    
+    // Additional missing translations
+    'nav.profile': 'Profil',
+    'theme.switchToDark': 'Skift til mørk tilstand',
+    'theme.switchToLight': 'Skift til lys tilstand',
+    'theme.darkMode': 'Mørk tilstand',
+    'theme.lightMode': 'Lys tilstand',
+    
+    // Validation messages
+    'validation.nameMinLength': 'Navnet skal være mindst 2 tegn',
+    'validation.emailInvalid': 'Indtast venligst en gyldig e-mailadresse',
+    'validation.currentPasswordRequired': 'Nuværende adgangskode påkrævet',
+    'validation.passwordMinLength': 'Adgangskoden skal være mindst 8 tegn',
+    'validation.passwordsDontMatch': 'Adgangskoderne matcher ikke',
+    'validation.streetMinLength': 'Gadeadressen skal være mindst 5 tegn',
+    'validation.cityMinLength': 'Byen skal være mindst 2 tegn',
+    'validation.stateMinLength': 'Stat/Provins skal være mindst 2 tegn',
+    'validation.postalCodeMinLength': 'Postnummer skal være mindst 4 tegn',
+    'validation.countryMinLength': 'Landet skal være mindst 2 tegn',
+    
+    // Email verification
+    'auth.userIdRequired': 'Bruger-ID påkrævet til e-mailverifikation',
+    'auth.failedToResendCode': 'Kunne ikke sende verifikationskode igen',
+    'auth.sending': 'Sender...',
+    'auth.resend': 'Send igen',
+    'auth.resendCode': 'Send kode igen',
+    'auth.resendTimer': 'Send igen ({timer}s)',
+    'auth.newCodeSent': 'En ny verifikationskode er sendt til din e-mail.',
+    'auth.enterCredentials': 'Indtast dine legitimationsoplysninger for at få adgang til din konto',
+    'auth.loginRequired': 'Login påkrævet',
+    'auth.signIn': 'Log ind',
+    'auth.emailNotVerified': 'E-mail ikke verificeret',
+    
+    // Currency names
+    'currency.euro': 'Euro',
+    'currency.swedishKrona': 'Svensk krone',
+    'currency.norwegianKrone': 'Norsk krone',
+    'currency.danishKrone': 'Dansk krone',
+    'currency.icelandicKrona': 'Islandsk krone',
+    
+    // Accessibility labels
+    'aria.selectSize': 'Vælg produktstørrelse',
+    'aria.selectColor': 'Vælg produktfarve',
+    'aria.nordFlexLogo': 'Nord Flex Logo',
+    
+    // Language names
+    'language.english': 'Engelsk',
+    'language.finnish': 'Finsk',
+    'language.swedish': 'Svensk',
+    'language.norwegian': 'Norsk',
+    'language.danish': 'Dansk',
+    'language.icelandic': 'Islandsk',
+    
+    // Shop navigation
+    'nav.shopMen': 'Herretøj',
+    'nav.shopWomen': 'Dametøj',
+    'nav.ourStory': 'Vores historie'
   },
   fi: {
     'nav.home': 'Koti',
@@ -2161,6 +2412,7 @@ const translations = {
     'products.belts': 'Vyöt',
     'products.jackets': 'Takit',
     'products.accessories': 'Lisävarusteet',
+    'products.noProductsFound': 'Tässä kategoriassa ei löytynyt tuotteita.',
     'product.addToCart': 'Lisää Koriin',
     'product.price': 'Hinta',
     'product.size': 'Koko',
@@ -2477,7 +2729,70 @@ const translations = {
     'country.finland': 'Suomi',
     'country.norway': 'Norja',
     'country.denmark': 'Tanska',
-    'country.iceland': 'Islanti'
+    'country.iceland': 'Islanti',
+    
+    // Additional missing translations
+    'nav.profile': 'Profiili',
+    'theme.switchToDark': 'Vaihda tummaan tilaan',
+    'theme.switchToLight': 'Vaihda vaaleaan tilaan',
+    'theme.darkMode': 'Tumma tila',
+    'theme.lightMode': 'Vaalea tila',
+    
+    // Validation messages
+    'validation.nameMinLength': 'Nimen tulee olla vähintään 2 merkkiä',
+    'validation.emailInvalid': 'Anna kelvollinen sähköpostiosoite',
+    'validation.currentPasswordRequired': 'Nykyinen salasana vaaditaan',
+    'validation.passwordMinLength': 'Salasanan tulee olla vähintään 8 merkkiä',
+    'validation.passwordsDontMatch': 'Salasanat eivät täsmää',
+    'validation.streetMinLength': 'Katuosoitteen tulee olla vähintään 5 merkkiä',
+    'validation.cityMinLength': 'Kaupungin tulee olla vähintään 2 merkkiä',
+    'validation.stateMinLength': 'Osavaltion/maakunnan tulee olla vähintään 2 merkkiä',
+    'validation.postalCodeMinLength': 'Postinumeron tulee olla vähintään 4 merkkiä',
+    'validation.countryMinLength': 'Maan tulee olla vähintään 2 merkkiä',
+    
+    // Email verification
+    'auth.userIdRequired': 'Käyttäjätunnus vaaditaan sähköpostin vahvistamiseen',
+    'auth.failedToResendCode': 'Vahvistuskoodin lähettäminen epäonnistui',
+    'auth.sending': 'Lähetetään...',
+    'auth.resend': 'Lähetä uudelleen',
+    'auth.resendCode': 'Lähetä koodi uudelleen',
+    'auth.resendTimer': 'Lähetä uudelleen ({timer}s)',
+    'auth.newCodeSent': 'Uusi vahvistuskoodi on lähetetty sähköpostiisi.',
+    'auth.enterCredentials': 'Anna tunnistetietosi päästäksesi tilillesi',
+    'auth.loginRequired': 'Kirjautuminen vaaditaan',
+    'auth.signIn': 'Kirjaudu sisään',
+    'auth.emailNotVerified': 'Sähköposti ei vahvistettu',
+    
+    // Currency names
+    'currency.euro': 'Euro',
+    'currency.swedishKrona': 'Ruotsin kruunu',
+    'currency.norwegianKrone': 'Norjan kruunu',
+    'currency.danishKrone': 'Tanskan kruunu',
+    'currency.icelandicKrona': 'Islannin kruunu',
+    
+    // Accessibility labels
+    'aria.selectSize': 'Valitse tuotteen koko',
+    'aria.selectColor': 'Valitse tuotteen väri',
+    'aria.nordFlexLogo': 'Nord Flex Logo',
+    
+    // Language names
+    'language.english': 'Englanti',
+    'language.finnish': 'Suomi',
+    'language.swedish': 'Ruotsi',
+    'language.norwegian': 'Norja',
+    'language.danish': 'Tanska',
+    'language.icelandic': 'Islanti',
+    
+    // Gender translations
+    'gender.male': 'Mies',
+    'gender.female': 'Nainen',
+    'gender.unisex': 'Unisex',
+    'gender.all': 'Kaikki sukupuolet',
+    
+    // Shop navigation
+    'nav.shopMen': 'Miesten tuotteet',
+    'nav.shopWomen': 'Naisten tuotteet',
+    'nav.ourStory': 'Meidän tarinamme'
   },
   is: {
     'nav.home': 'Heim',
@@ -2704,6 +3019,7 @@ const translations = {
     'products.belts': 'Belti',
     'products.jackets': 'Jakkar',
     'products.accessories': 'Fylgihlutir',
+    'products.noProductsFound': 'Engar vörur fundust í þessum flokki.',
     'product.addToCart': 'Bæta í Körfu',
     'product.price': 'Verð',
     'product.size': 'Stærð',
@@ -2945,7 +3261,70 @@ const translations = {
     'error.notFoundTitle': 'Ferð Í Gegnum Tímann',
     'error.notFoundDesc': 'Eitt af því sem við köllum fortíðin, nútíðin eða framtíðin. Við skulum finna réttu leiðina aftur.',
     'error.goHome': 'Farðu á forsíðu',
-    'error.goBack': 'Farðu til baka'
+    'error.goBack': 'Farðu til baka',
+    
+    // Additional missing translations
+    'nav.profile': 'Prófíll',
+    'theme.switchToDark': 'Skiptu yfir í dökkan ham',
+    'theme.switchToLight': 'Skiptu yfir í ljósa ham',
+    'theme.darkMode': 'Dökk ham',
+    'theme.lightMode': 'Ljós ham',
+    
+    // Validation messages
+    'validation.nameMinLength': 'Nafnið verður að vera að minnsta kosti 2 stafir',
+    'validation.emailInvalid': 'Vinsamlegast sláðu inn gilt netfang',
+    'validation.currentPasswordRequired': 'Núverandi lykilorð er krafist',
+    'validation.passwordMinLength': 'Lykilorðið verður að vera að minnsta kosti 8 stafir',
+    'validation.passwordsDontMatch': 'Lykilorðin passa ekki saman',
+    'validation.streetMinLength': 'Götunafnið verður að vera að minnsta kosti 5 stafir',
+    'validation.cityMinLength': 'Borgin verður að vera að minnsta kosti 2 stafir',
+    'validation.stateMinLength': 'Ríki/Fylki verður að vera að minnsta kosti 2 stafir',
+    'validation.postalCodeMinLength': 'Póstnúmerið verður að vera að minnsta kosti 4 stafir',
+    'validation.countryMinLength': 'Landið verður að vera að minnsta kosti 2 stafir',
+    
+    // Email verification
+    'auth.userIdRequired': 'Notandakenni er krafist fyrir netfangsstaðfestingu',
+    'auth.failedToResendCode': 'Mistókst að senda staðfestingarkóða aftur',
+    'auth.sending': 'Sendi...',
+    'auth.resend': 'Senda aftur',
+    'auth.resendCode': 'Senda kóða aftur',
+    'auth.resendTimer': 'Senda aftur ({timer}s)',
+    'auth.newCodeSent': 'Nýr staðfestingarkóði hefur verið sendur á netfangið þitt.',
+    'auth.enterCredentials': 'Sláðu inn auðkennin þín til að fá aðgang að reikningnum þínum',
+    'auth.loginRequired': 'Innskráning krafist',
+    'auth.signIn': 'Skrá inn',
+    'auth.emailNotVerified': 'Netfang ekki staðfest',
+    
+    // Currency names
+    'currency.euro': 'Evra',
+    'currency.swedishKrona': 'Sænsk króna',
+    'currency.norwegianKrone': 'Norsk króna',
+    'currency.danishKrone': 'Dönsk króna',
+    'currency.icelandicKrona': 'Íslensk króna',
+    
+    // Accessibility labels
+    'aria.selectSize': 'Veldu stærð vöru',
+    'aria.selectColor': 'Veldu lit vöru',
+    'aria.nordFlexLogo': 'Nord Flex Merki',
+    
+    // Language names
+    'language.english': 'Enska',
+    'language.finnish': 'Finnska',
+    'language.swedish': 'Sænska',
+    'language.norwegian': 'Norska',
+    'language.danish': 'Danska',
+    'language.icelandic': 'Íslenska',
+    
+    // Gender translations
+    'gender.male': 'Karl',
+    'gender.female': 'Kona',
+    'gender.unisex': 'Unisex',
+    'gender.all': 'Öll kyn',
+    
+    // Shop navigation
+    'nav.shopMen': 'Karlavörur',
+    'nav.shopWomen': 'Kvennavörur',
+    'nav.ourStory': 'Saga okkar'
   }
 };
 

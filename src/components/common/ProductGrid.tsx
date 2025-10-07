@@ -10,6 +10,7 @@ import { cn } from '@/lib/utils';
 interface Product {
   id: number;
   name: string;
+  gender: 'male' | 'female' | 'unisex';
   price: string;
   discount?: number;
   category: {
@@ -37,18 +38,18 @@ const ProductGrid: React.FC<ProductGridProps> = ({
   showVariants = true,
   className
 }) => {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
 
   const gridClasses = {
-    2: 'grid-cols-1 sm:grid-cols-2',
-    3: 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3',
-    4: 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4',
-    5: 'grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5'
+    2: 'grid-cols-2 sm:grid-cols-2',
+    3: 'grid-cols-2 sm:grid-cols-2 md:grid-cols-3',
+    4: 'grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4',
+    5: 'grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5'
   };
 
   if (loading) {
     return (
-      <div className={cn('grid gap-6', gridClasses[columns], className)}>
+      <div className={cn('grid gap-3 sm:gap-4 md:gap-6', gridClasses[columns], className)}>
         {Array.from({ length: 8 }).map((_, index) => (
           <Card key={index} className="overflow-hidden animate-pulse">
             <div className="aspect-square bg-gray-200 dark:bg-gray-700" />
@@ -74,7 +75,7 @@ const ProductGrid: React.FC<ProductGridProps> = ({
   }
 
   return (
-    <div className={cn('grid gap-6 max-w-7xl mx-auto', gridClasses[columns], className)}>
+    <div className={cn('grid gap-3 sm:gap-4 md:gap-6 max-w-7xl mx-auto px-2 sm:px-4', gridClasses[columns], className)}>
       {products.map((product) => {
         const discountedPrice = product.discount 
           ? product.price * (1 - product.discount / 100)
@@ -84,10 +85,10 @@ const ProductGrid: React.FC<ProductGridProps> = ({
           `https://placehold.co/400x400/EFEFEF/AAAAAA?text=${encodeURIComponent(product.name)}`;
 
         return (
-          <Card key={product.id} className="group overflow-hidden hover:shadow-lg transition-shadow">
+          <Card key={product.id} className="bg-white dark:bg-card border border-gray-200 dark:border-border group overflow-hidden hover:shadow-lg transition-all duration-300">
             <Link to={`/products/${product.id}`}>
               {/* Product Image */}
-              <div className="aspect-square overflow-hidden bg-gray-100 dark:bg-gray-800">
+              <div className="aspect-square overflow-hidden bg-white">
                 <img
                   src={mainImage}
                   alt={product.name}
@@ -117,6 +118,21 @@ const ProductGrid: React.FC<ProductGridProps> = ({
                       {product?.category?.name || 'Uncategorized'}
                     </p>
                   )}
+                  
+                  {/* Gender Badge */}
+                  <div className="flex items-center gap-2">
+                    <Badge 
+                      variant="secondary" 
+                      className={cn(
+                        "text-xs capitalize",
+                        product.gender === 'male' && "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
+                        product.gender === 'female' && "bg-pink-100 text-pink-800 dark:bg-pink-900 dark:text-pink-200",
+                        product.gender === 'unisex' && "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200"
+                      )}
+                    >
+                      {language === 'en' ? product.gender.charAt(0).toUpperCase() + product.gender.slice(1) : t(`gender.${product.gender}`)}
+                    </Badge>
+                  </div>
                 </div>
 
                 {/* Price */}

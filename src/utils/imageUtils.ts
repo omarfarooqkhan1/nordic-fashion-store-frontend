@@ -4,7 +4,7 @@
  * Get the backend base URL for images
  */
 export const getBackendBaseUrl = (): string => {
-  const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api';
+  const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || '/api';
   // Remove '/api' from the end to get the base URL
   return apiBaseUrl.replace('/api', '');
 };
@@ -12,7 +12,7 @@ export const getBackendBaseUrl = (): string => {
 /**
  * Convert a relative image path to a full URL
  * @param imagePath - The relative path (e.g., '/storage/images/blogs/1.jpeg')
- * @returns Full URL (e.g., 'http://localhost:8000/storage/images/blogs/1.jpeg')
+ * @returns Full URL (e.g., '/storage/images/blogs/1.jpeg')
  */
 export const getImageUrl = (imagePath: string | null | undefined): string | null => {
   if (!imagePath) return null;

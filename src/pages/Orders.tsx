@@ -1,7 +1,7 @@
 
 import type React from "react"
 import { useState, useEffect } from "react"
-import { useParams, useLocation } from "react-router-dom"
+import { useParams, useLocation, useNavigate } from "react-router-dom"
 import { Package, Calendar, Truck, CheckCircle, Clock, XCircle, Eye, ArrowLeft, ExternalLink } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -17,46 +17,84 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 
-import { useAuth } from "../contexts/AuthContext"
-import { useLanguage } from "../contexts/LanguageContext"
-import { fetchOrders, fetchOrder, Order as ApiOrder, OrderItem as ApiOrderItem } from "@/api/orders"
+import { useAuth } from "@/contexts/AuthContext"
+import { useLanguage } from "@/contexts/LanguageContext"
+import { fetchOrders, fetchOrder, type Order as ApiOrder, type OrderItem as ApiOrderItem } from "@/api/orders"
 import { useToast } from "@/hooks/use-toast"
 
-interface OrderItem {
-  id: string
-  name: string
-  price: number
-  quantity: number
-  image: string
-}
+// Helper to format date
+const formatDate = (dateString: string) => {
+  return new Date(dateString).toLocaleDateString('en-US', {
+    year: 'numeric',
+    day: 'numeric',
+  });
+};
 
-interface Order {
-  id: string
-  orderNumber: string
-  date: string
-  status: "pending" | "processing" | "shipped" | "delivered" | "cancelled"
-  total: number
-  items: OrderItem[]
-  shippingAddress: {
-    name: string
-    address: string
-    city: string
-    postalCode: string
-    country: string
+// Helper to get status color
+  const getStatusColor = (status: ApiOrder['status']) => {
+    switch (status) {
+      case 'pending':
+        return 'secondary';
+      case 'processing':
+        return 'default';
+      case 'shipped':
+        return 'default';
+      case 'delivered':
+        return 'default';
+      case 'cancelled':
+        return 'destructive';
+      default:
+        return 'secondary';
+    }
+  };
+
+// Helper to get status icon
+const getStatusIcon = (status: ApiOrder['status']) => {
+  switch (status) {
+    case 'pending':
+      return <Clock className="h-4 w-4" />;
+    case 'processing':
+      return <Package className="h-4 w-4" />;
+    case 'shipped':
+      return <Truck className="h-4 w-4" />;
+    case 'delivered':
+      return <CheckCircle className="h-4 w-4" />;
+    case 'cancelled':
+      return <XCircle className="h-4 w-4" />;
+    default:
+      return <Clock className="h-4 w-4" />;
   }
-  trackingNumber?: string
-}
+};
 
 const Orders: React.FC = () => {
-  const { user, token } = useAuth()
-  const { t } = useLanguage()
-  const { toast } = useToast()
-  const location = useLocation()
-  const params = useParams()
-  const [orders, setOrders] = useState<ApiOrder[]>([])
-  const [loading, setLoading] = useState(true)
-  const [selectedOrder, setSelectedOrder] = useState<ApiOrder | null>(null)
-  const [singleOrder, setSingleOrder] = useState<ApiOrder | null>(null)
+  const { user, token } = useAuth();
+  const { t } = useLanguage();
+  const { toast } = useToast();
+  const location = useLocation();
+  const params = useParams();
+  const navigate = useNavigate();
+  
+  // State for orders and loading
+  const [orders, setOrders] = useState<ApiOrder[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedOrder, setSelectedOrder] = useState<ApiOrder | null>(null);
+  const [singleOrder, setSingleOrder] = useState<ApiOrder | null>(null);
+  
+  // Store the initial order data from location state
+  const initialOrderData = location.state?.orderData as ApiOrder | undefined;
+  
+  // Initialize with order data from location state if available
+  useEffect(() => {
+    if (initialOrderData) {
+      setOrders(prevOrders => {
+        // Only update if we don't already have this order
+        if (!prevOrders.some(order => order.id === initialOrderData.id)) {
+          return [...prevOrders, initialOrderData];
+        }
+        return prevOrders;
+      });
+    }
+  }, [initialOrderData]);
 
   // Check if this is a single order view
 
@@ -67,40 +105,69 @@ const Orders: React.FC = () => {
   useEffect(() => {
     const loadOrders = async () => {
       try {
+        setLoading(true);
+        
         if (isOrderDetail && params.id) {
           // If order data is available from checkout (guest), use it directly
           if (orderDataFromCheckout) {
-            setSingleOrder(orderDataFromCheckout);
-            if (fromCheckout) {
-              toast({
-                title: t('orders.orderConfirmation'),
-                description: t('orders.orderSuccess').replace('{orderNumber}', orderDataFromCheckout.order_number),
-                className: "bg-green-500 text-white"
-              });
-            }
-          } else {
-            // Otherwise, fetch from backend (requires auth)
-            const order = await fetchOrder(params.id, token);
+            const order = orderDataFromCheckout as ApiOrder;
             setSingleOrder(order);
             if (fromCheckout) {
               toast({
-                title: t('orders.orderConfirmation'),
-                description: t('orders.orderSuccess').replace('{orderNumber}', order.order_number),
+                title: t('orders.orderConfirmation') || 'Order Confirmed!',
+                description: (t('orders.orderSuccess') || 'Your order #{orderNumber} has been placed successfully!').replace('{orderNumber}', order.order_number),
                 className: "bg-green-500 text-white"
               });
             }
+            return;
+          }
+          
+          // Otherwise, fetch from backend (requires auth)
+          if (!token) {
+            // If not logged in, redirect to login
+            navigate('/login', { state: { from: location.pathname } });
+            return;
+          }
+          
+          const order = await fetchOrder(params.id, token);
+          setSingleOrder(order);
+          if (fromCheckout) {
+            toast({
+              title: t('orders.orderConfirmation') || 'Order Confirmed!',
+              description: (t('orders.orderSuccess') || 'Your order #{orderNumber} has been placed successfully!').replace('{orderNumber}', order.order_number),
+              className: "bg-green-500 text-white"
+            });
+          }
+          return;
+        }
+
+        // Load all orders
+        console.log('Loading orders...');
+        
+        if (!token) {
+          // For guest users, try to load orders using session ID
+          const sessionId = localStorage.getItem('nordic_fashion_cart_session_id') || 
+                           sessionStorage.getItem('nordic_fashion_cart_session_id');
+          
+          if (sessionId) {
+            const guestOrders = await fetchOrders(); // No token for guest users
+            setOrders(Array.isArray(guestOrders) ? guestOrders : []);
+          } else {
+            setOrders([]);
           }
         } else {
-          // Load all orders
-          const fetchedOrders = await fetchOrders(token);
-          setOrders(fetchedOrders);
+          // For authenticated users, fetch their orders
+          const userOrders = await fetchOrders(token);
+          setOrders(Array.isArray(userOrders) ? userOrders : []);
         }
-      } catch (error: any) {
+      } catch (error) {
+        console.error('Error in loadOrders:', error);
         toast({
           title: t('orders.error'),
-          description: t('orders.loadError'),
+          description: error instanceof Error ? error.message : t('orders.loadError'),
           variant: "destructive"
         });
+        setOrders([]);
       } finally {
         setLoading(false);
       }
@@ -109,39 +176,6 @@ const Orders: React.FC = () => {
     loadOrders();
   }, [token, isOrderDetail, params.id, fromCheckout, toast, orderDataFromCheckout]);
 
-  const getStatusIcon = (status: ApiOrder["status"]) => {
-    switch (status) {
-      case "pending":
-        return <Clock className="h-4 w-4" />
-      case "processing":
-        return <Package className="h-4 w-4" />
-      case "shipped":
-        return <Truck className="h-4 w-4" />
-      case "delivered":
-        return <CheckCircle className="h-4 w-4" />
-      case "cancelled":
-        return <XCircle className="h-4 w-4" />
-      default:
-        return <Clock className="h-4 w-4" />
-    }
-  }
-
-  const getStatusColor = (status: ApiOrder["status"]) => {
-    switch (status) {
-      case "pending":
-        return "secondary"
-      case "processing":
-        return "default"
-      case "shipped":
-        return "default"
-      case "delivered":
-        return "default"
-      case "cancelled":
-        return "destructive"
-      default:
-        return "secondary"
-    }
-  }
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("en-US", {

@@ -11,6 +11,7 @@ export interface CartItem {
     product: {
       id: number;
       name: string;
+      gender: 'male' | 'female' | 'unisex';
       price: string;
       images: { url: string }[];
       category: { name: string };

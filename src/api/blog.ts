@@ -36,6 +36,11 @@ export const blogApi = {
     return response.data;
   },
 
+  viewBlog: async (slug: string): Promise<{ message: string; views_count: number; success: boolean }> => {
+    const response = await api.post(`/blogs/${slug}/view`);
+    return response.data;
+  },
+
   // Admin blog endpoints
   getAdminBlogs: async (filters?: BlogFilters): Promise<BlogListResponse> => {
     const params = new URLSearchParams();

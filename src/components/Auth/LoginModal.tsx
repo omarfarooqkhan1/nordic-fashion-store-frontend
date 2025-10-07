@@ -48,7 +48,11 @@ export const LoginModal: React.FC<LoginModalProps> = ({
       onLoginSuccess?.();
       onClose();
     } catch (err: any) {
-      setError(t('toast.loginError'));
+      // Only set local error for non-verification related errors
+      // Let AuthContext handle verification redirects
+      if (err.response?.status !== 403 || !err.response?.data?.require_verification) {
+        setError(t('toast.loginError'));
+      }
     }
   };
 
