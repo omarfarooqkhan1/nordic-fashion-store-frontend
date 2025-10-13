@@ -19,6 +19,7 @@ const ProductImage: React.FC<ProductImageProps> = ({
   const [isLoading, setIsLoading] = useState(true);
 
   const handleError = () => {
+    console.log(`[ProductImage] Error loading image: ${src}`);
     setHasError(true);
     setIsLoading(false);
   };
@@ -42,8 +43,31 @@ const ProductImage: React.FC<ProductImageProps> = ({
         src="/placeholder.svg" 
         alt="No image available" 
         className={fallbackClassName}
+        onError={handleError}
+        onLoad={handleLoad}
       />
     );
+  }
+
+  // Handle URL resolution for relative paths with better error handling
+  let resolvedSrc = src;
+  try {
+    // If src is already a full URL, use it as is
+    if (src.startsWith('http://') || src.startsWith('https://')) {
+      resolvedSrc = src;
+    } else {
+      // For relative paths, construct the full URL
+      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000';
+      // Ensure we don't double up on slashes
+      if (src.startsWith('/')) {
+        resolvedSrc = `${backendUrl}${src}`;
+      } else {
+        resolvedSrc = `${backendUrl}/${src}`;
+      }
+    }
+  } catch (error) {
+    console.error('[ProductImage] Error resolving image URL:', error);
+    resolvedSrc = src; // Fallback to original src
   }
 
   return (
@@ -54,7 +78,7 @@ const ProductImage: React.FC<ProductImageProps> = ({
         </div>
       )}
       <img
-        src={src}
+        src={resolvedSrc}
         alt={alt}
         className={`${className} transition-opacity duration-300`}
         onError={handleError}

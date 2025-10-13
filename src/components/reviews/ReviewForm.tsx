@@ -241,7 +241,15 @@ export const ReviewForm: React.FC<ReviewFormProps> = ({
                   {media.type === 'image' ? (
                     <img src={media.url} alt="media" className="object-cover w-full h-full" />
                   ) : (
-                    <video src={media.url} controls className="object-cover w-full h-full" />
+                    <video 
+                      src={
+                        media.url.startsWith('http://') || media.url.startsWith('https://') 
+                          ? media.url 
+                          : `${import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000'}${media.url.startsWith('/') ? media.url : `/${media.url}`}`
+                      } 
+                      controls 
+                      className="object-cover w-full h-full" 
+                    />
                   )}
                   <button
                     type="button"
@@ -257,7 +265,15 @@ export const ReviewForm: React.FC<ReviewFormProps> = ({
                   {media.type === 'image' ? (
                     <img src={media.url} alt="preview" className="object-cover w-full h-full" />
                   ) : (
-                    <video src={media.url} controls className="object-cover w-full h-full" />
+                    <video 
+                      src={
+                        media.url.startsWith('http://') || media.url.startsWith('https://') 
+                          ? media.url 
+                          : `${import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000'}${media.url.startsWith('/') ? media.url : `/${media.url}`}`
+                      } 
+                      controls 
+                      className="object-cover w-full h-full" 
+                    />
                   )}
                   <button
                     type="button"

@@ -10,9 +10,9 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { X, Plus, Save, Eye, Image as ImageIcon, Upload } from 'lucide-react';
-import { Blog, BlogCreateRequest } from '@/types/Blog';
+import { BlogPost } from '@/types/Blog';
 import { useToast } from '@/hooks/use-toast';
-import ImageUpload from '@/components/ui/ImageUpload';
+// import ImageUpload from '@/components/ui/ImageUpload';
 
 const blogSchema = z.object({
   title: z.string().min(1, 'Title is required').max(255, 'Title is too long'),
@@ -27,8 +27,8 @@ const blogSchema = z.object({
 type BlogFormData = z.infer<typeof blogSchema>;
 
 interface BlogFormProps {
-  blog?: Blog;
-  onSubmit: (data: BlogCreateRequest) => Promise<void>;
+  blog?: BlogPost;
+  onSubmit: (data: any) => Promise<void>; // Use any or define BlogCreateRequest inline if needed
   onCancel: () => void;
   loading?: boolean;
 }
@@ -46,6 +46,9 @@ const BlogForm: React.FC<BlogFormProps> = ({
   const [newImageFiles, setNewImageFiles] = useState<File[]>([]);
   const [featuredImageFile, setFeaturedImageFile] = useState<File | null>(null);
   const [featuredImagePreview, setFeaturedImagePreview] = useState<string | null>(blog?.featured_image || null);
+  const [existingMediaImages, setExistingMediaImages] = useState<string[]>(blog?.images || []);
+  const [mediaImageFiles, setMediaImageFiles] = useState<File[]>([]);
+  const [mediaImagePreviews, setMediaImagePreviews] = useState<string[]>([]);
   const { toast } = useToast();
 
   const {
@@ -91,7 +94,7 @@ const BlogForm: React.FC<BlogFormProps> = ({
   const onFormSubmit = async (data: BlogFormData) => {
     try {
       // Validate that at least one featured image method is provided
-      if (!data.featured_image && !featuredImageFile && blogImages.length === 0) {
+      if (!data.featured_image && !featuredImageFile && mediaImageFiles.length === 0 && existingMediaImages.length === 0) {
         toast({
           title: 'Featured Image Required',
           description: 'Please provide either a featured image URL, upload a file, or add gallery images.',
@@ -100,27 +103,28 @@ const BlogForm: React.FC<BlogFormProps> = ({
         return;
       }
 
-      const submitData: BlogCreateRequest = {
+      // Prepare blog data for saving
+      const submitData: any = {
         ...data,
         tags: tags.length > 0 ? tags : undefined,
-        featured_image: data.featured_image || undefined,
-        images: blogImages.length > 0 ? blogImages : undefined,
+        images: existingMediaImages.length > 0 ? existingMediaImages : undefined,
       };
 
-      // If there are new image files, we need to handle them differently
-      // For now, we'll pass them as a separate property
-      if (newImageFiles.length > 0) {
-        (submitData as any).newImageFiles = newImageFiles;
-      }
-      
-      // Add featured image file if uploaded
+      // Remove featured_image from submitData if we have a file
       if (featuredImageFile) {
-        (submitData as any).featuredImageFile = featuredImageFile;
+        delete submitData.featured_image;
       }
 
-      // Auto-set featured image from first gallery image if no featured image is set
-      if (!submitData.featured_image && !featuredImageFile && blogImages.length > 0) {
-        submitData.featured_image = blogImages[0];
+      // Add new gallery image files
+      if (mediaImageFiles.length > 0) {
+        submitData.newImageFiles = mediaImageFiles;
+      }
+      // Add featured image file if uploaded
+      if (featuredImageFile) {
+        submitData.featuredImageFile = featuredImageFile;
+      } else if (!featuredImagePreview && data.featured_image === '') {
+        // If preview is cleared (removed), send empty string to remove featured image
+        submitData.featured_image = '';
       }
 
       await onSubmit(submitData);
@@ -204,53 +208,7 @@ const BlogForm: React.FC<BlogFormProps> = ({
               <div>
                 <Label htmlFor="featured_image">Featured Image</Label>
                 <div className="space-y-3">
-                  {/* Featured Image URL Input */}
-                  <div>
-                    <Label htmlFor="featured_image_url" className="text-sm text-muted-foreground">
-                      Or enter image URL
-                    </Label>
-                    <Input
-                      id="featured_image"
-                      {...register('featured_image')}
-                      placeholder="https://example.com/image.jpg"
-                      onChange={(e) => {
-                        // Clear file upload when URL is entered
-                        if (e.target.value && featuredImageFile) {
-                          setFeaturedImageFile(null);
-                          setFeaturedImagePreview(null);
-                        }
-                        register('featured_image').onChange(e);
-                      }}
-                    />
-                    {errors.featured_image && (
-                      <p className="text-sm text-destructive mt-1">{errors.featured_image.message}</p>
-                    )}
-                  </div>
-                  
-                  {/* Featured Image File Upload */}
-                  <div>
-                    <Label htmlFor="featured_image_file" className="text-sm text-muted-foreground">
-                      Or upload image file
-                    </Label>
-                    <Input
-                      id="featured_image_file"
-                      type="file"
-                      accept="image/*"
-                      onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        if (file) {
-                          // Clear URL field when file is selected
-                          setValue('featured_image', '');
-                          setFeaturedImageFile(file);
-                          const preview = URL.createObjectURL(file);
-                          setFeaturedImagePreview(preview);
-                        }
-                      }}
-                      className="mt-1"
-                    />
-                  </div>
-                  
-                  {/* Featured Image Preview */}
+                  {/* Show existing featured image if editing */}
                   {featuredImagePreview && (
                     <div className="relative w-32 h-32 border rounded overflow-hidden">
                       <img
@@ -264,11 +222,30 @@ const BlogForm: React.FC<BlogFormProps> = ({
                         onClick={() => {
                           setFeaturedImageFile(null);
                           setFeaturedImagePreview(null);
+                          setValue('featured_image', '');
                         }}
                       >
                         <X className="w-3 h-3" />
                       </button>
                     </div>
+                  )}
+                  {/* Upload new featured image */}
+                  <Input
+                    id="featured_image_file"
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        setFeaturedImageFile(file);
+                        setFeaturedImagePreview(URL.createObjectURL(file));
+                        setValue('featured_image', ''); // Clear old URL so backend uses file
+                      }
+                    }}
+                    className="mt-1"
+                  />
+                  {errors.featured_image && (
+                    <p className="text-sm text-destructive mt-1">{errors.featured_image.message}</p>
                   )}
                 </div>
               </div>
@@ -296,31 +273,6 @@ const BlogForm: React.FC<BlogFormProps> = ({
                   You can use HTML tags for formatting
                 </p>
               </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <ImageIcon className="w-5 h-5" />
-                Image Gallery
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ImageUpload
-                label="Blog Images"
-                maxFiles={10}
-                accept="image/*"
-                existingImages={blogImages}
-                onImagesChange={setBlogImages}
-                onNewFilesChange={setNewImageFiles}
-                disabled={loading}
-                previewSize="md"
-              />
-              <p className="text-xs text-muted-foreground mt-2">
-                Upload images to create a rich visual experience for your blog post. 
-                The first image will be used as the featured image if no URL is provided above.
-              </p>
             </CardContent>
           </Card>
 

@@ -28,7 +28,11 @@ const MediaThumbnail: React.FC<MediaThumbnailProps> = ({ media, onClick, classNa
         ) : (
           <>
             <video
-              src={media.url}
+              src={
+                media.url.startsWith('http://') || media.url.startsWith('https://') 
+                  ? media.url 
+                  : `${import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000'}${media.url.startsWith('/') ? media.url : `/${media.url}`}`
+              }
               className="object-cover w-full h-full"
               style={{ pointerEvents: 'none' }}
               tabIndex={-1}

@@ -10,6 +10,13 @@ interface LanguageContextType {
 
 const translations = {
   en: {
+  // ProductDetail specific missing translations
+    'product.handcrafted': 'Handcrafted Excellence',
+    'product.premiumLeather': 'Premium Leather',
+    'product.returns': '30-day returns',
+    'product.freeShipping': 'Free shipping on orders over €100',
+    'product.noReviews': 'No reviews yet',
+    'product.wishlistComingSoon': 'Wishlist feature coming soon',
     'nav.home': 'Home',
     'nav.products': 'Products',
     'nav.about': 'About',
@@ -175,6 +182,12 @@ const translations = {
     'product.size': 'Size',
     'product.color': 'Color',
     'product.selectVariant': 'Please select a product variant',
+    'product.detailsDescription': 'Detailed view of {name}',
+    'product.stylingTitle': 'How Others Are Styling This',
+    'product.stylingDescription': 'See how others are styling {name}',
+    'product.videoNotSupported': 'Your browser does not support the video tag.',
+    'product.stylingInspiration': 'Styling inspiration',
+    'product.look': 'Look',
     'admin.title': 'Admin Dashboard',
     'admin.products': 'Manage Products',
     'admin.orders': 'Orders',
@@ -373,6 +386,7 @@ const translations = {
     'common.back': 'Back',
     'common.next': 'Next',
     'common.previous': 'Previous',
+    'common.clear': 'Clear selection',
     'admin.dashboard': 'Dashboard',
     'admin.addProduct': 'Add Product',
     'admin.editProduct': 'Edit Product',
@@ -612,6 +626,18 @@ const translations = {
     'error.404.goBack': 'Go Back'
   },
   sv: {
+  'product.detailsDescription': 'Detaljerad vy av {name}',
+  'product.stylingTitle': 'Hur andra stylar denna',
+  'product.stylingDescription': 'Se hur andra stylar {name}',
+  'product.videoNotSupported': 'Din webbläsare stöder inte videotaggen.',
+  'product.stylingInspiration': 'Stilinspiration',
+  // ProductDetail specific missing translations
+  'product.handcrafted': 'Handgjord kvalitet',
+  'product.premiumLeather': 'Premiumläder',
+  'product.returns': '30 dagars öppet köp',
+  'product.freeShipping': 'Fri frakt på beställningar över €100',
+  'product.noReviews': 'Inga recensioner än',
+  'product.wishlistComingSoon': 'Önskelista kommer snart',
     'nav.home': 'Hem',
     'nav.products': 'Produkter',
     'nav.about': 'Om oss',
@@ -965,6 +991,7 @@ const translations = {
     'common.back': 'Tillbaka',
     'common.next': 'Nästa',
     'common.previous': 'Föregående',
+    'common.clear': 'Rensa val',
     'admin.dashboard': 'Instrumentpanel',
     'admin.addProduct': 'Lägg till Produkt',
     'admin.editProduct': 'Redigera Produkt',
@@ -1006,6 +1033,7 @@ const translations = {
     'product.selectColor': 'Välj färg',
     'product.selectSizeAndColor': 'Välj storlek och färg',
     'product.chooseVariant': 'Välj din variant',
+    'product.look': 'Look',
     'common.share': 'Dela',
     'common.each': 'vardera',
     // About page specific translations
@@ -1181,6 +1209,13 @@ const translations = {
     'nav.ourStory': 'Vår historia'
   },
   no: {
+  // ProductDetail specific missing translations
+  'product.handcrafted': 'Håndlaget kvalitet',
+  'product.premiumLeather': 'Premium lær',
+  'product.returns': '30 dagers returrett',
+  'product.freeShipping': 'Gratis frakt på bestillinger over €100',
+  'product.noReviews': 'Ingen anmeldelser ennå',
+  'product.wishlistComingSoon': 'Ønskelistefunksjon kommer snart',
     'nav.home': 'Hjem',
     'nav.products': 'Produkter',
     'nav.about': 'Om oss',
@@ -1452,6 +1487,7 @@ const translations = {
     'common.back': 'Tilbake',
     'common.next': 'Neste',
     'common.previous': 'Forrige',
+    'common.clear': 'Fjern valg',
     'admin.dashboard': 'Kontrollpanel',
     'admin.addProduct': 'Legg til Produkt',
     'admin.editProduct': 'Rediger Produkt',
@@ -1738,6 +1774,13 @@ const translations = {
     'nav.ourStory': 'Vår historie'
   },
   da: {
+  // ProductDetail specific missing translations
+  'product.handcrafted': 'Håndlavet kvalitet',
+  'product.premiumLeather': 'Premium læder',
+  'product.returns': '30 dages returret',
+  'product.freeShipping': 'Gratis forsendelse på ordrer over €100',
+  'product.noReviews': 'Ingen anmeldelser endnu',
+  'product.wishlistComingSoon': 'Ønskelistefunktion kommer snart',
     'nav.home': 'Hjem',
     'nav.products': 'Produkter',
     'nav.about': 'Om os',
@@ -2084,6 +2127,7 @@ const translations = {
     'common.back': 'Tilbage',
     'common.next': 'Næste',
     'common.previous': 'Forrige',
+    'common.clear': 'Ryd valg',
     'admin.dashboard': 'Dashboard',
     'admin.addProduct': 'Tilføj Produkt',
     'admin.editProduct': 'Rediger Produkt',
@@ -2125,6 +2169,12 @@ const translations = {
     'product.selectColor': 'Velg farge',
     'product.selectSizeAndColor': 'Velg størrelse og farge',
     'product.chooseVariant': 'Velg din variant',
+    'product.detailsDescription': 'Detaljert visning av {name}',
+    'product.stylingTitle': 'Hvordan Andre Stiler Dette',
+    'product.stylingDescription': 'Se hvordan andre stiler {name}',
+    'product.videoNotSupported': 'Nettleseren din støtter ikke videotaggen.',
+    'product.stylingInspiration': 'Stilinspirasjon',
+    'product.look': 'Stil',
     'common.share': 'Del',
     'common.each': 'hver',
     // About page specific translations
@@ -2263,6 +2313,13 @@ const translations = {
     'nav.ourStory': 'Vores historie'
   },
   fi: {
+  // ProductDetail specific missing translations
+  'product.handcrafted': 'Käsintehty laatu',
+  'product.premiumLeather': 'Premium-nahka',
+  'product.returns': '30 päivän palautusoikeus',
+  'product.freeShipping': 'Ilmainen toimitus yli 100 € tilauksille',
+  'product.noReviews': 'Ei arvosteluja vielä',
+  'product.wishlistComingSoon': 'Toivelista tulossa pian',
     'nav.home': 'Koti',
     'nav.products': 'Tuotteet',
     'nav.about': 'Meistä',
@@ -2610,6 +2667,7 @@ const translations = {
     'common.back': 'Takaisin',
     'common.next': 'Seuraava',
     'common.previous': 'Edellinen',
+    'common.clear': 'Tyhjennä valinta',
     'admin.dashboard': 'Hallintapaneeli',
     'admin.addProduct': 'Lisää Tuote',
     'admin.editProduct': 'Muokkaa Tuote',
@@ -2651,6 +2709,12 @@ const translations = {
     'product.selectColor': 'Valitse väri',
     'product.selectSizeAndColor': 'Valitse koko ja väri',
     'product.chooseVariant': 'Valitse variantti',
+    'product.detailsDescription': 'Yksityiskohtainen näkymä tuotteesta {name}',
+    'product.stylingTitle': 'Miten Muut Käyttävät Tätä',
+    'product.stylingDescription': 'Katso miten muut käyttävät tuotetta {name}',
+    'product.videoNotSupported': 'Selaimesi ei tue videotunnistetta.',
+    'product.stylingInspiration': 'Tyylinspiraatio',
+    'product.look': 'Tyylisuunta',
     'common.share': 'Jaa',
     'common.each': 'kpl',
     // About page specific translations
@@ -2795,6 +2859,13 @@ const translations = {
     'nav.ourStory': 'Meidän tarinamme'
   },
   is: {
+  // ProductDetail specific missing translations
+  'product.handcrafted': 'Handgerð gæði',
+  'product.premiumLeather': 'Úrvals leður',
+  'product.returns': '30 daga skilastefna',
+  'product.freeShipping': 'Ókeypis sending fyrir pantanir yfir €100',
+  'product.noReviews': 'Engar umsagnir enn',
+  'product.wishlistComingSoon': 'Óskalisti kemur fljótlega',
     'nav.home': 'Heim',
     'nav.products': 'Vörur',
     'nav.about': 'Um okkur',
@@ -3142,6 +3213,7 @@ const translations = {
     'common.back': 'Til baka',
     'common.next': 'Næsta',
     'common.previous': 'Fyrri',
+    'common.clear': 'Hreinsa val',
     'admin.dashboard': 'Stjórnborð',
     'admin.addProduct': 'Bæta við Vöru',
     'admin.editProduct': 'Breyta Vöru',
@@ -3183,6 +3255,12 @@ const translations = {
     'product.selectColor': 'Velja lit',
     'product.selectSizeAndColor': 'Veldu stærð og lit',
     'product.chooseVariant': 'Veldu afbrigði',
+    'product.detailsDescription': 'Nákvæm sýn á {name}',
+    'product.stylingTitle': 'Hvernig Aðrir Nota Þetta',
+    'product.stylingDescription': 'Sjáðu hvernig aðrir nota {name}',
+    'product.videoNotSupported': 'Vafrinn þinn styður ekki myndbandamerkið.',
+    'product.stylingInspiration': 'Stíllinspíratíon',
+    'product.look': 'Stíll',
     'common.share': 'Deila',
     'common.each': 'hvör',
     // About page specific translations

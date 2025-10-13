@@ -311,20 +311,8 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const getItemPrice = (item: CartItem): number => {
-    // First try to get price from variant.product.price since actual_price is undefined
-    let price = 0;
-    
-    if (item?.variant?.product?.price) {
-      // Convert string price to number
-      price = parseFloat(item.variant.product.price);
-      
-      // Add any price_difference from the variant (if any)
-      if (item?.variant?.price_difference) {
-        price += parseFloat(item.variant.price_difference);
-      }
-    }
-    
-    return price;
+    // Use the actual_price from the variant directly
+    return item?.variant?.actual_price || 0;
   };
 
   const getCartTotal = () => {

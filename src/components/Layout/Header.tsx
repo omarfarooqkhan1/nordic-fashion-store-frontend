@@ -74,20 +74,18 @@ export const Header: React.FC = () => {
 
   // Compute cart count that will automatically update when cart data changes
   const cartCount = useMemo(() => {
-    let totalCount = 0
-
+    let totalCount = 0;
     // Count regular cart items
-    if (items && items.length > 0) {
-      totalCount += items.reduce((total, item) => total + (item?.quantity ?? 0), 0)
+    if (Array.isArray(items) && items.length > 0) {
+      totalCount += items.reduce((total, item) => total + (item?.quantity ?? 0), 0);
     }
-
     // Count custom jacket items
-    if (customItems && customItems.length > 0) {
-      totalCount += customItems.reduce((total, item) => total + (item?.quantity ?? 0), 0)
+    const safeCustomItems = Array.isArray(customItems) ? customItems : [];
+    if (safeCustomItems.length > 0) {
+      totalCount += safeCustomItems.reduce((total, item) => total + (item?.quantity ?? 0), 0);
     }
-
-    return totalCount
-  }, [items, customItems])
+    return totalCount;
+  }, [items, customItems]);
 
   const categories = [
     { name: t("categories.bags"), path: "/products?category=bags" },

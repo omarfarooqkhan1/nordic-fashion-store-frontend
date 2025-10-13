@@ -57,7 +57,11 @@ const Products = () => {
   // React Query hook to fetch products
   const { data: products = [], isLoading, isError, error } = useQuery<Product[], Error>({
     queryKey: ['products'],
-    queryFn: fetchProducts,
+    queryFn: async () => {
+      const data = await fetchProducts();
+      console.log('[Products.tsx] Fetched products:', data);
+      return data;
+    },
     staleTime: 1000 * 60 * 5, // 5 minutes cache
     retry: 1,
   });
@@ -215,7 +219,7 @@ const Products = () => {
                 >
                   <Link to={`/product/${product.id}`}>
                     <div className="aspect-square bg-gradient-to-br from-leather-200 to-leather-300 dark:from-leather-800 dark:to-leather-900 relative overflow-hidden">
-                      {product.discount && (
+                      {product.discount > 0 && (
                         <Badge className="absolute top-2 right-2 bg-red-500 text-white z-10">
                           -{product.discount}%
                         </Badge>
@@ -224,6 +228,15 @@ const Products = () => {
                         <img
                           src={product.images[0].url}
                           alt={product.images[0].alt_text || product.name}
+                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                          onError={(e) => {
+                            e.currentTarget.src = '/placeholder.svg';
+                          }}
+                        />
+                      ) : product.variants && product.variants.length > 0 && product.variants[0].images && product.variants[0].images.length > 0 ? (
+                        <img
+                          src={product.variants[0].images[0].url}
+                          alt={product.variants[0].images[0].alt_text || product.name}
                           className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                           onError={(e) => {
                             e.currentTarget.src = '/placeholder.svg';
@@ -253,16 +266,23 @@ const Products = () => {
                     <div className="flex flex-col gap-3 pt-2">
                       <div className="flex items-center justify-center">
                         <div className="flex items-center gap-2">
-                          {product.discount ? (
-                            <>
-                              <span className="text-lg font-bold text-cognac-500">
-                                {getCurrencySymbol()}{Math.round(Number(convertPrice(product.price)) * (1 - Number(product.discount) / 100))}
-                              </span>
-                              <span className="text-sm text-muted-foreground line-through">{getCurrencySymbol()}{convertPrice(product.price).toFixed(2)}</span>
-                            </>
-                          ) : (
-                            <span className="text-lg font-bold text-cognac-500">{getCurrencySymbol()}{convertPrice(product.price).toFixed(2)}</span>
-                          )}
+                          {(() => {
+                            const firstVariant = product.variants && product.variants.length > 0 ? product.variants[0] : null;
+                            if (!firstVariant) return <span className="text-lg font-bold text-cognac-500">N/A</span>;
+                            const basePrice = firstVariant.price;
+                            const discount = product.discount || 0;
+                            const discountedPrice = basePrice * (1 - discount / 100);
+                            if (discount > 0) {
+                              return <>
+                                <span className="text-lg font-bold text-cognac-500">
+                                  {getCurrencySymbol()}{Math.round(Number(convertPrice(discountedPrice)))}
+                                </span>
+                                <span className="text-sm text-muted-foreground line-through">{getCurrencySymbol()}{convertPrice(basePrice).toFixed(2)}</span>
+                              </>;
+                            } else {
+                              return <span className="text-lg font-bold text-cognac-500">{getCurrencySymbol()}{convertPrice(basePrice).toFixed(2)}</span>;
+                            }
+                          })()}
                         </div>
                       </div>
                       <Button

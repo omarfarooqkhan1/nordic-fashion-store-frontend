@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { Heart, Share2, ShoppingCart, Edit, Star, ArrowLeft, Check, X } from 'lucide-react';
+import { Heart, Share2, ShoppingCart, Edit, Star, ArrowLeft, ArrowRight, Check, X, Ruler, Play } from 'lucide-react';
 import { Product, Variant } from '@/types/Product';
 import { useToast } from '@/hooks/use-toast';
 import ProductImage from '@/components/ui/ProductImage';
@@ -18,64 +18,206 @@ import MediaPreviewModal from '@/components/MediaPreviewModal';
 import MediaThumbnail from '@/components/MediaThumbnail';
 import { LoadingState, ErrorState } from '@/components/common';
 import { ProductReviews } from '@/components/reviews';
-import { ReviewList } from '@/components/reviews/ReviewList';
 import { StarRating } from '@/components/ui/StarRating';
+import { SizeGuideModal } from '@/components/ui/SizeGuideModal';
 
 const ProductDetail = () => {
-  // Modal state for previewing main image/video
+  // All state declarations must come first
   const [showMediaModal, setShowMediaModal] = useState(false);
+  const [selectedSize, setSelectedSize] = useState('');
+  const [selectedColor, setSelectedColor] = useState('');
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [reviewSummary, setReviewSummary] = useState<{ average_rating: number; review_count: number } | null>(null);
+  const [isMobile, setIsMobile] = useState(false);
+  
+  // Then all context hooks
   const { id } = useParams();
   const navigate = useNavigate();
   const { t } = useLanguage();
   const { addToCart } = useCart();
-  const { user } = useAuth(); // Add auth context
-  const { toast } = useToast(); // Initialize useToast at the top level
-  const { convertPrice, getCurrencySymbol } = useCurrency(); // Add currency context
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const { convertPrice, getCurrencySymbol } = useCurrency();
 
-  const isAdmin = user?.role === 'admin'; // Check if user is admin
+  const isAdmin = user?.role === 'admin';
 
-  const [selectedSize, setSelectedSize] = useState('');
-  const [selectedColor, setSelectedColor] = useState('');
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  // Check if device is mobile
+  useEffect(() => {
+    const checkIsMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    
+    checkIsMobile();
+    window.addEventListener('resize', checkIsMobile);
+    
+    return () => {
+      window.removeEventListener('resize', checkIsMobile);
+    };
+  }, []);
 
-  const { data: product, isLoading, isError, error } = useQuery<Product>({
-    queryKey: ['product', id],
-    queryFn: () => fetchProductById(id!),
-    enabled: !!id,
-    retry: 3,
-    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    cacheTime: 10 * 60 * 1000, // 10 minutes
-    refetchOnWindowFocus: false,
-  });
-
-  // Ensure currentImageIndex is within bounds if product images change
-  React.useEffect(() => {
-    if (product && currentImageIndex >= product.images.length) {
-      setCurrentImageIndex(0);
-    }
-  }, [product, currentImageIndex]);
-
-  const [reviewSummary, setReviewSummary] = useState<{ average_rating: number; review_count: number } | null>(null);
+  // All useEffect hooks must come before any conditional returns
   // Scroll to top when component mounts
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
 
-  // Preload main product image for better LCP
+  const { data: product, isLoading, isError, error } = useQuery<Product>({
+    queryKey: ['product', id],
+    queryFn: async () => {
+      if (!id) throw new Error('No product ID provided');
+      const data = await fetchProductById(id);
+      console.log('[ProductDetail.tsx] Fetched product:', data);
+      // Log the structure of the product data to debug
+      console.log('[ProductDetail.tsx] Product structure:', {
+        hasVariants: !!data.variants,
+        variantsType: Array.isArray(data.variants) ? 'array' : typeof data.variants,
+        variantsCount: Array.isArray(data.variants) ? data.variants.length : 'N/A',
+        variants: data.variants
+      });
+      
+      // Deep clone the data to ensure we're not dealing with any proxy issues
+      const clonedData = JSON.parse(JSON.stringify(data));
+      console.log('[ProductDetail.tsx] Cloned product data:', clonedData);
+      
+      // Ensure variants is always an array
+      if (!clonedData.variants) {
+        clonedData.variants = [];
+      } else if (!Array.isArray(clonedData.variants)) {
+        console.warn('[ProductDetail.tsx] Variants is not an array, converting to array:', clonedData.variants);
+        clonedData.variants = Array.isArray(clonedData.variants) ? clonedData.variants : [];
+      }
+      
+      return clonedData;
+    },
+    enabled: !!id,
+    retry: 3,
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    refetchOnWindowFocus: false,
+  });
+
+  // Initialize with first variant when product loads
   useEffect(() => {
-    if (product && product.images.length > 0) {
+    // Do not select any color or size by default on initial load
+  }, [product]); // Only depend on product changes
+
+  // Get selected variant
+  const getSelectedVariant = () => {
+    console.log('[ProductDetail] getSelectedVariant called with:', {
+      product,
+      selectedSize,
+      selectedColor,
+      hasVariants: !!product?.variants,
+      variantsType: product?.variants ? (Array.isArray(product.variants) ? 'array' : typeof product.variants) : 'undefined'
+    });
+    
+    // Check if product exists and has variants array
+    if (!product || !product.variants || !Array.isArray(product.variants) || product.variants.length === 0) {
+      console.log('[ProductDetail] No product or variants found');
+      return undefined;
+    }
+    
+    // If both size and color are selected, find exact match
+    if (selectedSize && selectedColor) {
+      const variant = product.variants.find((v) => v.size === selectedSize && v.color === selectedColor);
+      console.log('[ProductDetail] Found variant by size and color:', variant);
+      return variant;
+    }
+    
+    // If only color is selected, find by color
+    if (selectedColor) {
+      const variant = product.variants.find((v) => v.color === selectedColor);
+      console.log('[ProductDetail] Found variant by color:', variant);
+      return variant;
+    }
+    
+    // If only size is selected, find by size
+    if (selectedSize) {
+      const variant = product.variants.find((v) => v.size === selectedSize);
+      console.log('[ProductDetail] Found variant by size:', variant);
+      return variant;
+    }
+    
+    // Always return the first variant as default if no selection is made and variants exist
+    if (product.variants.length > 0) {
+      const firstVariant = product.variants[0];
+      console.log('[ProductDetail] Returning first variant:', firstVariant);
+      return firstVariant;
+    }
+    
+    // No variants available
+    console.log('[ProductDetail] No variants available');
+    return undefined;
+  };
+
+  const selectedVariant = getSelectedVariant();
+  
+  // Check if product has variants
+  const hasVariants = product?.variants && Array.isArray(product.variants) && product.variants.length > 0;
+  
+  // Robust, scalable image selection logic
+  // Main images: Prefer variant.main_images, fallback to product.images
+  const displayImages = (hasVariants && selectedVariant && selectedVariant.main_images && selectedVariant.main_images.length > 0)
+    ? selectedVariant.main_images
+    : (product?.images && product.images.length > 0)
+    ? product.images
+    : [];
+
+  // Detailed images: Prefer variant.detailed_images, fallback to product.detailed_images
+  const detailedImages = (hasVariants && selectedVariant && selectedVariant.detailed_images && selectedVariant.detailed_images.length > 0)
+    ? selectedVariant.detailed_images
+    : (product?.detailed_images && product.detailed_images.length > 0)
+    ? product.detailed_images
+    : [];
+
+  // Mobile detailed images: Prefer variant.mobile_detailed_images, fallback to product.mobile_detailed_images
+  const mobileDetailedImages = (hasVariants && selectedVariant && selectedVariant.mobile_detailed_images && selectedVariant.mobile_detailed_images.length > 0)
+    ? selectedVariant.mobile_detailed_images
+    : (product?.mobile_detailed_images && product.mobile_detailed_images.length > 0)
+    ? product.mobile_detailed_images
+    : [];
+
+  // Styling images: Prefer variant.styling_images, fallback to empty array
+  const stylingImages = (hasVariants && selectedVariant && selectedVariant.styling_images && selectedVariant.styling_images.length > 0)
+    ? selectedVariant.styling_images
+    : [];
+
+  // Support both video_path and video_url for compatibility
+  // @ts-expect-error: video_url may exist in backend data
+  const videoUrl = hasVariants && selectedVariant ? (selectedVariant?.video_url || selectedVariant?.video_path) : undefined;
+
+  // Carousel navigation state for styling section
+  const stylingMedia = videoUrl
+    ? [ { type: 'video', url: videoUrl, alt_text: '' }, ...stylingImages.map(img => ({ type: 'image', ...img })) ]
+    : stylingImages.map(img => ({ type: 'image', ...img }));
+  const [stylingIndex, setStylingIndex] = useState(0);
+  const handlePrevStyling = () => setStylingIndex(i => (i === 0 ? stylingMedia.length - 1 : i - 1));
+  const handleNextStyling = () => setStylingIndex(i => (i === stylingMedia.length - 1 ? 0 : i + 1));
+
+  // Ensure currentImageIndex is within bounds if display images change
+  useEffect(() => {
+    if (displayImages && currentImageIndex >= displayImages.length) {
+      setCurrentImageIndex(0);
+    }
+  }, [displayImages, currentImageIndex]);
+
+  // Preload main variant image for better LCP
+  useEffect(() => {
+    if (displayImages && displayImages.length > 0) {
       const link = document.createElement('link');
       link.rel = 'preload';
       link.as = 'image';
-      link.href = product.images[0].url;
+      link.href = displayImages[0].url;
       document.head.appendChild(link);
     }
-  }, [product]);
-
+  }, [displayImages]);
+  
   // Fetch review summary on mount
   useEffect(() => {
-    if (!product?.id) return; // Don't fetch if no product ID
+    if (!product?.id) {
+      setReviewSummary(null);
+      return;
+    }
     
     let isMounted = true;
     import('@/api/reviews').then(({ getProductReviews }) => {
@@ -102,11 +244,24 @@ const ProductDetail = () => {
     return () => { isMounted = false; };
   }, [product?.id]);
 
+  // Reset image index when color changes to ensure smooth transitions
+  useEffect(() => {
+    setCurrentImageIndex(0);
+  }, [selectedColor]);
+
+  // Reset image index when display images change (variant switch) and current index is out of bounds
+  useEffect(() => {
+    if (displayImages.length > 0 && currentImageIndex >= displayImages.length) {
+      setCurrentImageIndex(0);
+    }
+  }, [displayImages.length, currentImageIndex]);
+
   if (isLoading) {
     return <LoadingState message={t('common.loading')} />;
   }
 
   if (isError || !product) {
+    console.error('[ProductDetail] Error loading product:', error);
     return (
       <ErrorState 
         title={t('error.notFound')}
@@ -118,25 +273,37 @@ const ProductDetail = () => {
     );
   }
 
-  const allSizes = Array.from(new Set(product.variants.map((v) => v.size))) as string[];
-  const allColors = Array.from(new Set(product.variants.map((v) => v.color))) as string[];
+  // Log product data for debugging
+  console.log('[ProductDetail] Product data:', product);
+  console.log('[ProductDetail] Variants:', product.variants);
+  console.log('[ProductDetail] Product data type check:', {
+    isArray: Array.isArray(product),
+    keys: Object.keys(product),
+    hasVariants: 'variants' in product,
+    variantsValue: product.variants
+  });
 
-  const getSelectedVariant = (): Variant | undefined => {
-    return product.variants.find((v) => v.size === selectedSize && v.color === selectedColor);
-  };
-
-  const variant = getSelectedVariant();
+  const allSizes = hasVariants && Array.isArray(product.variants) 
+    ? Array.from(new Set(product.variants.map((v) => v.size).filter(Boolean))) as string[]
+    : [];
+  const allColors = hasVariants && Array.isArray(product.variants)
+    ? Array.from(new Set(product.variants.map((v) => v.color).filter(Boolean))) as string[]
+    : [];
+  
+  const variant = selectedVariant;
   const isVariantSelected = !!variant;
   const isInStock = variant ? variant.stock > 0 : false;
-  // Always use product images for thumbnails - don't filter based on variant
-  const variantImages = product.images;
+  
   // Determine if main media is video or image
-  const mainMedia = variantImages[currentImageIndex];
+  const mainMedia = displayImages && displayImages.length > 0 ? displayImages[currentImageIndex] : null;
 
-  const basePrice = parseFloat(product.price);
-  const finalPrice = variant ? variant.actual_price : basePrice;
-  const discountedPrice = product.discount
-    ? (finalPrice * (1 - product.discount / 100))
+  // Use the selected variant's price, fallback to first variant's price, then to 0
+  // For products without variants, we would need to get price from the product itself (not implemented in current backend)
+  const finalPrice = hasVariants 
+    ? (variant ? variant.actual_price : (product?.variants?.length > 0 ? product.variants[0].actual_price : 0))
+    : 0; // For products without variants, price should come from product, but it's not in the current schema
+  const discountedPrice = product?.discount && finalPrice
+    ? (finalPrice * (1 - (product.discount / 100)))
     : finalPrice;
   
   // Convert prices using currency context
@@ -145,6 +312,16 @@ const ProductDetail = () => {
   const currencySymbol = getCurrencySymbol();
 
   const handleAddToCart = async () => { // Made async to await addToCart
+    // For products without variants, we can't add to cart (this would need backend changes)
+    if (!hasVariants) {
+      toast({ 
+        title: t('product.cannotAddToCart'), 
+        description: t('product.noVariantsAvailable'), 
+        variant: 'destructive' 
+      });
+      return;
+    }
+    
     if (!variant) {
       toast({ 
         title: t('product.chooseVariant'), 
@@ -173,116 +350,149 @@ const ProductDetail = () => {
   };
 
   return (
-    <div className="container mx-auto px-2 sm:px-4 py-6 sm:py-10 md:py-12">
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-10 lg:gap-12">
-        {/* Image Gallery */}
-        <div className="space-y-4 sm:space-y-6 lg:px-8 xl:px-12">
-          <Button variant="ghost" onClick={() => navigate('/products')} className="mb-4 sm:mb-6 hover:bg-accent text-base sm:text-lg transition-colors duration-200">
+    <div className="container mx-auto px-2 sm:px-4 py-4 sm:py-6 md:py-8">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8 lg:gap-10">
+        {/* Image Gallery - Responsive layout for mobile and desktop */}
+        <div className="space-y-4 sm:space-y-6">
+          <Button 
+            variant="ghost" 
+            onClick={() => navigate('/products')} 
+            className="mb-2 sm:mb-4 hover:bg-accent text-sm sm:text-base transition-colors duration-200"
+          >
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Products
+            {t('common.back')}
           </Button>
-          <div className="aspect-[3/4] rounded-xl overflow-hidden relative bg-white flex items-center justify-center min-h-[320px] sm:min-h-[420px] md:min-h-[500px] max-h-[600px] mx-auto max-w-md lg:max-w-lg border border-gray-200 dark:border-slate-600">
-            {product.discount && (
-              <Badge className="absolute top-2 sm:top-4 right-2 sm:right-4 z-10 bg-red-500 text-white text-xs sm:text-sm md:text-base">
-                -{product.discount}%
-              </Badge>
-            )}
-            <MediaThumbnail
-              media={mainMedia ? {
-                url: mainMedia.url,
-                type: mainMedia.url.match(/\.(mp4|webm|ogg)$/i) ? 'video' : 'image'
-              } : null}
-              onClick={() => mainMedia && setShowMediaModal(true)}
-              className="w-full h-full"
-            />
-            {/* Modal for preview (reusable) */}
-            <MediaPreviewModal
-              open={!!mainMedia && showMediaModal}
-              onClose={() => setShowMediaModal(false)}
-              media={mainMedia ? {
-                url: mainMedia.url,
-                type: mainMedia.url.match(/\.(mp4|webm|ogg)$/i) ? 'video' : 'image'
-              } : null}
-            />
-          </div>
-
-          {variantImages.length > 1 && (
-            <div className="flex flex-wrap gap-3 justify-center mt-4">
-              {variantImages.map((img, i) => (
-                <button
-                  key={img.id || i}
-                  onClick={() => setCurrentImageIndex(i)}
-                  className={`w-16 h-20 sm:w-18 sm:h-24 md:w-20 md:h-24 rounded-xl overflow-hidden border-2 transition-all duration-200 hover:scale-105 ${
-                    i === currentImageIndex 
-                      ? 'border-primary shadow-lg ring-2 ring-primary/20' 
-                      : 'border-gray-200 dark:border-slate-600 hover:border-primary/50 shadow-md hover:shadow-lg'
-                  }`}
+          <div className="space-y-4">
+            {displayImages && displayImages.length > 0 ? (
+              <>
+                <div className="h-[60vh] sm:h-[70vh] md:h-[80vh] rounded-xl overflow-hidden relative bg-white flex items-center justify-center border border-gray-200 dark:border-slate-600 cursor-pointer"
+                  onClick={() => setShowMediaModal(true)}
+                  role="button"
+                  tabIndex={0}
+                  aria-label="Open image in full view"
                 >
                   <ProductImage
-                    src={img.url}
-                    alt={img.alt_text}
+                    src={displayImages[currentImageIndex]?.url}
+                    alt={displayImages[currentImageIndex]?.alt_text || `${product?.name || 'Product'} image ${currentImageIndex + 1}`}
                     className="w-full h-full object-cover"
                   />
-                </button>
-              ))}
-            </div>
-          )}
+                </div>
+                {/* Modal for main image full view */}
+                {showMediaModal && displayImages[currentImageIndex] && (
+                  <MediaPreviewModal
+                    open={showMediaModal}
+                    onClose={() => setShowMediaModal(false)}
+                    media={{
+                      url: displayImages[currentImageIndex].url,
+                      type: 'image',
+                    }}
+                  />
+                )}
+                {/* Thumbnails - Responsive grid for different screen sizes */}
+                {displayImages.length > 1 && (
+                  <div className="mt-2 sm:mt-4">
+                    <div className="flex justify-center w-full">
+                      <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 gap-2 sm:gap-3">
+                        {displayImages.map((img, i) => (
+                          <button
+                            key={img.id || i}
+                            onClick={() => setCurrentImageIndex(i)}
+                            className={`aspect-square rounded-lg overflow-hidden border-2 transition-all duration-200 hover:scale-105 ${
+                              i === currentImageIndex
+                                ? 'border-primary shadow-lg ring-2 ring-primary/20'
+                                : 'border-gray-200 dark:border-slate-600 hover:border-primary/50 shadow-md hover:shadow-lg'
+                            }`}
+                            aria-label={`View image ${i + 1}`}
+                          >
+                            <ProductImage
+                              src={img.url}
+                              alt={img.alt_text || `${product?.name || 'Product'} thumbnail ${i + 1}`}
+                              className="w-full h-full object-cover"
+                            />
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </>
+            ) : (
+              <div className="h-[60vh] sm:h-[70vh] md:h-[80vh] rounded-xl overflow-hidden relative bg-white flex items-center justify-center border border-gray-200 dark:border-slate-600">
+                <span className="text-gray-400">{t('product.noImage')}</span>
+              </div>
+            )}
+          </div>
         </div>
 
-        {/* Product Info */}
-        <div className="space-y-6 sm:space-y-8">
+        {/* Product Info - Responsive layout */}
+        <div className="space-y-5 sm:space-y-6 md:space-y-8">
           <div className="space-y-3">
-            <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold break-words text-gray-900 dark:text-white leading-tight">{product.name}</h1>
-            <p className="text-gray-600 dark:text-slate-300 capitalize text-base sm:text-lg font-medium">{product.category.name}</p>
-            {/* Product Rating Display */}
-            <div className="flex items-center gap-3 mt-3">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold break-words text-gray-900 dark:text-white leading-tight">
+              {product.name}
+            </h1>
+            <p className="text-gray-600 dark:text-slate-300 capitalize text-sm sm:text-base md:text-lg font-medium">
+              {product.category?.name || ''}
+            </p>
+            {/* Product Rating Display - Responsive */}
+            <div className="flex items-center gap-2 sm:gap-3 mt-2 sm:mt-3">
               {reviewSummary && reviewSummary.review_count > 0 ? (
                 <>
                   <StarRating rating={reviewSummary.average_rating} size="sm" />
-                  <span className="text-sm text-gray-600 dark:text-slate-300">
-                    {reviewSummary.average_rating.toFixed(1)} out of 5 ({reviewSummary.review_count} review{reviewSummary.review_count !== 1 ? 's' : ''})
+                  <span className="text-xs sm:text-sm text-gray-600 dark:text-slate-300">
+                    {reviewSummary.average_rating.toFixed(1)} ({reviewSummary.review_count})
                   </span>
                 </>
               ) : (
-                <span className="text-sm text-gray-500 dark:text-slate-400">No reviews yet</span>
+                <span className="text-xs sm:text-sm text-gray-500 dark:text-slate-400">
+                  {t('product.noReviews')}
+                </span>
               )}
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-3 sm:gap-4 p-4 bg-gray-50 dark:bg-slate-800 rounded-xl">
-            <span className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white">{currencySymbol}{convertedDiscountedPrice.toFixed(2)}</span>
-            {product.discount && (
-              <>
-                <span className="text-lg sm:text-xl line-through text-gray-500 dark:text-slate-400">{currencySymbol}{convertedFinalPrice.toFixed(2)}</span>
-                <Badge className="bg-red-500 text-white text-sm font-semibold px-3 py-1">
-                  {t('common.save')} {currencySymbol}{convertPrice(finalPrice * (product.discount / 100)).toFixed(2)}
-                </Badge>
-              </>
-            )}
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3 p-3 sm:p-4 bg-gray-50 dark:bg-slate-800 rounded-xl">
+            <span className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 dark:text-white">
+              {currencySymbol}{convertedDiscountedPrice.toFixed(2)}
+            </span>
           </div>
 
           <Separator />
 
           <div className="space-y-3">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">{t('product.description')}</h2>
-            <p className="text-gray-600 dark:text-slate-300 text-base leading-relaxed">{product.description}</p>
+            <h2 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white">
+              {t('product.description')}
+            </h2>
+            <p className="text-gray-600 dark:text-slate-300 text-sm sm:text-base leading-relaxed">
+              {product?.description || ''}
+            </p>
           </div>
 
-          {/* Size Selector */}
-          {allSizes.length > 0 && (
+          {/* Size Selector - Responsive */}
+          {hasVariants && allSizes.length > 0 && (
             <div className="space-y-3">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{t('product.size')}</h3>
-              <div className="flex flex-wrap gap-3" role="group" aria-label="Select product size">
+              <div className="flex items-center justify-between">
+                <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white">
+                  {t('product.size')}
+                </h3>
+                {/* Check if product has a size guide image */}
+                {product?.size_guide_image && (
+                  <SizeGuideModal 
+                    sizeGuideImage={product.size_guide_image}
+                    productName={product.name}
+                  />
+                )}
+              </div>
+              <div className="flex flex-wrap gap-2 sm:gap-3" role="group" aria-label="Select product size">
                 {allSizes.map((size) => {
                   // Check if a variant exists with the current size and selected color, and is in stock
-                  const hasStock = product.variants.some((v) => 
+                  const hasStock = product.variants?.some((v) => 
                     v.size === size && (selectedColor === '' || v.color === selectedColor) && v.stock > 0
-                  );
+                  ) || false;
                   return (
                     <button
                       key={size}
                       onClick={() => setSelectedSize(size)}
-                      className={`px-4 py-3 border-2 rounded-xl text-base font-semibold transition-all duration-200 min-w-[60px] ${
+                      className={`px-3 py-2 sm:px-4 sm:py-3 border-2 rounded-lg sm:rounded-xl text-sm sm:text-base font-semibold transition-all duration-200 min-w-[50px] sm:min-w-[60px] ${
                         selectedSize === size
                           ? 'border-2 border-green-500 bg-green-500 text-white shadow-lg ring-2 ring-green-500/30 font-bold'
                           : hasStock
@@ -301,21 +511,23 @@ const ProductDetail = () => {
             </div>
           )}
 
-          {/* Color Selector */}
-          {allColors.length > 0 && (
+          {/* Color Selector - Responsive */}
+          {hasVariants && allColors.length > 0 && (
             <div className="space-y-3">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{t('product.color')}</h3>
-              <div className="flex flex-wrap gap-3" role="group" aria-label="Select product color">
+              <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white">
+                {t('product.color')}
+              </h3>
+              <div className="flex flex-wrap gap-2 sm:gap-3" role="group" aria-label="Select product color">
                 {allColors.map((color) => {
                   // Check if a variant exists with the current color and selected size, and is in stock
-                  const hasStock = product.variants.some((v) => 
+                  const hasStock = product.variants?.some((v) => 
                     v.color === color && (selectedSize === '' || v.size === selectedSize) && v.stock > 0
-                  );
+                  ) || false;
                   return (
                     <button
                       key={color}
                       onClick={() => setSelectedColor(color)}
-                      className={`px-4 py-3 border-2 rounded-xl flex items-center gap-3 text-base font-semibold transition-all duration-200 ${
+                      className={`px-3 py-2 sm:px-4 sm:py-3 border-2 rounded-lg sm:rounded-xl flex items-center gap-2 sm:gap-3 text-sm sm:text-base font-semibold transition-all duration-200 ${
                         selectedColor === color
                           ? 'border-2 border-green-500 bg-green-500 text-white shadow-lg ring-2 ring-green-500/30 font-bold'
                           : hasStock
@@ -326,8 +538,9 @@ const ProductDetail = () => {
                       aria-pressed={selectedColor === color}
                       aria-label={`Color ${color}${!hasStock ? ' (out of stock)' : ''}`}
                     >
-                      <span className="w-5 h-5 rounded-full border-2 border-gray-300 shadow-sm" style={{ backgroundColor: color.toLowerCase() }} aria-hidden="true"></span>
-                      {color} {hasStock ? <Check className="h-4 w-4" /> : <X className="h-4 w-4" />}
+                      <span className="w-4 h-4 sm:w-5 sm:h-5 rounded-full border border-gray-300 shadow-sm" style={{ backgroundColor: color.toLowerCase() }} aria-hidden="true"></span>
+                      <span className="hidden xs:inline">{color}</span>
+                      {hasStock ? <Check className="h-3 w-3 sm:h-4 sm:w-4" /> : <X className="h-3 w-3 sm:h-4 sm:w-4" />}
                     </button>
                   );
                 })}
@@ -335,8 +548,8 @@ const ProductDetail = () => {
             </div>
           )}
 
-          {/* Clear Selection Button */}
-          {(selectedSize || selectedColor) && (
+          {/* Clear Selection Button - Responsive */}
+          {hasVariants && (selectedSize || selectedColor) && (
             <div className="flex justify-center">
               <Button 
                 variant="outline" 
@@ -344,70 +557,110 @@ const ProductDetail = () => {
                   setSelectedSize('');
                   setSelectedColor('');
                 }}
-                className="border-muted-foreground text-muted-foreground hover:border-primary hover:text-primary text-sm sm:text-base"
+                className="border-muted-foreground text-muted-foreground hover:border-primary hover:text-primary text-xs sm:text-sm"
               >
-                <X className="h-4 w-4 mr-2" />
-                Clear Selection
+                <X className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                {t('common.clear')}
               </Button>
             </div>
           )}
 
-          {/* Stock Info */}
+          {/* Stock Info - Responsive */}
           <Card className="rounded-lg shadow-sm">
-            <CardContent className="p-3 sm:p-4">
+            <CardContent className="p-2 sm:p-3 md:p-4">
               <div className="flex items-center gap-2">
-                {isVariantSelected ? (
-                  isInStock ? (
-                    <>
-                      <Check className="text-green-500 h-5 w-5" />
-                      <span className="text-green-600 dark:text-green-400 font-medium text-sm sm:text-base">{t('product.inStock')}</span>
-                    </>
+                {hasVariants ? (
+                  isVariantSelected ? (
+                    isInStock ? (
+                      <>
+                        <Check className="text-green-500 h-4 w-4 sm:h-5 sm:w-5" />
+                        <span className="text-green-600 dark:text-green-400 font-medium text-xs sm:text-sm">
+                          {t('product.inStock')}
+                        </span>
+                      </>
+                    ) : (
+                      <>
+                        <X className="text-red-500 h-4 w-4 sm:h-5 sm:w-5" />
+                        <span className="text-red-600 dark:text-red-400 font-medium text-xs sm:text-sm">
+                          {t('product.outOfStock')}
+                        </span>
+                      </>
+                    )
+                  ) : selectedColor ? (
+                    // When only color is selected, show color-specific availability
+                    product.variants?.some((v) => v.color === selectedColor && v.stock > 0) ? (
+                      <>
+                        <Check className="text-blue-500 h-4 w-4 sm:h-5 sm:w-5" />
+                        <span className="text-blue-600 dark:text-blue-400 font-medium text-xs sm:text-sm">
+                          {selectedColor} {t('product.available')} - {t('product.selectSize')}
+                        </span>
+                      </>
+                    ) : (
+                      <>
+                        <X className="text-red-500 h-4 w-4 sm:h-5 sm:w-5" />
+                        <span className="text-red-600 dark:text-red-400 font-medium text-xs sm:text-sm">
+                          {selectedColor} {t('product.outOfStock')}
+                        </span>
+                      </>
+                    )
                   ) : (
-                    <>
-                      <X className="text-red-500 h-5 w-5" />
-                      <span className="text-red-600 dark:text-red-400 font-medium text-sm sm:text-base">{t('product.outOfStock')}</span>
-                    </>
+                    <span className="text-muted-foreground text-xs sm:text-sm">
+                      {t('product.selectSizeAndColor')}
+                    </span>
                   )
                 ) : (
-                  <span className="text-muted-foreground text-sm sm:text-base">{t('product.selectSizeAndColor')}</span>
+                  // For products without variants, show generic in stock message
+                  <div className="flex items-center gap-2">
+                    <Check className="text-green-500 h-4 w-4 sm:h-5 sm:w-5" />
+                    <span className="text-green-600 dark:text-green-400 font-medium text-xs sm:text-sm">
+                      {t('product.inStock')}
+                    </span>
+                  </div>
                 )}
               </div>
             </CardContent>
           </Card>
 
-          {/* Actions */}
+          {/* Actions - Responsive */}
           <div className="space-y-3 sm:space-y-4">
             {isAdmin ? (
               // Admin Actions
               <Button
-                onClick={() => navigate(`/admin/products/${product.id}/edit`)}
-                className="w-full py-4 sm:py-6 text-base sm:text-lg font-bold rounded-md bg-blue-500 hover:bg-blue-600 text-white border border-blue-400 hover:border-blue-500"
+                onClick={() => navigate(`/admin/products/${product?.id}/edit`)}
+                className="w-full py-3 sm:py-4 md:py-5 text-base sm:text-lg font-bold rounded-md bg-blue-500 hover:bg-blue-600 text-white border border-blue-400 hover:border-blue-500"
               >
-                <Edit className="h-5 w-5 mr-2" />
-                Edit Product
+                <Edit className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
+                {t('product.edit')}
               </Button>
             ) : (
               // Customer Actions
               <>
                 <Button
                   onClick={handleAddToCart}
-                  disabled={!isVariantSelected || !isInStock}
-                  className="w-full py-4 sm:py-6 text-lg font-bold disabled:opacity-50 rounded-xl bg-white hover:bg-gray-50 dark:hover:bg-slate-100 text-black border-2 border-gray-300 dark:border-slate-600 hover:border-gray-400 dark:hover:border-slate-500 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02] disabled:hover:scale-100"
+                  disabled={hasVariants && (!isVariantSelected || !isInStock)}
+                  className="w-full py-3 sm:py-4 md:py-5 text-base sm:text-lg font-bold disabled:opacity-50 rounded-xl bg-white hover:bg-gray-50 dark:hover:bg-slate-100 text-black border-2 border-gray-300 dark:border-slate-600 hover:border-gray-400 dark:hover:border-slate-500 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02] disabled:hover:scale-100"
                 >
-                  {!isVariantSelected ? t('product.chooseVariant') : !isInStock ? t('product.outOfStock') : t('product.addToCart')}
+                  {hasVariants ? (
+                    !isVariantSelected ? t('product.chooseVariant') : !isInStock ? t('product.outOfStock') : t('product.addToCart')
+                  ) : (
+                    t('product.addToCart')
+                  )}
                 </Button>
 
-                <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+                <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 md:gap-4">
                   <Button
                     variant="outline"
                     className="flex-1 gap-2 border-2 border-gray-300 dark:border-slate-600 text-gray-600 dark:text-slate-400 rounded-xl cursor-not-allowed opacity-60 hover:bg-gray-50 dark:hover:bg-slate-800"
                     disabled
-                    title="Stay tuned, wishlist coming soon!"
+                    title={t('product.wishlistComingSoon')}
                   >
                     <Heart className="h-4 w-4" />
                     {t('nav.wishlist')}
                   </Button>
-                  <Button variant="outline" className="flex-1 gap-2 border-2 border-gray-300 dark:border-slate-600 text-gray-600 dark:text-slate-400 rounded-xl hover:bg-gray-50 dark:hover:bg-slate-800 hover:border-primary hover:text-primary transition-all duration-200">
+                  <Button 
+                    variant="outline" 
+                    className="flex-1 gap-2 border-2 border-gray-300 dark:border-slate-600 text-gray-600 dark:text-slate-400 rounded-xl hover:bg-gray-50 dark:hover:bg-slate-800 hover:border-primary hover:text-primary transition-all duration-200"
+                  >
                     <Share2 className="h-4 w-4" />
                     {t('common.share')}
                   </Button>
@@ -418,24 +671,34 @@ const ProductDetail = () => {
 
           <Separator />
 
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Features</h3>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="flex items-center gap-3 p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
-                <Check className="h-5 w-5 text-green-600 dark:text-green-400 flex-shrink-0" />
-                <span className="text-sm font-medium text-gray-700 dark:text-slate-300">Handcrafted</span>
+          <div className="space-y-3 sm:space-y-4">
+            <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white">
+              {t('product.features')}
+            </h3>
+            <div className="grid grid-cols-2 gap-2 sm:gap-3 md:gap-4">
+              <div className="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                <Check className="h-4 w-4 sm:h-5 sm:w-5 text-green-600 dark:text-green-400 flex-shrink-0" />
+                <span className="text-xs sm:text-sm font-medium text-gray-700 dark:text-slate-300">
+                  {t('product.handcrafted')}
+                </span>
               </div>
-              <div className="flex items-center gap-3 p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
-                <Check className="h-5 w-5 text-green-600 dark:text-green-400 flex-shrink-0" />
-                <span className="text-sm font-medium text-gray-700 dark:text-slate-300">Premium Leather</span>
+              <div className="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                <Check className="h-4 w-4 sm:h-5 sm:w-5 text-green-600 dark:text-green-400 flex-shrink-0" />
+                <span className="text-xs sm:text-sm font-medium text-gray-700 dark:text-slate-300">
+                  {t('product.premiumLeather')}
+                </span>
               </div>
-              <div className="flex items-center gap-3 p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
-                <Check className="h-5 w-5 text-green-600 dark:text-green-400 flex-shrink-0" />
-                <span className="text-sm font-medium text-gray-700 dark:text-slate-300">30-Day Returns</span>
+              <div className="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                <Check className="h-4 w-4 sm:h-5 sm:w-5 text-green-600 dark:text-green-400 flex-shrink-0" />
+                <span className="text-xs sm:text-sm font-medium text-gray-700 dark:text-slate-300">
+                  {t('product.returns')}
+                </span>
               </div>
-              <div className="flex items-center gap-3 p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
-                <Check className="h-5 w-5 text-green-600 dark:text-green-400 flex-shrink-0" />
-                <span className="text-sm font-medium text-gray-700 dark:text-slate-300">Free Shipping</span>
+              <div className="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                <Check className="h-4 w-4 sm:h-5 sm:w-5 text-green-600 dark:text-green-400 flex-shrink-0" />
+                <span className="text-xs sm:text-sm font-medium text-gray-700 dark:text-slate-300">
+                  {t('product.freeShipping')}
+                </span>
               </div>
             </div>
           </div>
@@ -445,12 +708,217 @@ const ProductDetail = () => {
           {/* Customer Reviews Section */}
           <div className="space-y-4 sm:space-y-6">
             <ProductReviews 
-              productId={product.id}
-              productName={product.name}
+              productId={product?.id}
+              productName={product?.name}
             />
           </div>
         </div>
       </div>
+      
+      {/* Detailed Pictures Section (Variant-based) - Responsive */}
+      {(detailedImages && detailedImages.length > 0) ? (
+        <div className="w-full py-8 sm:py-12 lg:py-16 mt-8 sm:mt-12 md:mt-16">
+          <div className="w-full px-0">
+            <div className="space-y-8 sm:space-y-12">
+              {/* Section Header - Responsive */}
+              <div className="text-center space-y-3 sm:space-y-4 px-2 sm:px-4">
+                <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 dark:text-white">
+                  {t('product.details')}
+                </h2>
+                <p className="text-base sm:text-lg md:text-xl text-gray-600 dark:text-slate-300 max-w-2xl sm:max-w-3xl mx-auto">
+                  {t('product.detailsDescription').replace('{name}', product?.name || '')}
+                </p>
+              </div>
+              {/* Detailed Images Gallery - Responsive layout */}
+              {isMobile
+                ? (mobileDetailedImages && mobileDetailedImages.length > 0 ? (
+                    <div className="space-y-6 sm:space-y-8">
+                      {mobileDetailedImages.map((image, index) => (
+                        <div
+                          key={`mobile-detail-${image.id || index}`}
+                          className="w-full aspect-[16/9] sm:aspect-[21/9] overflow-hidden bg-white dark:bg-slate-800 group relative shadow-lg rounded-xl"
+                        >
+                          <ProductImage
+                            src={image.url}
+                            alt={image.alt_text || `${product?.name || 'Product'} - Mobile Detail ${index + 1}`}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  ) : null)
+                : (detailedImages && detailedImages.length > 0 ? (
+                    <div className="space-y-6 sm:space-y-8">
+                      {detailedImages.map((image, index) => (
+                        <div
+                          key={`desktop-detail-${image.id || index}`}
+                          className="w-full aspect-[16/9] sm:aspect-[21/9] overflow-hidden bg-white dark:bg-slate-800 group relative shadow-lg rounded-xl"
+                        >
+                          <ProductImage
+                            src={image.url}
+                            alt={image.alt_text || `${product?.name || 'Product'} - Detail ${index + 1}`}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  ) : null)
+              }
+            </div>
+          </div>
+        </div>
+      ) : null}
+      
+      {/* How Others Are Styling This Section - Responsive */}
+      {(stylingMedia && stylingMedia.length > 0) ? (
+        <div className="w-full py-8 sm:py-12 lg:py-16 bg-gray-50 dark:bg-slate-900">
+          <div className="max-w-7xl mx-auto px-2 sm:px-4 md:px-6 lg:px-8">
+            <div className="space-y-6 sm:space-y-8 md:space-y-12">
+              {/* Section Header - Responsive */}
+              <div className="text-center space-y-3 sm:space-y-4">
+                <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 dark:text-white">
+                  {t('product.stylingTitle')}
+                </h2>
+                <p className="text-base sm:text-lg md:text-xl text-gray-600 dark:text-slate-300 max-w-2xl sm:max-w-3xl mx-auto leading-relaxed">
+                  {t('product.stylingDescription').replace('{name}', product?.name || '')}
+                </p>
+              </div>
+              {/* Mobile: Single item with arrows. Desktop: Horizontal scroll carousel. */}
+              {isMobile ? (
+                <div className="flex flex-col items-center">
+                  <div className="relative w-[88vw] max-w-[340px] sm:w-[32vw] sm:max-w-[340px] aspect-[4/5] flex items-center justify-center mx-auto rounded-2xl bg-white shadow-xl overflow-hidden">
+                    {stylingMedia[stylingIndex].type === 'video' ? (
+                      <video
+                        autoPlay
+                        muted
+                        loop
+                        playsInline
+                        className="w-full h-full object-cover rounded-xl"
+                        preload="auto"
+                      >
+                        <source
+                          src={
+                            stylingMedia[stylingIndex].url.startsWith('http://') || stylingMedia[stylingIndex].url.startsWith('https://')
+                              ? stylingMedia[stylingIndex].url
+                              : `${import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000'}${stylingMedia[stylingIndex].url.startsWith('/') ? stylingMedia[stylingIndex].url : `/${stylingMedia[stylingIndex].url}`}`
+                          }
+                          type="video/mp4"
+                        />
+                        {t('product.videoNotSupported')}
+                      </video>
+                    ) : (
+                      <ProductImage
+                        src={stylingMedia[stylingIndex].url}
+                        alt={stylingMedia[stylingIndex].alt_text || `${product?.name || 'Product'} - Styling inspiration`}
+                        className="w-full h-full object-cover"
+                      />
+                    )}
+                    {/* Overlay for info */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent opacity-0 hover:opacity-100 transition-opacity duration-300 pointer-events-none">
+                      <div className="absolute bottom-3 sm:bottom-4 left-3 sm:left-4 right-3 sm:right-4 text-white">
+                        <p className="text-xs sm:text-sm font-medium mb-1">
+                          {stylingMedia[stylingIndex].type === 'video' ? 'Product Video' : (stylingMedia[stylingIndex].alt_text || t('product.stylingInspiration'))}
+                        </p>
+                        {stylingMedia[stylingIndex].type !== 'video' && (
+                          <p className="text-xs opacity-90">
+                            {t('product.look')} {videoUrl ? stylingIndex : stylingIndex + 1}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  {/* Arrow Controls */}
+                  <div className="flex flex-row items-center justify-center gap-6 mt-4">
+                    <button
+                      aria-label="Previous"
+                      onClick={handlePrevStyling}
+                      className="p-2 rounded-full bg-gray-200 hover:bg-gray-300 dark:bg-slate-700 dark:hover:bg-slate-600 transition-colors"
+                    >
+                      <ArrowLeft className="w-6 h-6" />
+                    </button>
+                    <span className="text-sm text-gray-600 dark:text-slate-300">
+                      {stylingIndex + 1} / {stylingMedia.length}
+                    </span>
+                    <button
+                      aria-label="Next"
+                      onClick={handleNextStyling}
+                      className="p-2 rounded-full bg-gray-200 hover:bg-gray-300 dark:bg-slate-700 dark:hover:bg-slate-600 transition-colors"
+                    >
+                      <ArrowRight className="w-6 h-6" />
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div
+                  className="flex flex-row gap-6 sm:gap-8 md:gap-10 overflow-x-auto scrollbar-hide px-6 mx-auto snap-x snap-mandatory"
+                  style={{ WebkitOverflowScrolling: 'touch', maxWidth: '99vw' }}
+                >
+                  {/* Video as first item if present */}
+                  {videoUrl && (
+                    <div className="min-w-[88vw] max-w-[340px] sm:min-w-[260px] sm:max-w-[340px] sm:w-[32vw] w-full flex-shrink-0 group relative overflow-hidden rounded-2xl bg-white shadow-xl hover:shadow-2xl transition-all duration-500 snap-center">
+                      <div className="aspect-[4/5] overflow-hidden flex items-center justify-center bg-black">
+                        <video
+                          autoPlay
+                          muted
+                          loop
+                          playsInline
+                          className="w-full h-full object-cover rounded-xl"
+                          preload="auto"
+                        >
+                          {/* Resolve video URL properly like images */}
+                          <source 
+                            src={
+                              videoUrl.startsWith('http://') || videoUrl.startsWith('https://') 
+                                ? videoUrl 
+                                : `${import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000'}${videoUrl.startsWith('/') ? videoUrl : `/${videoUrl}`}`
+                            } 
+                            type="video/mp4" 
+                          />
+                          {t('product.videoNotSupported')}
+                        </video>
+                      </div>
+                      {/* Overlay for video info */}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                        <div className="absolute bottom-3 sm:bottom-4 left-3 sm:left-4 right-3 sm:right-4 text-white">
+                          <p className="text-xs sm:text-sm font-medium mb-1">
+                            Product Video
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  {/* Up to 3 styling images */}
+                  {stylingImages.slice(0, 3).map((image, index) => (
+                    <div
+                      key={`styling-${image.id}`}
+                      className="min-w-[88vw] max-w-[340px] sm:min-w-[260px] sm:max-w-[340px] sm:w-[32vw] w-full flex-shrink-0 group relative overflow-hidden rounded-2xl bg-white shadow-xl hover:shadow-2xl transition-all duration-500 snap-center"
+                    >
+                      <div className="aspect-[4/5] overflow-hidden">
+                        <ProductImage
+                          src={image.url}
+                          alt={image.alt_text || `${product?.name || 'Product'} - Styling inspiration ${index + 1}`}
+                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                        />
+                      </div>
+                      {/* Overlay with styling info */}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                        <div className="absolute bottom-3 sm:bottom-4 left-3 sm:left-4 right-3 sm:right-4 text-white">
+                          <p className="text-xs sm:text-sm font-medium mb-1">
+                            {image.alt_text || t('product.stylingInspiration')}
+                          </p>
+                          <p className="text-xs opacity-90">
+                            {t('product.look')} {index + 1}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 };

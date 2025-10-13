@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Search, Filter, Grid, List } from 'lucide-react';
-import { Blog, BlogFilters } from '@/types/Blog';
+import { BlogPost, BlogFilters } from '@/types/Blog';
 import { blogApi } from '@/api/blog';
 import BlogCard from './BlogCard';
 import { useToast } from '@/hooks/use-toast';
@@ -24,14 +24,17 @@ const BlogList: React.FC<BlogListProps> = ({
   onLike
 }) => {
   const { t } = useLanguage();
-  const [blogs, setBlogs] = useState<Blog[]>([]);
+  const [blogs, setBlogs] = useState<BlogPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [filters, setFilters] = useState<BlogFilters>({
     search: '',
-    per_page: 12,
-    page: 1
-  });
+    tag: undefined,
+    status: undefined,
+    sort: undefined,
+    author: undefined,
+    // per_page and page are not in BlogFilters type, but are used in API, so add them as needed
+  } as any);
   const [pagination, setPagination] = useState({
     current_page: 1,
     last_page: 1,
@@ -52,8 +55,11 @@ const BlogList: React.FC<BlogListProps> = ({
         ? await blogApi.getAdminBlogs(filters)
         : await blogApi.getBlogs(filters);
       
-      setBlogs(response.data);
-      setPagination(response.pagination);
+  setBlogs(response.data);
+      setPagination({
+        ...response.meta,
+        has_more_pages: response.meta.current_page < response.meta.last_page
+      });
     } catch (err: any) {
       setError(err.response?.data?.message || t('blog.failedToFetch'));
       toast({
@@ -91,9 +97,7 @@ const BlogList: React.FC<BlogListProps> = ({
   const handleTagFilter = (tag: string) => {
     setFilters(prev => ({
       ...prev,
-      tags: prev.tags?.includes(tag) 
-        ? prev.tags.filter(t => t !== tag)
-        : [...(prev.tags || []), tag],
+      tag: prev.tag === tag ? undefined : tag,
       page: 1
     }));
   };
@@ -143,11 +147,13 @@ const BlogList: React.FC<BlogListProps> = ({
     } catch (err) {}
   };
 
+  // Only increment views for each blog once on initial mount
   useEffect(() => {
     blogs.forEach(blog => {
       handleView(blog.slug);
     });
-  }, [blogs]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   if (loading && blogs.length === 0) {
     return (
@@ -220,7 +226,7 @@ const BlogList: React.FC<BlogListProps> = ({
           {availableTags.slice(0, 10).map((tag) => (
             <Badge
               key={tag}
-              variant={filters.tags?.includes(tag) ? 'default' : 'outline'}
+              variant={filters.tag === tag ? 'default' : 'outline'}
               className="cursor-pointer hover:bg-primary hover:text-primary-foreground"
               onClick={() => handleTagFilter(tag)}
             >

@@ -50,10 +50,27 @@ import {
   deleteProductImage,
   createProductVariant,
   uploadProductImages,
+  getAdminStats,
+  getRecentRegistrations,
+  getRecentOrders,
+  markRegistrationAsNotified,
+  getAllUsers,
+  createUser,
+  updateUser,
+  deleteUser,
+  updateUserStatus,
+  resetUserPassword,
   type ProductFormData,
+  type AdminStats,
+  type AdminRegistration,
+  type AdminOrder,
+  type AdminUser,
+  type UserFormData,
 } from "@/api/admin"
 import OrderManagement from "@/components/admin/OrderManagement"
+import AdminFaqs from "@/components/admin/AdminFaqs"
 import ContactForms from "@/components/admin/ContactForms"
+import UserManagement from "@/components/admin/UserManagement"
 import { ProductForm } from "@/components/admin/ProductForm"
 import { getPendingReviews, approveReview, rejectReview, type ProductReview } from "@/api/reviews"
 import { fetchProductById } from "@/api/products"
@@ -187,6 +204,30 @@ const AdminDashboard: React.FC = () => {
     queryKey: ["categories"],
     queryFn: () => fetchCategories(),
     enabled: isAuthenticated,
+  })
+
+  // Fetch admin statistics
+  const { data: adminStats, isLoading: statsLoading } = useQuery<AdminStats>({
+    queryKey: ["admin-stats"],
+    queryFn: () => getAdminStats(token!),
+    enabled: isAuthenticated && !!token,
+    refetchInterval: 30000, // Refresh every 30 seconds
+  })
+
+  // Fetch recent registrations
+  const { data: recentRegistrations } = useQuery({
+    queryKey: ["recent-registrations"],
+    queryFn: () => getRecentRegistrations(token!, 5, 7),
+    enabled: isAuthenticated && !!token,
+    refetchInterval: 60000, // Refresh every minute
+  })
+
+  // Fetch recent orders
+  const { data: recentOrders } = useQuery({
+    queryKey: ["recent-orders"],
+    queryFn: () => getRecentOrders(token!, 5, 7),
+    enabled: isAuthenticated && !!token,
+    refetchInterval: 60000, // Refresh every minute
   })
 
   // Create product mutation
@@ -661,7 +702,8 @@ const AdminDashboard: React.FC = () => {
   }
 
   return (
-    <div className="container mx-auto px-2 sm:px-4 py-0 sm:py-0 space-y-4 sm:space-y-8">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <div className="container mx-auto px-3 sm:px-4 lg:px-6 py-4 sm:py-6 lg:py-8 space-y-4 sm:space-y-6 lg:space-y-8">
       {/* Loading Overlay */}
       {isCreatingProduct && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -691,119 +733,285 @@ const AdminDashboard: React.FC = () => {
         </div>
       )}
 
-      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
-        <h1 className="text-2xl sm:text-4xl font-bold text-foreground">Admin Dashboard</h1>
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 sm:gap-4">
+        <h1 className="text-xl sm:text-2xl lg:text-4xl font-bold text-foreground">Admin Dashboard</h1>
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-1">
-          <TabsTrigger value="overview" onClick={() => navigate("/admin/dashboard")} className="text-xs sm:text-sm">
-            Overview
-          </TabsTrigger>
-          <TabsTrigger value="products" onClick={() => navigate("/admin/products")} className="text-xs sm:text-sm">
-            Products
-          </TabsTrigger>
-          <TabsTrigger value="categories" className="text-xs sm:text-sm">
-            Categories
-          </TabsTrigger>
-          <TabsTrigger value="bulk-upload" className="text-xs sm:text-sm">
-            <span className="hidden sm:inline">Bulk Upload</span>
-            <span className="sm:hidden">Upload</span>
-          </TabsTrigger>
-          <TabsTrigger value="orders" className="text-xs sm:text-sm">
-            Orders
-          </TabsTrigger>
-          <TabsTrigger value="pending-reviews" className="text-xs sm:text-sm">
-            Pending Reviews
-          </TabsTrigger>
-          <TabsTrigger value="contact-forms" className="text-xs sm:text-sm">
-            <span className="hidden sm:inline">Contact Forms</span>
-            <span className="sm:hidden">Contacts</span>
-          </TabsTrigger>
-          <TabsTrigger value="blogs" onClick={() => navigate("/admin/blogs")} className="text-xs sm:text-sm">
-            <span className="hidden sm:inline">Blogs</span>
-            <span className="sm:hidden">Blogs</span>
-          </TabsTrigger>
-        </TabsList>
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4 sm:space-y-6">
+        <div className="overflow-x-auto">
+          <TabsList className="grid w-full min-w-max grid-cols-10 gap-1 p-1">
+            <TabsTrigger value="overview" onClick={() => navigate("/admin/dashboard")} className="text-xs sm:text-sm px-2 sm:px-3">
+              <span className="hidden sm:inline">Overview</span>
+              <span className="sm:hidden">Home</span>
+            </TabsTrigger>
+            <TabsTrigger value="products" onClick={() => navigate("/admin/products")} className="text-xs sm:text-sm px-2 sm:px-3">
+              Products
+            </TabsTrigger>
+            <TabsTrigger value="users" className="text-xs sm:text-sm px-2 sm:px-3">
+              Users
+            </TabsTrigger>
+            <TabsTrigger value="categories" className="text-xs sm:text-sm px-2 sm:px-3">
+              <span className="hidden sm:inline">Categories</span>
+              <span className="sm:hidden">Cat.</span>
+            </TabsTrigger>
+            <TabsTrigger value="bulk-upload" className="text-xs sm:text-sm px-2 sm:px-3">
+              <span className="hidden lg:inline">Bulk Upload</span>
+              <span className="lg:hidden hidden sm:inline">Upload</span>
+              <span className="sm:hidden">CSV</span>
+            </TabsTrigger>
+            <TabsTrigger value="orders" className="text-xs sm:text-sm px-2 sm:px-3">
+              Orders
+            </TabsTrigger>
+            <TabsTrigger value="pending-reviews" className="text-xs sm:text-sm px-2 sm:px-3">
+              <span className="hidden lg:inline">Pending Reviews</span>
+              <span className="lg:hidden hidden sm:inline">Reviews</span>
+              <span className="sm:hidden">Rev.</span>
+            </TabsTrigger>
+            <TabsTrigger value="contact-forms" className="text-xs sm:text-sm px-2 sm:px-3">
+              <span className="hidden lg:inline">Contact Forms</span>
+              <span className="lg:hidden hidden sm:inline">Contacts</span>
+              <span className="sm:hidden">Con.</span>
+            </TabsTrigger>
+            <TabsTrigger value="blogs" onClick={() => navigate("/admin/blogs")} className="text-xs sm:text-sm px-2 sm:px-3">
+              Blogs
+            </TabsTrigger>
+            <TabsTrigger value="faqs" className="text-xs sm:text-sm px-2 sm:px-3">
+              FAQs
+            </TabsTrigger>
+          </TabsList>
+        </div>
 
-        {/* Overview Tab */}
-        <TabsContent value="overview" className="space-y-6">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
+  {/* Overview Tab */}
+        {/* FAQ Management Tab */}
+        <TabsContent value="faqs" className="space-y-6">
+          <AdminFaqs />
+        </TabsContent>
+        <TabsContent value="overview" className="space-y-4 sm:space-y-6">
+          {statsLoading ? (
+            <LoadingState message="Loading dashboard statistics..." className="py-8" />
+          ) : (
+            <>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
+                <Card className="transition-all duration-200 hover:shadow-md">
+                  <CardContent className="p-4 sm:p-6">
+                    <div className="flex items-center space-x-2 sm:space-x-3">
+                      <Package className="h-6 w-6 sm:h-8 sm:w-8 text-primary flex-shrink-0" />
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xl sm:text-2xl lg:text-3xl font-bold truncate">{adminStats?.total_products || 0}</p>
+                        <p className="text-xs sm:text-sm text-muted-foreground">Total Products</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="transition-all duration-200 hover:shadow-md">
+                  <CardContent className="p-4 sm:p-6">
+                    <div className="flex items-center space-x-2 sm:space-x-3">
+                      <ShoppingCart className="h-6 w-6 sm:h-8 sm:w-8 text-blue-500 flex-shrink-0" />
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xl sm:text-2xl lg:text-3xl font-bold truncate">{adminStats?.new_orders || 0}</p>
+                        <p className="text-xs sm:text-sm text-muted-foreground">New Orders (30 days)</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="transition-all duration-200 hover:shadow-md">
+                  <CardContent className="p-4 sm:p-6">
+                    <div className="flex items-center space-x-2 sm:space-x-3">
+                      <Users className="h-6 w-6 sm:h-8 sm:w-8 text-green-500 flex-shrink-0" />
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xl sm:text-2xl lg:text-3xl font-bold truncate">{adminStats?.total_customers || 0}</p>
+                        <p className="text-xs sm:text-sm text-muted-foreground">Total Customers</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="transition-all duration-200 hover:shadow-md">
+                  <CardContent className="p-4 sm:p-6">
+                    <div className="flex items-center space-x-2 sm:space-x-3">
+                      <Euro className="h-6 w-6 sm:h-8 sm:w-8 text-gold-500 flex-shrink-0" />
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xl sm:text-2xl lg:text-3xl font-bold truncate">€{adminStats?.recent_revenue?.toFixed(2) || '0.00'}</p>
+                        <p className="text-xs sm:text-sm text-muted-foreground">Revenue (30 days)</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Additional statistics row */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
+                <Card className="transition-all duration-200 hover:shadow-md">
+                  <CardContent className="p-4 sm:p-6">
+                    <div className="flex items-center justify-between">
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xl sm:text-2xl lg:text-3xl font-bold truncate">{adminStats?.new_registrations || 0}</p>
+                        <p className="text-xs sm:text-sm text-muted-foreground">New Registrations</p>
+                      </div>
+                      {(adminStats?.new_registrations || 0) > 0 && (
+                        <Badge className="bg-green-500 text-white ml-2 flex-shrink-0">New</Badge>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="transition-all duration-200 hover:shadow-md">
+                  <CardContent className="p-4 sm:p-6">
+                    <div className="flex items-center justify-between">
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xl sm:text-2xl lg:text-3xl font-bold truncate">{adminStats?.new_contact_forms || 0}</p>
+                        <p className="text-xs sm:text-sm text-muted-foreground">New Contact Forms</p>
+                      </div>
+                      {(adminStats?.unread_contact_forms || 0) > 0 && (
+                        <Badge className="bg-red-500 text-white ml-2 flex-shrink-0">{adminStats.unread_contact_forms} Unread</Badge>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="transition-all duration-200 hover:shadow-md">
+                  <CardContent className="p-4 sm:p-6">
+                    <div className="flex items-center justify-between">
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xl sm:text-2xl lg:text-3xl font-bold truncate">{adminStats?.pending_orders || 0}</p>
+                        <p className="text-xs sm:text-sm text-muted-foreground">Pending Orders</p>
+                      </div>
+                      {(adminStats?.pending_orders || 0) > 0 && (
+                        <Badge className="bg-yellow-500 text-white ml-2 flex-shrink-0">Pending</Badge>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="transition-all duration-200 hover:shadow-md">
+                  <CardContent className="p-4 sm:p-6">
+                    <div className="flex items-center justify-between">
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xl sm:text-2xl lg:text-3xl font-bold truncate">{adminStats?.low_stock_variants || 0}</p>
+                        <p className="text-xs sm:text-sm text-muted-foreground">Low Stock Items</p>
+                      </div>
+                      {(adminStats?.low_stock_variants || 0) > 0 && (
+                        <Badge className="bg-orange-500 text-white ml-2 flex-shrink-0">Alert</Badge>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </>
+          )}
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Quick Actions */}
             <Card>
-              <CardContent className="p-3 sm:p-6">
-                <div className="flex items-center space-x-2">
-                  <Package className="h-6 w-6 sm:h-8 sm:w-8 text-primary" />
-                  <div>
-                    <p className="text-lg sm:text-2xl font-bold">{products.length}</p>
-                    <p className="text-xs sm:text-sm text-muted-foreground">Total Products</p>
-                  </div>
-                </div>
+              <CardHeader>
+                <CardTitle>Quick Actions</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <Button 
+                  onClick={() => setActiveTab('users')} 
+                  variant="outline" 
+                  className="w-full justify-start"
+                >
+                  <Users className="h-4 w-4 mr-2" />
+                  Manage Users
+                  {(adminStats?.new_registrations || 0) > 0 && (
+                    <Badge className="ml-auto bg-green-500 text-white">{adminStats.new_registrations}</Badge>
+                  )}
+                </Button>
+                <Button 
+                  onClick={() => setActiveTab('products')} 
+                  variant="outline" 
+                  className="w-full justify-start"
+                >
+                  <Package className="h-4 w-4 mr-2" />
+                  Manage Products
+                </Button>
+                <Button 
+                  onClick={() => setActiveTab('orders')} 
+                  variant="outline" 
+                  className="w-full justify-start"
+                >
+                  <ShoppingCart className="h-4 w-4 mr-2" />
+                  View Orders
+                  {(adminStats?.pending_orders || 0) > 0 && (
+                    <Badge className="ml-auto bg-yellow-500 text-white">{adminStats.pending_orders}</Badge>
+                  )}
+                </Button>
+                <Button 
+                  onClick={() => setActiveTab('contact-forms')} 
+                  variant="outline" 
+                  className="w-full justify-start"
+                >
+                  <Users className="h-4 w-4 mr-2" />
+                  Contact Forms
+                  {(adminStats?.unread_contact_forms || 0) > 0 && (
+                    <Badge className="ml-auto bg-red-500 text-white">{adminStats.unread_contact_forms}</Badge>
+                  )}
+                </Button>
               </CardContent>
             </Card>
 
+            {/* Recent Orders */}
             <Card>
-              <CardContent className="p-3 sm:p-6">
-                <div className="flex items-center space-x-2">
-                  <ShoppingCart className="h-6 w-6 sm:h-8 sm:w-8 text-blue-500" />
-                  <div>
-                    <p className="text-lg sm:text-2xl font-bold">0</p>
-                    <p className="text-xs sm:text-sm text-muted-foreground">Orders Today</p>
+              <CardHeader>
+                <CardTitle className="flex items-center justify-between">
+                  Recent Orders
+                  {(recentOrders?.total_count || 0) > 0 && (
+                    <Badge className="bg-blue-500 text-white">{recentOrders?.total_count} New</Badge>
+                  )}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {recentOrders?.orders && recentOrders.orders.length > 0 ? (
+                  <div className="space-y-4">
+                    {recentOrders.orders.map((order) => (
+                      <div key={order.id} className="flex items-center justify-between py-2 border-b last:border-b-0">
+                        <div>
+                          <div className="font-medium">Order #{order.order_number}</div>
+                          <div className="text-sm text-muted-foreground">{order.customer_name}</div>
+                          <div className="text-xs text-muted-foreground">
+                            €{order.total.toFixed(2)} • {order.time_ago}
+                          </div>
+                        </div>
+                        <Badge 
+                          className={
+                            order.status === 'completed' ? 'bg-green-500 text-white' :
+                            order.status === 'pending' ? 'bg-yellow-500 text-white' :
+                            order.status === 'shipped' ? 'bg-blue-500 text-white' :
+                            'bg-gray-500 text-white'
+                          }
+                        >
+                          {order.status}
+                        </Badge>
+                      </div>
+                    ))}
+                    {(recentOrders.total_count || 0) > 5 && (
+                      <div className="text-center pt-2">
+                        <span className="text-sm text-muted-foreground">
+                          +{recentOrders.total_count - 5} more orders
+                        </span>
+                      </div>
+                    )}
                   </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardContent className="p-3 sm:p-6">
-                <div className="flex items-center space-x-2">
-                  <Users className="h-6 w-6 sm:h-8 sm:w-8 text-green-500" />
-                  <div>
-                    <p className="text-lg sm:text-2xl font-bold">0</p>
-                    <p className="text-xs sm:text-sm text-muted-foreground">Total Customers</p>
+                ) : (
+                  <div className="text-center py-4 text-muted-foreground">
+                    No recent orders
                   </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardContent className="p-3 sm:p-6">
-                <div className="flex items-center space-x-2">
-                  <Euro className="h-6 w-6 sm:h-8 sm:w-8 text-gold-500" />
-                  <div>
-                    <p className="text-lg sm:text-2xl font-bold">€0</p>
-                    <p className="text-xs sm:text-sm text-muted-foreground">Revenue Today</p>
-                  </div>
-                </div>
+                )}
               </CardContent>
             </Card>
           </div>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Recent Activity</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between py-2 border-b">
-                  <span>Admin dashboard accessed</span>
-                  <span className="text-sm text-muted-foreground">Just now</span>
-                </div>
-                <div className="flex items-center justify-between py-2 border-b">
-                  <span>Products loaded</span>
-                  <span className="text-sm text-muted-foreground">1 minute ago</span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
         </TabsContent>
 
         {/* Products Tab */}
-        <TabsContent value="products" className="space-y-6">
-          <div className="flex justify-between items-center">
-            <h2 className="text-2xl font-semibold">Manage Products</h2>
+        <TabsContent value="products" className="space-y-4 sm:space-y-6">
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 sm:gap-4">
+            <h2 className="text-xl sm:text-2xl font-semibold">Manage Products</h2>
             <Button
               onClick={() => setIsAddingProduct(true)}
-              className="bg-gold-500 hover:bg-gold-600 text-leather-900 font-semibold"
+              className="bg-gold-500 hover:bg-gold-600 text-leather-900 font-semibold w-full sm:w-auto"
             >
               <Plus className="h-4 w-4 mr-2" />
               Add Product
@@ -841,23 +1049,24 @@ const AdminDashboard: React.FC = () => {
           {productsLoading ? (
             <LoadingState message="Loading products..." className="py-8" />
           ) : (
-            <div className="grid gap-6">
+            <div className="grid gap-4 sm:gap-6">
               {products.map((product) => (
-                <Card key={product.id}>
-                  <CardContent className="p-6">
-                    <div className="flex gap-4">
-                      <div className="w-20 h-20 bg-gray-200 rounded-lg flex-shrink-0 flex items-center justify-center">
-                        <Package className="h-8 w-8 text-gray-400" />
+                <Card key={product.id} className="transition-all duration-200 hover:shadow-md">
+                  <CardContent className="p-4 sm:p-6">
+                    <div className="flex flex-col sm:flex-row gap-4">
+                      <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gray-200 rounded-lg flex-shrink-0 flex items-center justify-center mx-auto sm:mx-0">
+                        <Package className="h-6 w-6 sm:h-8 sm:w-8 text-gray-400" />
                       </div>
-                      <div className="flex-1 space-y-2">
-                        <div className="flex justify-between items-start">
-                          <div>
-                            <h3 className="font-semibold text-foreground">{product.name}</h3>
-                            <p className="text-sm text-muted-foreground">{product.category.name}</p>
+                      <div className="flex-1 space-y-2 min-w-0">
+                        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2">
+                          <div className="min-w-0 flex-1">
+                            <h3 className="font-semibold text-foreground truncate">{product.name}</h3>
+                            <p className="text-sm text-muted-foreground truncate">{product.category.name}</p>
                           </div>
-                          <div className="flex gap-2">
+                          <div className="flex gap-2 justify-center sm:justify-end flex-shrink-0">
                             <Button variant="outline" size="sm" onClick={() => setEditingProduct(product)}>
                               <Edit className="h-4 w-4" />
+                              <span className="hidden sm:inline ml-1">Edit</span>
                             </Button>
                             <Button
                               variant="outline"
@@ -866,16 +1075,19 @@ const AdminDashboard: React.FC = () => {
                               className="text-red-500 hover:text-red-700"
                             >
                               <Trash2 className="h-4 w-4" />
+                              <span className="hidden sm:inline ml-1">Delete</span>
                             </Button>
                           </div>
                         </div>
-                        <p className="text-sm text-muted-foreground">{product.description}</p>
-                        <div className="flex items-center gap-4">
-                          <span className="font-semibold text-gold-500">€{product.price}</span>
-                          <Badge variant="default">{product.variants?.length || 0} variants</Badge>
-                          <span className="text-sm text-muted-foreground">
-                            Stock: {product.variants?.reduce((total, v) => total + v.stock, 0) || 0}
-                          </span>
+                        <p className="text-sm text-muted-foreground line-clamp-2">{product.description}</p>
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
+                          <span className="font-semibold text-gold-500 text-lg">€{product.price}</span>
+                          <div className="flex items-center gap-2 sm:gap-4 text-sm">
+                            <Badge variant="default">{product.variants?.length || 0} variants</Badge>
+                            <span className="text-muted-foreground">
+                              Stock: {product.variants?.reduce((total, v) => total + v.stock, 0) || 0}
+                            </span>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -884,6 +1096,11 @@ const AdminDashboard: React.FC = () => {
               ))}
             </div>
           )}
+        </TabsContent>
+
+        {/* Users Tab */}
+        <TabsContent value="users" className="space-y-6">
+          <UserManagement />
         </TabsContent>
 
         {/* Categories Tab */}
@@ -897,8 +1114,8 @@ const AdminDashboard: React.FC = () => {
         </TabsContent>
 
         {/* Bulk Upload Tab */}
-        <TabsContent value="bulk-upload" className="space-y-6">
-          <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+        <TabsContent value="bulk-upload" className="space-y-4 sm:space-y-6">
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-6">
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
@@ -914,6 +1131,7 @@ const AdminDashboard: React.FC = () => {
                     type="file"
                     accept=".csv,.zip"
                     onChange={(e) => setUploadFile(e.target.files?.[0] || null)}
+                    className="mt-1"
                   />
                   <p className="text-sm text-muted-foreground mt-1">
                     Upload a CSV file or ZIP file containing CSV and images
@@ -926,14 +1144,14 @@ const AdminDashboard: React.FC = () => {
                     checked={updateExisting}
                     onCheckedChange={(checked) => setUpdateExisting(checked as boolean)}
                   />
-                  <Label htmlFor="update-existing">Update existing products</Label>
+                  <Label htmlFor="update-existing" className="text-sm">Update existing products</Label>
                 </div>
 
-                <div className="flex flex-col sm:flex-row gap-4">
+                <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
                   <Button
                     onClick={handleBulkUpload}
                     disabled={!uploadFile || isUploading}
-                    className="bg-green-500 hover:bg-green-600 text-white flex-1 sm:flex-none"
+                    className="bg-green-500 hover:bg-green-600 text-white flex-1 sm:flex-none order-1 sm:order-none"
                   >
                     {isUploading ? (
                       <>
@@ -951,7 +1169,7 @@ const AdminDashboard: React.FC = () => {
                   <Button
                     variant="outline"
                     onClick={handleDownloadTemplate}
-                    className="flex-1 sm:flex-none bg-transparent"
+                    className="flex-1 sm:flex-none bg-transparent order-2 sm:order-none"
                   >
                     <Download className="h-4 w-4 mr-2" />
                     <span className="hidden sm:inline">Download Template</span>
@@ -1012,7 +1230,7 @@ const AdminDashboard: React.FC = () => {
                       • <strong>size</strong> - Product size
                     </li>
                     <li>
-                      • <strong>price_difference</strong> - Price adjustment from base (default: 0.00)
+                      • <strong>price</strong> - Price for this variant
                     </li>
                     <li>
                       • <strong>stock</strong> - Quantity in stock (default: 0)
@@ -1210,6 +1428,7 @@ const AdminDashboard: React.FC = () => {
           <ContactForms />
         </TabsContent>
       </Tabs>
+      </div>
     </div>
   )
 }
@@ -1350,12 +1569,12 @@ const CategoryManagement: React.FC<CategoryManagementProps> = ({
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold">Category Management</h2>
+    <div className="space-y-4 sm:space-y-6">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 sm:gap-4">
+        <h2 className="text-xl sm:text-2xl font-bold">Category Management</h2>
         <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
           <DialogTrigger asChild>
-            <Button>
+            <Button className="w-full sm:w-auto">
               <Plus className="h-4 w-4 mr-2" />
               Add Category
             </Button>
@@ -1401,24 +1620,27 @@ const CategoryManagement: React.FC<CategoryManagementProps> = ({
           <CardTitle>Categories ({categories.length})</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
+          <div className="space-y-3 sm:space-y-4">
             {categories.map((category) => (
-              <div key={category.id} className="flex items-center justify-between p-4 border rounded-lg">
-                <div className="flex-1">
-                  <h3 className="font-medium">{category.name}</h3>
-                  {category.description && <p className="text-sm text-muted-foreground mt-1">{category.description}</p>}
+              <div key={category.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 border rounded-lg">
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-medium truncate">{category.name}</h3>
+                  {category.description && <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{category.description}</p>}
                 </div>
-                <div className="flex space-x-2">
+                <div className="flex space-x-2 justify-end sm:justify-start flex-shrink-0">
                   <Button variant="outline" size="sm" onClick={() => openEditDialog(category)}>
                     <Edit className="h-4 w-4" />
+                    <span className="hidden sm:inline ml-1">Edit</span>
                   </Button>
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => handleDeleteCategory(category)}
                     disabled={deleteCategoryMutation.isPending}
+                    className="text-red-500 hover:text-red-700"
                   >
                     <Trash2 className="h-4 w-4" />
+                    <span className="hidden sm:inline ml-1">Delete</span>
                   </Button>
                 </div>
               </div>
@@ -1473,3 +1695,4 @@ const CategoryManagement: React.FC<CategoryManagementProps> = ({
 }
 
 export default AdminDashboard;
+

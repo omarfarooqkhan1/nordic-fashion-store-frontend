@@ -227,7 +227,7 @@ const Index = () => {
                       <div className="flex items-center justify-center">
                         <div className="flex items-center gap-2">
                           <span className="text-lg font-bold text-cognac-500">
-                            {getCurrencySymbol()}{convertPrice(product.price).toFixed(2)}
+                            {getCurrencySymbol()}{convertPrice(product.variants && product.variants.length > 0 ? product.variants[0].price : product.price).toFixed(2)}
                           </span>
                         </div>
                       </div>

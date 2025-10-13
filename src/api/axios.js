@@ -55,7 +55,22 @@ api.interceptors.request.use(
 
 // Response interceptor for error handling
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    console.log('[axios] Response received:', response.config.url, response.data);
+    // Check if this is a product response and log the structure
+    if (response.config.url && response.config.url.includes('/products/')) {
+      console.log('[axios] Product response structure:', {
+        hasData: !!response.data,
+        hasDataData: !!(response.data && response.data.data),
+        hasVariants: !!(response.data && response.data.data && response.data.data.variants),
+        variantsType: response.data && response.data.data && response.data.data.variants ? 
+          (Array.isArray(response.data.data.variants) ? 'array' : typeof response.data.data.variants) : 'undefined',
+        variantsCount: response.data && response.data.data && response.data.data.variants ? 
+          (Array.isArray(response.data.data.variants) ? response.data.data.variants.length : 'N/A') : 'N/A'
+      });
+    }
+    return response;
+  },
   (error) => {
     if (error.response?.status === 419) {
       // CSRF token mismatch, try to get a new one

@@ -15,7 +15,16 @@ const MediaPreviewModal: React.FC<{
         {media.type === 'image' ? (
           <img src={media.url} alt="Media preview" className="max-w-[80vw] max-h-[80vh] object-contain" />
         ) : media.type === 'video' ? (
-          <video src={media.url} controls autoPlay className="max-w-[80vw] max-h-[80vh] object-contain" />
+          <video 
+            src={
+              media.url.startsWith('http://') || media.url.startsWith('https://') 
+                ? media.url 
+                : `${import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000'}${media.url.startsWith('/') ? media.url : `/${media.url}`}`
+            } 
+            controls 
+            autoPlay 
+            className="max-w-[80vw] max-h-[80vh] object-contain" 
+          />
         ) : null}
       </div>
     </div>
@@ -377,7 +386,11 @@ const ReviewList: React.FC<ReviewListProps> = ({
                           />
                         ) : media.type === 'video' ? (
                           <video
-                            src={media.url}
+                            src={
+                              media.url.startsWith('http://') || media.url.startsWith('https://') 
+                                ? media.url 
+                                : `${import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000'}${media.url.startsWith('/') ? media.url : `/${media.url}`}`
+                            }
                             className="object-cover w-full h-full"
                             muted
                             playsInline

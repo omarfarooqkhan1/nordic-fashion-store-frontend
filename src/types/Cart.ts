@@ -7,7 +7,6 @@ export interface CartItem {
     size: string;
     color: string;
     actual_price: number;
-    price_difference: string;
     product: {
       id: number;
       name: string;

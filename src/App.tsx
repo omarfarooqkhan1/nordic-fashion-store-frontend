@@ -5,6 +5,7 @@ import { Footer } from "@/components/Layout/Footer"
 import AppProviders from "./providers/AppProviders"
 import ErrorBoundary from "./components/ErrorBoundary"
 import TestComponent from "./TestComponent"
+import TestProductData from "./TestProductData"
 import ProtectedRoute from "./components/Auth/ProtectedRoute"
 
 // Critical Pages (loaded immediately)
@@ -62,6 +63,7 @@ const App: React.FC = () => {
                               <Route path="/faqs" element={<FAQ />} />
                               <Route path="/products" element={<Products />} />
                               <Route path="/product/:id" element={<ProductDetail />} />
+                              <Route path="/test-product/:id" element={<TestProductData />} />
                               
                               {/* Blog Routes */}
                               <Route path="/blogs" element={<LazyBlog />} />

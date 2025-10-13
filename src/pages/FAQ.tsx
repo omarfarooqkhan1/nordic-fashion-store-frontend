@@ -1,11 +1,14 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { ChevronDown, ChevronUp } from 'lucide-react';
+import { useFaqs } from '@/hooks/useFaqs';
 
 const FAQ = () => {
   const { t } = useLanguage();
   const [openItems, setOpenItems] = useState<number[]>([]);
+  const { faqs, isLoading, isError } = useFaqs();
 
   // Scroll to top when component mounts
   React.useEffect(() => {
@@ -20,57 +23,10 @@ const FAQ = () => {
     );
   };
 
-  const faqItems = [
-    {
-      question: t('faq.q1.question'),
-      answer: t('faq.q1.answer'),
-      icon: "⚠️"
-    },
-    {
-      question: t('faq.q2.question'),
-      answer: t('faq.q2.answer'),
-      icon: "✨"
-    },
-    {
-      question: t('faq.q3.question'),
-      answer: t('faq.q3.answer'),
-      icon: "🭐"
-    },
-    {
-      question: t('faq.q4.question'),
-      answer: t('faq.q4.answer'),
-      icon: "🔒"
-    },
-    {
-      question: t('faq.q5.question'),
-      answer: t('faq.q5.answer'),
-      icon: "🌍"
-    },
-    {
-      question: t('faq.q6.question'),
-      answer: t('faq.q6.answer'),
-      icon: "🔄"
-    },
-    {
-      question: t('faq.q7.question'),
-      answer: t('faq.q7.answer'),
-      icon: "🧽"
-    },
-    {
-      question: t('faq.q8.question'),
-      answer: t('faq.q8.answer'),
-      icon: "🛡️"
-    },
-    {
-      question: t('faq.q9.question'),
-      answer: t('faq.q9.answer'),
-      icon: "🎨"
-    },
-    {
-      question: t('faq.q10.question'),
-      answer: t('faq.q10.answer'),
-      icon: "📞"
-    }
+
+  // Optionally, you can define icons here if you want to keep them
+  const icons = [
+    "⚠️", "✨", "🭐", "�", "🌍", "🔄", "🧽", "🛡️", "🎨", "📞"
   ];
 
   return (
@@ -93,9 +49,11 @@ const FAQ = () => {
 
       {/* FAQ Content */}
       <div className="max-w-4xl mx-auto space-y-4">
-        {faqItems.map((item, index) => (
-          <Card 
-            key={index} 
+        {isLoading && <div>Loading FAQs...</div>}
+        {isError && <div>Failed to load FAQs.</div>}
+        {faqs && faqs.map((item, index) => (
+          <Card
+            key={item.id}
             className="bg-gradient-to-br from-card to-leather-100/50 dark:from-card dark:to-leather-800/30 border-border shadow-lg hover:shadow-xl transition-all duration-300"
           >
             <CardContent className="p-0">
@@ -104,7 +62,7 @@ const FAQ = () => {
                 className="w-full p-6 text-left flex items-center justify-between hover:bg-leather-50/50 dark:hover:bg-leather-800/20 transition-colors duration-200"
               >
                 <div className="flex items-center space-x-4">
-                  <span className="text-2xl">{item.icon}</span>
+                  <span className="text-2xl">{icons[index % icons.length]}</span>
                   <h2 className="text-lg sm:text-xl font-semibold text-foreground">
                     {item.question}
                   </h2>
@@ -115,7 +73,6 @@ const FAQ = () => {
                   <ChevronDown className="h-5 w-5 text-muted-foreground" />
                 )}
               </button>
-              
               {openItems.includes(index) && (
                 <div className="px-6 pb-6 border-t border-border">
                   <div className="pt-4">

@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Plus, BarChart3, FileText, Eye, Edit, Trash2 } from 'lucide-react';
-import { Blog, BlogStats, BlogCreateRequest } from '@/types/Blog';
+import { BlogPost } from '@/types/Blog';
 import { blogApi } from '@/api/blog';
 import BlogList from '@/components/Blog/BlogList';
 import BlogForm from '@/components/Blog/BlogForm';
@@ -12,8 +12,8 @@ import { useToast } from '@/hooks/use-toast';
 
 const AdminBlogManagement: React.FC = () => {
   const [view, setView] = useState<'list' | 'create' | 'edit'>('list');
-  const [selectedBlog, setSelectedBlog] = useState<Blog | null>(null);
-  const [stats, setStats] = useState<BlogStats | null>(null);
+  const [selectedBlog, setSelectedBlog] = useState<BlogPost | null>(null);
+  const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
@@ -77,7 +77,7 @@ const AdminBlogManagement: React.FC = () => {
     }
   };
 
-  const handleSubmit = async (data: BlogCreateRequest) => {
+  const handleSubmit = async (data: any) => {
     try {
       setLoading(true);
       
