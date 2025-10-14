@@ -245,7 +245,7 @@ export const ReviewForm: React.FC<ReviewFormProps> = ({
                       src={
                         media.url.startsWith('http://') || media.url.startsWith('https://') 
                           ? media.url 
-                          : `${import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000'}${media.url.startsWith('/') ? media.url : `/${media.url}`}`
+                          : `${import.meta.env.VITE_BACKEND_URL}${media.url.startsWith('/') ? media.url : `/${media.url}`}`
                       } 
                       controls 
                       className="object-cover w-full h-full" 
@@ -269,7 +269,7 @@ export const ReviewForm: React.FC<ReviewFormProps> = ({
                       src={
                         media.url.startsWith('http://') || media.url.startsWith('https://') 
                           ? media.url 
-                          : `${import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000'}${media.url.startsWith('/') ? media.url : `/${media.url}`}`
+                          : `${import.meta.env.VITE_BACKEND_URL}${media.url.startsWith('/') ? media.url : `/${media.url}`}`
                       } 
                       controls 
                       className="object-cover w-full h-full" 

@@ -19,7 +19,7 @@ const MediaPreviewModal: React.FC<{
             src={
               media.url.startsWith('http://') || media.url.startsWith('https://') 
                 ? media.url 
-                : `${import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000'}${media.url.startsWith('/') ? media.url : `/${media.url}`}`
+                : `${import.meta.env.VITE_BACKEND_URL}${media.url.startsWith('/') ? media.url : `/${media.url}`}`
             } 
             controls 
             autoPlay 
@@ -389,7 +389,7 @@ const ReviewList: React.FC<ReviewListProps> = ({
                             src={
                               media.url.startsWith('http://') || media.url.startsWith('https://') 
                                 ? media.url 
-                                : `${import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000'}${media.url.startsWith('/') ? media.url : `/${media.url}`}`
+                                : `${import.meta.env.VITE_BACKEND_URL}${media.url.startsWith('/') ? media.url : `/${media.url}`}`
                             }
                             className="object-cover w-full h-full"
                             muted

@@ -11,13 +11,6 @@ const TestProductData = () => {
     queryFn: async () => {
       if (!id) throw new Error('No product ID provided');
       const data = await fetchProductById(id);
-      console.log('[TestProductData] Raw product data:', data);
-      console.log('[TestProductData] Product structure:', {
-        hasVariants: !!data.variants,
-        variantsType: Array.isArray(data.variants) ? 'array' : typeof data.variants,
-        variantsCount: Array.isArray(data.variants) ? data.variants.length : 'N/A',
-        variants: data.variants
-      });
       return data;
     },
     enabled: !!id,

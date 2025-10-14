@@ -230,7 +230,6 @@ export const ProductForm: React.FC<ProductFormProps> = ({
         if (sizeGuideInputRef.current) sizeGuideInputRef.current.value = "";
         toast.toast({ title: "Size guide image uploaded successfully" });
       } catch (error: any) {
-        console.log(error);
         toast.toast({ title: "Failed to upload size guide image", description: error.message, variant: "destructive" });
         return;
       }
@@ -352,7 +351,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                     let imageUrl = product.size_guide_image;
                     try {
                       if (imageUrl && !imageUrl.startsWith('http://') && !imageUrl.startsWith('https://')) {
-                        const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000';
+                        const backendUrl = import.meta.env.VITE_BACKEND_URL;
                         if (imageUrl.startsWith('/')) {
                           imageUrl = `${backendUrl}${imageUrl}`;
                         } else {
@@ -360,7 +359,6 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                         }
                       }
                     } catch (error) {
-                      console.error('[ProductForm] Error resolving size guide image URL:', error);
                       imageUrl = product.size_guide_image; // Fallback to original
                     }
                     return (

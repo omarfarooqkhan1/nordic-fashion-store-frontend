@@ -446,7 +446,7 @@ export const VariantForm: React.FC<VariantFormProps> = ({
                   {mainImages.filter(img => img.id).map((image, index) => (
                     <div key={image.id} className="relative group">
                       <img
-                        src={image.url.startsWith('http') ? image.url : `http://localhost:8000${image.url}`}
+                        src={image.url.startsWith('http') ? image.url : `https://backend.nordflex.shop${image.url}`}
                         alt={image.alt_text || `Main image`}
                         className="w-full h-24 object-cover rounded border"
                         onError={(e) => {
@@ -471,7 +471,7 @@ export const VariantForm: React.FC<VariantFormProps> = ({
             {mainImages.filter(img => !img.id).map((image, index) => (
               <div key={index} className="relative group">
                 <img
-                  src={image.url.startsWith('http') ? image.url : `http://localhost:8000${image.url}`}
+                  src={image.url.startsWith('http') ? image.url : `https://backend.nordflex.shop${image.url}`}
                   alt={image.alt_text || `Main image`}
                   className="w-full h-24 object-cover rounded border"
                   onError={(e) => {
@@ -548,7 +548,7 @@ export const VariantForm: React.FC<VariantFormProps> = ({
                 {stylingImages.map((image, index) => (
                   <div key={index} className="relative group">
                     <img
-                      src={image.url.startsWith('http') ? image.url : `http://localhost:8000${image.url}`}
+                      src={image.url.startsWith('http') ? image.url : `https://backend.nordflex.shop${image.url}`}
                       alt={image.alt_text || `Styling image ${index + 1}`}
                       className="w-full h-24 object-cover rounded border"
                       onError={(e) => {
@@ -640,7 +640,7 @@ export const VariantForm: React.FC<VariantFormProps> = ({
                 {detailedImages.map((image, index) => (
                   <div key={index} className="relative group">
                     <img
-                      src={image.url.startsWith('http') ? image.url : `http://localhost:8000${image.url}`}
+                      src={image.url.startsWith('http') ? image.url : `https://backend.nordflex.shop${image.url}`}
                       alt={image.alt_text || `Detailed image ${index + 1}`}
                       className="w-full h-24 object-cover rounded border"
                       onError={(e) => {
@@ -733,7 +733,7 @@ export const VariantForm: React.FC<VariantFormProps> = ({
                 {mobileDetailedImages.map((image, index) => (
                   <div key={index} className="relative group">
                     <img
-                      src={image.url.startsWith('http') ? image.url : `http://localhost:8000${image.url}`}
+                      src={image.url.startsWith('http') ? image.url : `https://backend.nordflex.shop${image.url}`}
                       alt={image.alt_text || `Mobile detailed image ${index + 1}`}
                       className="w-full h-24 object-cover rounded border"
                       onError={(e) => {
@@ -836,7 +836,7 @@ export const VariantForm: React.FC<VariantFormProps> = ({
                   src={
                     variantData.video_url.startsWith('http') 
                       ? variantData.video_url 
-                      : `${import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000'}${variantData.video_url.startsWith('/') ? variantData.video_url : `/${variantData.video_url}`}`
+                      : `${import.meta.env.VITE_BACKEND_URL}${variantData.video_url.startsWith('/') ? variantData.video_url : `/${variantData.video_url}`}`
                   }
                   className="w-full h-32 object-cover rounded border"
                   controls

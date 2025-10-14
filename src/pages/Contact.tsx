@@ -70,7 +70,6 @@ const Contact = () => {
       }
       
     } catch (error: any) {
-      console.error('Contact form error:', error);
       const errorMessage = error.response?.data?.message || error.message || 'Failed to send message. Please try again later.';
       
       toast({

@@ -59,7 +59,6 @@ export const CurrencyProvider: React.FC<CurrencyProviderProps> = ({ children }) 
         }
       } catch (error) {
         // Fallback to default rates if API fails
-        console.warn('Failed to fetch exchange rates, using default rates');
       }
     };
 

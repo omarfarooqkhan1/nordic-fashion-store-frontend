@@ -59,7 +59,6 @@ const Products = () => {
     queryKey: ['products'],
     queryFn: async () => {
       const data = await fetchProducts();
-      console.log('[Products.tsx] Fetched products:', data);
       return data;
     },
     staleTime: 1000 * 60 * 5, // 5 minutes cache

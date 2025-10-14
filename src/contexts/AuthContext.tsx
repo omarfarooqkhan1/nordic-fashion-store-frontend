@@ -211,7 +211,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             className: "bg-blue-500 text-white",
           });
         } catch (resendError) {
-          console.error("Failed to resend verification code:", resendError);
           toast({
             title: "Email Not Verified",
             description: "Please verify your email before logging in",

@@ -19,7 +19,6 @@ const ProductImage: React.FC<ProductImageProps> = ({
   const [isLoading, setIsLoading] = useState(true);
 
   const handleError = () => {
-    console.log(`[ProductImage] Error loading image: ${src}`);
     setHasError(true);
     setIsLoading(false);
   };
@@ -57,7 +56,7 @@ const ProductImage: React.FC<ProductImageProps> = ({
       resolvedSrc = src;
     } else {
       // For relative paths, construct the full URL
-      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000';
+      const backendUrl = import.meta.env.VITE_BACKEND_URL;
       // Ensure we don't double up on slashes
       if (src.startsWith('/')) {
         resolvedSrc = `${backendUrl}${src}`;
@@ -66,7 +65,6 @@ const ProductImage: React.FC<ProductImageProps> = ({
       }
     }
   } catch (error) {
-    console.error('[ProductImage] Error resolving image URL:', error);
     resolvedSrc = src; // Fallback to original src
   }
 

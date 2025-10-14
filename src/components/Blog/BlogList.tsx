@@ -55,10 +55,11 @@ const BlogList: React.FC<BlogListProps> = ({
         ? await blogApi.getAdminBlogs(filters)
         : await blogApi.getBlogs(filters);
       
-  setBlogs(response.data);
+      setBlogs(response.data);
+      // Use response.pagination instead of response.meta
       setPagination({
-        ...response.meta,
-        has_more_pages: response.meta.current_page < response.meta.last_page
+        ...response.pagination,
+        has_more_pages: response.pagination.current_page < response.pagination.last_page
       });
     } catch (err: any) {
       setError(err.response?.data?.message || t('blog.failedToFetch'));

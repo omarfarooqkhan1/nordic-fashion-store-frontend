@@ -10,7 +10,7 @@ export default defineConfig(({ mode }) => ({
     port: 3000, // Changed to 3000 to avoid conflict with Laravel (8000)
     proxy: {
       '/api': {
-        target: 'http://localhost:8000',
+        target: 'https://backend.nordflex.shop',
         changeOrigin: true,
         secure: false,
       },

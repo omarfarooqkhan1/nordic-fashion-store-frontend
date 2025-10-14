@@ -110,23 +110,9 @@ export const addCustomJacketToCart = async (
   token?: string
 ): Promise<CustomJacketItem> => {
   try {
-    console.log('Starting addCustomJacketToCart', {
-      frontImageLength: customJacket.frontImageUrl?.length,
-      backImageLength: customJacket.backImageUrl?.length,
-      hasSessionId: !!sessionId,
-      hasToken: !!token
-    });
-
     // Convert base64 images to blobs
     const frontBlob = await dataURLToBlob(customJacket.frontImageUrl);
     const backBlob = await dataURLToBlob(customJacket.backImageUrl);
-    
-    console.log('Blobs created', {
-      frontBlobSize: frontBlob.size,
-      backBlobSize: backBlob.size,
-      frontBlobType: frontBlob.type,
-      backBlobType: backBlob.type
-    });
     
     // Create FormData
     const formData = new FormData();
@@ -143,14 +129,6 @@ export const addCustomJacketToCart = async (
       formData.append('session_id', sessionId);
     }
 
-    console.log('Sending request to backend...', {
-      formDataEntries: Array.from(formData.entries()).map(([key, value]) => ({
-        key,
-        valueType: value instanceof Blob ? 'Blob' : typeof value,
-        size: value instanceof Blob ? value.size : undefined
-      }))
-    });
-
     // Don't set Content-Type header - let axios handle it for FormData
     // The axios interceptor will automatically remove Content-Type for FormData
     const response = await api.post('/cart/custom-jacket', formData, {
@@ -159,10 +137,8 @@ export const addCustomJacketToCart = async (
       transformRequest: [(data) => data] // Prevent axios from transforming FormData
     });
     
-    console.log('Success:', response.data);
     return response.data;
   } catch (error) {
-    console.error('Error in addCustomJacketToCart:', error);
     throw error;
   }
 };
@@ -213,16 +189,9 @@ const dataURLToBlob = async (dataURL: string): Promise<Blob> => {
       throw new Error('Created blob has zero size');
     }
     
-    console.log('Blob created successfully:', {
-      size: blob.size,
-      type: blob.type,
-      originalDataLength: dataURL.length
-    });
-    
     return blob;
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    console.error('Failed to convert data URL to blob:', errorMessage);
     throw new Error(`Failed to convert image data to blob: ${errorMessage}`);
   }
 };

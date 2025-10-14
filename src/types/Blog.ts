@@ -20,13 +20,14 @@ export interface BlogPost {
 
 export interface BlogListResponse {
   data: BlogPost[];
-  meta: {
+  pagination: {
     current_page: number;
     from: number;
     last_page: number;
     per_page: number;
     to: number;
     total: number;
+    has_more_pages?: boolean;
   };
 }
 

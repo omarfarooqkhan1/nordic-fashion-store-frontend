@@ -48,7 +48,6 @@ const CustomerSignup: React.FC = () => {
       // Redirect to verify email page
       navigate("/verify-email", { state: { userId: result.user_id, email: data.email } });
     } catch (err: any) {
-      console.error("Signup error:", err);
       if (err.response?.data?.message) {
         setError(err.response.data.message);
       } else if (err.response?.data?.errors) {

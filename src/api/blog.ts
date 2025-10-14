@@ -58,7 +58,6 @@ export const blogApi = {
   createBlog: async (blogData: any): Promise<{ message: string; data: BlogPost; success: boolean }> => {
     // Check if there are new image files to upload
     if ((blogData.newImageFiles && blogData.newImageFiles.length > 0) || blogData.featuredImageFile) {
-      console.log('Creating blog with FormData', { hasNewImageFiles: !!blogData.newImageFiles, hasFeaturedImageFile: !!blogData.featuredImageFile });
       const formData = new FormData();
       
       // Add all text fields
@@ -75,7 +74,6 @@ export const blogApi = {
       
       // Add image files
       if (blogData.newImageFiles) {
-        console.log('Adding gallery images to FormData', blogData.newImageFiles.length);
         blogData.newImageFiles.forEach(file => {
           formData.append('images[]', file);
         });
@@ -83,13 +81,7 @@ export const blogApi = {
       
       // Add featured image file if present
       if (blogData.featuredImageFile) {
-        console.log('Adding featured image to FormData', blogData.featuredImageFile);
         formData.append('featured_image_file', blogData.featuredImageFile);
-      }
-      
-      // Log FormData contents for debugging
-      for (let [key, value] of formData.entries()) {
-        console.log(`FormData key: ${key}, value:`, value instanceof File ? `File: ${value.name}` : value);
       }
       
       const response = await api.post('/admin/blogs', formData, {
@@ -99,7 +91,6 @@ export const blogApi = {
       });
       return response.data;
     } else {
-      console.log('Creating blog with JSON data', blogData);
       const response = await api.post('/admin/blogs', blogData);
       return response.data;
     }
@@ -108,7 +99,6 @@ export const blogApi = {
   updateBlog: async (id: number, blogData: any): Promise<{ message: string; data: BlogPost; success: boolean }> => {
     // Check if there are new image files to upload
     if ((blogData.newImageFiles && blogData.newImageFiles.length > 0) || blogData.featuredImageFile) {
-      console.log('Updating blog with FormData', { blogId: id, hasNewImageFiles: !!blogData.newImageFiles, hasFeaturedImageFile: !!blogData.featuredImageFile });
       const formData = new FormData();
       
       // Add all text fields
@@ -125,7 +115,6 @@ export const blogApi = {
       
       // Add image files
       if (blogData.newImageFiles) {
-        console.log('Adding gallery images to FormData', blogData.newImageFiles.length);
         blogData.newImageFiles.forEach(file => {
           formData.append('images[]', file);
         });
@@ -133,13 +122,7 @@ export const blogApi = {
       
       // Add featured image file if present
       if (blogData.featuredImageFile) {
-        console.log('Adding featured image to FormData', blogData.featuredImageFile);
         formData.append('featured_image_file', blogData.featuredImageFile);
-      }
-      
-      // Log FormData contents for debugging
-      for (let [key, value] of formData.entries()) {
-        console.log(`FormData key: ${key}, value:`, value instanceof File ? `File: ${value.name}` : value);
       }
       
       const response = await api.put(`/admin/blogs/${id}`, formData, {
@@ -149,7 +132,6 @@ export const blogApi = {
       });
       return response.data;
     } else {
-      console.log('Updating blog with JSON data', { blogId: id, blogData });
       const response = await api.put(`/admin/blogs/${id}`, blogData);
       return response.data;
     }

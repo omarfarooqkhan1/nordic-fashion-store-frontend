@@ -4,9 +4,7 @@
  * Get the backend base URL for images
  */
 export const getBackendBaseUrl = (): string => {
-  const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || '/api';
-  // Remove '/api' from the end to get the base URL
-  return apiBaseUrl.replace('/api', '');
+  return import.meta.env.VITE_BACKEND_URL;
 };
 
 /**
@@ -16,15 +14,7 @@ export const getBackendBaseUrl = (): string => {
  */
 export const getImageUrl = (imagePath: string | null | undefined): string | null => {
   if (!imagePath) return null;
-  
-  // If it's already a full URL, return as is
-  if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
-    return imagePath;
-  }
-  
-  // If it's a relative path, prepend the backend base URL
-  const baseUrl = getBackendBaseUrl();
-  return `${baseUrl}${imagePath}`;
+  return getBackendBaseUrl() + imagePath;
 };
 
 /**

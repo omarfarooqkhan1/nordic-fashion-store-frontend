@@ -141,9 +141,6 @@ const Orders: React.FC = () => {
           return;
         }
 
-        // Load all orders
-        console.log('Loading orders...');
-        
         if (!token) {
           // For guest users, try to load orders using session ID
           const sessionId = localStorage.getItem('nordic_fashion_cart_session_id') || 
@@ -161,7 +158,6 @@ const Orders: React.FC = () => {
           setOrders(Array.isArray(userOrders) ? userOrders : []);
         }
       } catch (error) {
-        console.error('Error in loadOrders:', error);
         toast({
           title: t('orders.error'),
           description: error instanceof Error ? error.message : t('orders.loadError'),

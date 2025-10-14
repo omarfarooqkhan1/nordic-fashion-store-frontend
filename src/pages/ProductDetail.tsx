@@ -66,24 +66,14 @@ const ProductDetail = () => {
     queryFn: async () => {
       if (!id) throw new Error('No product ID provided');
       const data = await fetchProductById(id);
-      console.log('[ProductDetail.tsx] Fetched product:', data);
-      // Log the structure of the product data to debug
-      console.log('[ProductDetail.tsx] Product structure:', {
-        hasVariants: !!data.variants,
-        variantsType: Array.isArray(data.variants) ? 'array' : typeof data.variants,
-        variantsCount: Array.isArray(data.variants) ? data.variants.length : 'N/A',
-        variants: data.variants
-      });
       
       // Deep clone the data to ensure we're not dealing with any proxy issues
       const clonedData = JSON.parse(JSON.stringify(data));
-      console.log('[ProductDetail.tsx] Cloned product data:', clonedData);
       
       // Ensure variants is always an array
       if (!clonedData.variants) {
         clonedData.variants = [];
       } else if (!Array.isArray(clonedData.variants)) {
-        console.warn('[ProductDetail.tsx] Variants is not an array, converting to array:', clonedData.variants);
         clonedData.variants = Array.isArray(clonedData.variants) ? clonedData.variants : [];
       }
       
@@ -103,50 +93,36 @@ const ProductDetail = () => {
 
   // Get selected variant
   const getSelectedVariant = () => {
-    console.log('[ProductDetail] getSelectedVariant called with:', {
-      product,
-      selectedSize,
-      selectedColor,
-      hasVariants: !!product?.variants,
-      variantsType: product?.variants ? (Array.isArray(product.variants) ? 'array' : typeof product.variants) : 'undefined'
-    });
-    
     // Check if product exists and has variants array
     if (!product || !product.variants || !Array.isArray(product.variants) || product.variants.length === 0) {
-      console.log('[ProductDetail] No product or variants found');
       return undefined;
     }
     
     // If both size and color are selected, find exact match
     if (selectedSize && selectedColor) {
       const variant = product.variants.find((v) => v.size === selectedSize && v.color === selectedColor);
-      console.log('[ProductDetail] Found variant by size and color:', variant);
       return variant;
     }
     
     // If only color is selected, find by color
     if (selectedColor) {
       const variant = product.variants.find((v) => v.color === selectedColor);
-      console.log('[ProductDetail] Found variant by color:', variant);
       return variant;
     }
     
     // If only size is selected, find by size
     if (selectedSize) {
       const variant = product.variants.find((v) => v.size === selectedSize);
-      console.log('[ProductDetail] Found variant by size:', variant);
       return variant;
     }
     
     // Always return the first variant as default if no selection is made and variants exist
     if (product.variants.length > 0) {
       const firstVariant = product.variants[0];
-      console.log('[ProductDetail] Returning first variant:', firstVariant);
       return firstVariant;
     }
     
     // No variants available
-    console.log('[ProductDetail] No variants available');
     return undefined;
   };
 
@@ -273,15 +249,7 @@ const ProductDetail = () => {
     );
   }
 
-  // Log product data for debugging
-  console.log('[ProductDetail] Product data:', product);
-  console.log('[ProductDetail] Variants:', product.variants);
-  console.log('[ProductDetail] Product data type check:', {
-    isArray: Array.isArray(product),
-    keys: Object.keys(product),
-    hasVariants: 'variants' in product,
-    variantsValue: product.variants
-  });
+
 
   const allSizes = hasVariants && Array.isArray(product.variants) 
     ? Array.from(new Set(product.variants.map((v) => v.size).filter(Boolean))) as string[]
@@ -800,7 +768,7 @@ const ProductDetail = () => {
                           src={
                             stylingMedia[stylingIndex].url.startsWith('http://') || stylingMedia[stylingIndex].url.startsWith('https://')
                               ? stylingMedia[stylingIndex].url
-                              : `${import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000'}${stylingMedia[stylingIndex].url.startsWith('/') ? stylingMedia[stylingIndex].url : `/${stylingMedia[stylingIndex].url}`}`
+                              : `${import.meta.env.VITE_BACKEND_URL}${stylingMedia[stylingIndex].url.startsWith('/') ? stylingMedia[stylingIndex].url : `/${stylingMedia[stylingIndex].url}`}`
                           }
                           type="video/mp4"
                         />
@@ -870,7 +838,7 @@ const ProductDetail = () => {
                             src={
                               videoUrl.startsWith('http://') || videoUrl.startsWith('https://') 
                                 ? videoUrl 
-                                : `${import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000'}${videoUrl.startsWith('/') ? videoUrl : `/${videoUrl}`}`
+                                : `${import.meta.env.VITE_BACKEND_URL}${videoUrl.startsWith('/') ? videoUrl : `/${videoUrl}`}`
                             } 
                             type="video/mp4" 
                           />

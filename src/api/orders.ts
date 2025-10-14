@@ -123,16 +123,12 @@ export const fetchOrders = async (
                    localStorage.getItem('cart_session_id') ||
                    sessionStorage.getItem('cart_session_id');
     
-    console.log('Fetching orders with session ID:', sessionId);
-    
     const response = await api.get(
       '/orders',
       {
         headers: buildApiHeaders(sessionId || undefined, bearerToken),
       }
     );
-    
-    console.log('Orders API response:', response.data);
     
     // Handle both paginated and non-paginated responses
     if (response.data && Array.isArray(response.data)) {
@@ -144,11 +140,9 @@ export const fetchOrders = async (
     }
     
     // If we get here, the response format is unexpected
-    console.warn('Unexpected API response format:', response.data);
     return [];
     
   } catch (error: any) {
-    console.error('Error fetching orders:', error);
     throw new Error(error.response?.data?.message || 'Failed to fetch orders');
   }
 };

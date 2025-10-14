@@ -54,7 +54,6 @@ const ContactForms: React.FC = () => {
         return (data as any).data
       }
       // Fallback to empty array if structure is unexpected
-      console.warn("Unexpected API response structure:", data)
       return []
     },
   })

@@ -119,7 +119,6 @@ const AdminDashboard: React.FC = () => {
         await createProductMutation.mutateAsync({ data, images, variants })
       }
     } catch (error) {
-      console.error('Error saving product:', error)
       toast({
         title: "Error",
         description: "Failed to save product. Please try again.",
@@ -244,9 +243,6 @@ const AdminDashboard: React.FC = () => {
       const newProduct = await createProduct(data, token!)
       currentStep++
 
-      // Debug: Check if product was created successfully
-      console.log("Created product:", newProduct)
-
       if (!newProduct || !newProduct.id) {
         throw new Error("Product creation failed - no product ID returned")
       }
@@ -269,12 +265,10 @@ const AdminDashboard: React.FC = () => {
               actual_price: variant.actual_price,
               stock: variant.stock,
             }
-            console.log("Creating variant for product ID:", newProduct.id, "with data:", variantData)
             await createProductVariant(newProduct.id, variantData, token!)
             currentStep++
           }
         } catch (error: any) {
-          console.error("Variant creation failed:", error)
           throw new Error(`Product created but variant creation failed: ${error.message}`)
         }
       }
@@ -354,8 +348,6 @@ const AdminDashboard: React.FC = () => {
           headers: buildApiHeaders(undefined, token!)
         });
         
-        console.log('Variants API Response:', response); // Debug log
-        
         // Handle different possible response structures
         let variantsData = [];
         if (Array.isArray(response.data)) {
@@ -367,8 +359,6 @@ const AdminDashboard: React.FC = () => {
             ? response.data.variants 
             : [];
         }
-        
-        console.log('Processed variants data:', variantsData); // Debug log
         
         // Create a map of existing variants by size and color
         const existingVariantMap = new Map(
@@ -394,16 +384,9 @@ const AdminDashboard: React.FC = () => {
         for (const variantToDelete of variantsToDelete) {
           try {
             const variantKey = `${variantToDelete.size}-${variantToDelete.color}`;
-            console.log('Attempting to delete variant:', {
-              variantId: variantToDelete.id,
-              productId: id,
-              variantKey,
-              existingVariantMap: Array.from(existingVariantMap.entries())
-            });
             
             // First try the standalone endpoint (as per routes/api.php)
             try {
-              console.log('Trying standalone endpoint...');
               const response = await api.delete(
                 `/variants/${variantToDelete.id}`,
                 { 
@@ -411,17 +394,12 @@ const AdminDashboard: React.FC = () => {
                   validateStatus: (status) => status < 500
                 }
               );
-              console.log('Delete successful with standalone endpoint:', response.data);
               continue; // If successful, move to next variant
             } catch (standaloneError) {
-              console.log('Standalone endpoint failed, trying nested...', {
-                error: (standaloneError as any).response?.data || (standaloneError as Error).message
-              });
             }
             
             // If standalone endpoint fails, try the nested endpoint
             try {
-              console.log('Trying nested endpoint...');
               const response = await api.delete(
                 `/products/${id}/variants/${variantToDelete.id}`,
                 { 
@@ -429,7 +407,6 @@ const AdminDashboard: React.FC = () => {
                   validateStatus: (status) => status < 500
                 }
               );
-              console.log('Delete successful with nested endpoint:', response.data);
             } catch (nestedError) {
               console.error('Both delete attempts failed for variant:', {
                 variantId: variantToDelete.id,
@@ -439,7 +416,6 @@ const AdminDashboard: React.FC = () => {
               
               // Try a direct fetch as a last resort
               try {
-                console.log('Trying direct fetch...');
                 const response = await fetch(
                   `${window.location.origin}/api/variants/${variantToDelete.id}`,
                   {
@@ -456,7 +432,6 @@ const AdminDashboard: React.FC = () => {
                 
                 const data = await response.json();
                 if (!response.ok) throw new Error(data.message || 'Failed to delete variant');
-                console.log('Direct fetch delete successful:', data);
               } catch (fetchError) {
                 console.error('All delete attempts failed for variant:', {
                   variantId: variantToDelete.id,
@@ -486,7 +461,6 @@ const AdminDashboard: React.FC = () => {
             
             if (existingVariant?.id) {
               // Update existing variant
-              console.log('Updating variant:', { variantKey, existingVariant });
               await api.put(
                 `/products/${id}/variants/${existingVariant.id}`,
                 {
@@ -510,7 +484,6 @@ const AdminDashboard: React.FC = () => {
               });
             } else {
               // Create new variant
-              console.log('Creating new variant:', variantKey);
               await api.post(
                 `/products/${id}/variants`,
                 {

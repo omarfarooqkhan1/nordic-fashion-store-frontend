@@ -50,20 +50,17 @@ const VerifyEmail: React.FC = () => {
     setError("");
     setLoading(true);
     try {
-      console.log("Verifying email with:", { userId: finalUserId, code });
       const response = await api.post("/customer/verify-email", {
         user_id: finalUserId,
         code: code
       });
       
-      console.log("Response data:", response.data);
       // Handle successful verification
       setSuccess(true);
       setTimeout(() => {
         navigate("/login", { replace: true });
       }, 1500);
     } catch (err: any) {
-      console.error("Verification error:", err);
       setError(err.response?.data?.message || err.message || "An unexpected error occurred. Please try again.");
     } finally {
       setLoading(false);

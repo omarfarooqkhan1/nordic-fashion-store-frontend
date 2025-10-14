@@ -15,7 +15,6 @@ export const fetchProducts = async (): Promise<Product[]> => {
     // Fallback for direct array response
     return Array.isArray(response.data) ? response.data : [];
   } catch (error) {
-    console.error('[api/products.ts] fetchProducts error:', error);
     throw error;
   }
 };
@@ -36,7 +35,6 @@ export const fetchProductById = async (id: string): Promise<Product> => {
 
     return productData;
   } catch (error) {
-    console.error('[api/products.ts] fetchProduct details error:', error);
     throw error;
   }
 };

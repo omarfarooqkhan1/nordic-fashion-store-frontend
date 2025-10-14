@@ -28,7 +28,7 @@ export const SizeGuideModal: React.FC<SizeGuideModalProps> = ({
   let imageUrl = sizeGuideImage;
   try {
     if (!sizeGuideImage.startsWith('http://') && !sizeGuideImage.startsWith('https://')) {
-      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000';
+      const backendUrl = import.meta.env.VITE_BACKEND_URL;
       // Ensure we don't double up on slashes
       if (sizeGuideImage.startsWith('/')) {
         imageUrl = `${backendUrl}${sizeGuideImage}`;
@@ -37,7 +37,6 @@ export const SizeGuideModal: React.FC<SizeGuideModalProps> = ({
       }
     }
   } catch (error) {
-    console.error('[SizeGuideModal] Error resolving size guide image URL:', error);
     imageUrl = sizeGuideImage; // Fallback to original
   }
 

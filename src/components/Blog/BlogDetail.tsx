@@ -160,7 +160,7 @@ const BlogDetail: React.FC = () => {
         {blog.featured_image && (
           <div className="aspect-video overflow-hidden rounded-lg">
             <img
-              src={getImageUrl(blog.featured_image) || getPlaceholderImageUrl(blog.title)}
+              src={getImageUrl(blog.featured_image)}
               alt={blog.title}
               className="w-full h-full object-cover"
               onError={(e) => {

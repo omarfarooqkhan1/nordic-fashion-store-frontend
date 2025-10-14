@@ -71,7 +71,6 @@ const Checkout: React.FC = () => {
             fillFormWithAddress(defaultAddress);
           }
         } catch (error) {
-          console.error('Error loading addresses:', error);
           toast({
             title: 'Error',
             description: 'Failed to load saved addresses',
@@ -138,7 +137,6 @@ const Checkout: React.FC = () => {
       
       return newAddress;
     } catch (error) {
-      console.error('Error saving address:', error);
       toast({
         title: 'Error',
         description: 'Failed to save address',
@@ -301,13 +299,6 @@ const Checkout: React.FC = () => {
       await clearCartItems();
 
     } catch (error: any) {
-        error,
-        message: error.message,
-        response: error.response,
-        status: error.response?.status,
-        data: error.response?.data
-      });
-      
       toast({
         title: 'Payment failed',
         description: error.message || 'There was an error processing your order',
@@ -364,6 +355,7 @@ const Checkout: React.FC = () => {
             <h1 className="text-3xl font-bold text-foreground mb-2">Checkout</h1>
             <p className="text-muted-foreground">Complete your order information</p>
           </div>
+          <form id="checkout-form" onSubmit={handleSubmit}>
 
           <div className="space-y-6">
             {/* Shipping Information */}
@@ -728,9 +720,9 @@ const Checkout: React.FC = () => {
               </div>
             </CardContent>
           </Card>
+          </form>
         </div>
       </div>
-      </form>
     </div>
   );
 };

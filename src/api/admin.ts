@@ -104,7 +104,6 @@ export const createProduct = async (
     );
     
     // Debug: Log the response to see the structure
-    console.log('Create product response:', response.data);
     
     // Handle different response structures
     const product = response.data?.data || response.data;
@@ -560,8 +559,6 @@ export const uploadProductImage = async (
   variantId?: number // Add variantId parameter
 ): Promise<ProductImage> => {
   try {
-    console.log('=== UPLOAD PRODUCT IMAGE START ===');
-    console.log('Uploading image for product ID:', productId, 'File:', imageFile.name, 'Size:', imageFile.size);
     try {
       // Validate file type
       if (!imageFile.type.startsWith('image/')) {
@@ -682,13 +679,6 @@ export const createProductVariant = async (
   token: string
 ): Promise<{ message: string; variant: ProductVariant }> => {
   try {
-    console.log('Creating variant for product ID:', productId, 'with data:', variantData);
-    try {
-      console.log('[createProductVariant] Request body:', JSON.stringify(variantData, null, 2));
-    } catch (e) {
-      console.log('[createProductVariant] Could not stringify variantData');
-    }
-    
     const response = await api.post(
       `/products/${productId}/variants`,
       variantData,
@@ -697,11 +687,8 @@ export const createProductVariant = async (
       }
     );
     
-    console.log('Create variant response:', response.data);
     return response.data;
   } catch (error: any) {
-    console.error('Create variant error:', error);
-    console.error('Error response:', error.response?.data);
     throw new Error(error.response?.data?.message || 'Failed to create variant');
   }
 };
