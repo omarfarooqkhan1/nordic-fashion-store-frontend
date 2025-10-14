@@ -29,10 +29,14 @@ const CartItem: React.FC<CartItemProps> = ({
   const itemPrice = getItemPrice(item);
   const totalPrice = itemPrice * item.quantity;
 
-  // Get product image - prioritize variant images, then fall back to product images
-  const productImage = item.variant?.images?.[0]?.url || 
-    item.variant?.product?.images?.[0]?.url ||
-    `https://placehold.co/96x96/EFEFEF/AAAAAA?text=Product`;
+  // Get product image - prioritize variant mainImages[0], then variant images[0], then product images[0]
+
+  // Add VITE_BACKEND_URL to image URLs if they are relative paths
+  const VITE_BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
+
+  const productImage = item.variant.product?.images?.[0]?.url
+    ? `${VITE_BACKEND_URL}${item.variant.product.images[0].url}`
+    : `https://placehold.co/96x96/EFEFEF/AAAAAA?text=Product`;
 
   return (
     <Card className="bg-card border-border rounded-lg shadow-md">
@@ -110,7 +114,7 @@ const CartItem: React.FC<CartItemProps> = ({
                   className="mb-1"
                 />
                 <p className="text-sm text-muted-foreground">
-                  {getCurrencySymbol()}{itemPrice.toFixed(2)} {t('common.each') || 'each'}
+                  {getCurrencySymbol()}{Number(itemPrice).toFixed(2)} {t('common.each') || 'each'}
                 </p>
               </div>
             </div>

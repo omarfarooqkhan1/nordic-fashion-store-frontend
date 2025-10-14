@@ -32,15 +32,15 @@ export const VariantForm: React.FC<VariantFormProps> = ({
   const [variantData, setVariantData] = useState<any>(() => {
     if (variant) {
       return {
-        ...variant,
-        actual_price: variant.actual_price?.toString() || "",
+  ...variant,
+  price: variant.price?.toString() || "",
         stock: variant.stock?.toString() || "",
       };
     }
     return {
       size: "",
       color: "",
-      actual_price: "",
+  price: "",
       stock: "",
       video_url: "",
     };
@@ -179,12 +179,12 @@ export const VariantForm: React.FC<VariantFormProps> = ({
       newErrors.color = "Color is required";
     }
     
-    if (!variantData.actual_price) {
-      newErrors.actual_price = "Price is required";
+    if (!variantData.price) {
+      newErrors.price = "Price is required";
     } else {
-      const price = Number.parseFloat(variantData.actual_price);
+    const price = Number.parseFloat(variantData.price);
       if (isNaN(price) || price < 0) {
-        newErrors.actual_price = "Please enter a valid price";
+        newErrors.price = "Please enter a valid price";
       }
     }
     
@@ -212,7 +212,7 @@ export const VariantForm: React.FC<VariantFormProps> = ({
         return;
       }
 
-      const price = Number.parseFloat(variantData.actual_price);
+    const price = Number.parseFloat(variantData.price);
       const stock = Number.parseInt(variantData.stock);
 
       setIsUploading(true);
@@ -220,7 +220,7 @@ export const VariantForm: React.FC<VariantFormProps> = ({
       let formattedVariantData: any = {
         ...variantData,
         id: variantData.id || Date.now(),
-        actual_price: price, // send as 'actual_price' to match backend
+  price: price,
         stock: stock,
       };
 
@@ -397,16 +397,16 @@ export const VariantForm: React.FC<VariantFormProps> = ({
                 type="number"
                 step="0.01"
                 min="0"
-                value={variantData.actual_price}
+                value={variantData.price}
                 onChange={(e) => {
-                  setVariantData({ ...variantData, actual_price: e.target.value });
-                  if (errors.actual_price) setErrors(prev => ({ ...prev, actual_price: '' }));
+                  setVariantData({ ...variantData, price: e.target.value });
+                  if (errors.price) setErrors(prev => ({ ...prev, price: '' }));
                 }}
                 placeholder="e.g., 29.99"
                 required
-                className={errors.actual_price ? "border-red-500" : ""}
+                className={errors.price ? "border-red-500" : ""}
               />
-              {errors.actual_price && <p className="text-sm text-red-500 mt-1">{errors.actual_price}</p>}
+              {errors.price && <p className="text-sm text-red-500 mt-1">{errors.price}</p>}
             </div>
             <div>
               <Label htmlFor="variant-stock">Stock *</Label>

@@ -260,6 +260,7 @@ const CheckoutFixed: React.FC = () => {
       });
       
     } catch (error: any) {
+      console.log('Error creating order after payment:', error);
       toast.toast({
         title: 'Error',
         description: 'Payment succeeded but there was an error creating your order',
@@ -894,7 +895,7 @@ const CheckoutFixed: React.FC = () => {
                         {item.variant?.size} - {item.variant?.color} × {item.quantity}
                       </p>
                     </div>
-                    <span className="font-medium">€{((item.variant?.actual_price || 0) * item.quantity).toFixed(2)}</span>
+                    <span className="font-medium">€{(((item.variant?.price ?? Number(item.variant?.product?.price)) || 0) * item.quantity).toFixed(2)}</span>
                   </div>
                 ))}
                 

@@ -3,15 +3,15 @@ export interface CartItem {
   product_variant_id: number;
   quantity: number;
   variant: {
+    price: number;
     id: number;
     size: string;
     color: string;
-    actual_price: number;
     product: {
       id: number;
       name: string;
       gender: 'male' | 'female' | 'unisex';
-      price: string;
+  price: number;
       images: { url: string }[];
       category: { name: string };
       variants: any[];

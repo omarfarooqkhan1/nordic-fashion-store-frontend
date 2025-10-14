@@ -413,27 +413,14 @@ const OrderManagement: React.FC = () => {
                                               </div>
                                             )}
                                           </div>
-                                        ) : item.variant?.images?.[0]?.url ? (
-                                          // Regular product variant image
-                                          <div className="relative w-full h-full group">
-                                            <img
-                                              src={item.variant.images[0].url}
-                                              alt={item.variant.images[0].alt_text || item.product_name}
-                                              className="w-full h-full object-cover cursor-pointer"
-                                              onClick={() => handleImagePreview(item.variant.images[0].url)}
-                                            />
-                                            <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all duration-200 flex items-center justify-center pointer-events-none">
-                                              <Eye className="h-6 w-6 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
-                                            </div>
-                                          </div>
                                         ) : item.variant?.product?.images?.[0]?.url ? (
-                                          // Fallback to product image
+                                          // Product image with backend URL
                                           <div className="relative w-full h-full group">
                                             <img
-                                              src={item.variant.product.images[0].url}
+                                              src={`${import.meta.env.VITE_BACKEND_URL}${item.variant.product.images[0].url}`}
                                               alt={item.variant.product.images[0].alt_text || item.product_name}
                                               className="w-full h-full object-cover cursor-pointer"
-                                              onClick={() => handleImagePreview(item.variant.product.images[0].url)}
+                                              onClick={() => handleImagePreview(`${import.meta.env.VITE_BACKEND_URL}${item.variant.product.images[0].url}`)}
                                             />
                                             <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all duration-200 flex items-center justify-center pointer-events-none">
                                               <Eye className="h-6 w-6 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-200" />

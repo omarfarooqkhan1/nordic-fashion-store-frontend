@@ -311,8 +311,8 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const getItemPrice = (item: CartItem): number => {
-    // Use the actual_price from the variant directly
-    return item?.variant?.actual_price || 0;
+  // Use the price from the variant directly
+  return item?.variant?.price || 0;
   };
 
   const getCartTotal = () => {

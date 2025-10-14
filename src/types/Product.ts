@@ -15,7 +15,6 @@ export interface Variant {
   color: string;
   size: string;
   price: number;
-  actual_price: number;
   stock: number;
   main_images?: Image[];
   detailed_images?: Image[];

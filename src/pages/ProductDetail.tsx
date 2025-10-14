@@ -268,7 +268,7 @@ const ProductDetail = () => {
   // Use the selected variant's price, fallback to first variant's price, then to 0
   // For products without variants, we would need to get price from the product itself (not implemented in current backend)
   const finalPrice = hasVariants 
-    ? (variant ? variant.actual_price : (product?.variants?.length > 0 ? product.variants[0].actual_price : 0))
+    ? (variant ? variant.price : (product?.variants?.length > 0 ? product.variants[0].price : 0))
     : 0; // For products without variants, price should come from product, but it's not in the current schema
   const discountedPrice = product?.discount && finalPrice
     ? (finalPrice * (1 - (product.discount / 100)))
@@ -605,11 +605,11 @@ const ProductDetail = () => {
               <>
                 <Button
                   onClick={handleAddToCart}
-                  disabled={hasVariants && (!isVariantSelected || !isInStock)}
+                  disabled={hasVariants && (!selectedSize || !selectedColor || !isVariantSelected || !isInStock)}
                   className="w-full py-3 sm:py-4 md:py-5 text-base sm:text-lg font-bold disabled:opacity-50 rounded-xl bg-white hover:bg-gray-50 dark:hover:bg-slate-100 text-black border-2 border-gray-300 dark:border-slate-600 hover:border-gray-400 dark:hover:border-slate-500 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02] disabled:hover:scale-100"
                 >
                   {hasVariants ? (
-                    !isVariantSelected ? t('product.chooseVariant') : !isInStock ? t('product.outOfStock') : t('product.addToCart')
+                    !selectedSize || !selectedColor ? t('product.chooseVariant') : !isVariantSelected ? t('product.chooseVariant') : !isInStock ? t('product.outOfStock') : t('product.addToCart')
                   ) : (
                     t('product.addToCart')
                   )}

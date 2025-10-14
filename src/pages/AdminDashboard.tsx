@@ -262,7 +262,7 @@ const AdminDashboard: React.FC = () => {
               size: variant.size,
               color: variant.color,
               sku: "", // Let backend generate SKU
-              actual_price: variant.actual_price,
+              price: variant.price,
               stock: variant.stock,
             }
             await createProductVariant(newProduct.id, variantData, token!)
@@ -466,7 +466,7 @@ const AdminDashboard: React.FC = () => {
                 {
                   size: variant.size,
                   color: variant.color,
-                  actual_price: variant.price || 0, // Changed from price to actual_price
+                  price: variant.price || 0,
                   stock: variant.stock || 0,
                   sku: variant.sku || `variant-${variant.size}-${variant.color}`,
                 },
@@ -489,7 +489,7 @@ const AdminDashboard: React.FC = () => {
                 {
                   size: variant.size,
                   color: variant.color,
-                  actual_price: variant.price || 0, // Changed from price to actual_price
+                  price: variant.price || 0,
                   stock: variant.stock || 0,
                   sku: variant.sku || `variant-${variant.size}-${variant.color}`,
                 },
