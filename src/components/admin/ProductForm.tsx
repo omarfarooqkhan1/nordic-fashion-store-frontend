@@ -75,7 +75,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                   {
                     size: variantData.size,
                     color: variantData.color,
-                    actual_price: Number(variantData.actual_price),
+                    price: Number(variantData.price),
                     stock: Number(variantData.stock),
                     sku: variantData.sku,
                   },
@@ -121,7 +121,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                 const variantPayload = {
                   size: variantData.size,
                   color: variantData.color,
-                  actual_price: Number(variantData.actual_price),
+                  price: Number(variantData.price),
                   stock: Number(variantData.stock),
                   sku: variantData.sku,
                 };
@@ -188,8 +188,8 @@ export const ProductForm: React.FC<ProductFormProps> = ({
       variant.price === undefined ||
       variant.price === null ||
       variant.price === "" ||
-      isNaN(Number(variant.price ?? variant.actual_price)) ||
-      Number(variant.price ?? variant.actual_price) < 0
+      isNaN(Number(variant.price)) ||
+      Number(variant.price) < 0
     );
 
     if (invalidPriceVariants.length > 0) {
@@ -201,23 +201,6 @@ export const ProductForm: React.FC<ProductFormProps> = ({
       return;
     }
 
-    // Validate that all variants have valid stock values
-    const invalidStockVariants = variants.filter(variant =>
-      variant.stock === undefined ||
-      variant.stock === null ||
-      variant.stock === "" ||
-      isNaN(Number(variant.stock)) ||
-      Number(variant.stock) < 0
-    );
-
-    if (invalidStockVariants.length > 0) {
-      toast.toast({
-        title: "Invalid variant stock",
-        description: `Found ${invalidStockVariants.length} variant(s) with invalid stock values. All variants must have valid non-negative stock quantities.`,
-        variant: "destructive",
-      });
-      return;
-    }
 
     // Upload size guide image if a new file is selected
     if (sizeGuideFile && product && token) {
@@ -239,8 +222,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
     // Ensure all variants have valid prices before sending
     const formattedVariants = variants.map(variant => ({
       ...variant,
-      price: Number(variant.price ?? variant.actual_price),
-      stock: Number(variant.stock)
+      price: Number(variant.price),
     }));
 
     onSave(formData, [], formattedVariants);
@@ -352,11 +334,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                     try {
                       if (imageUrl && !imageUrl.startsWith('http://') && !imageUrl.startsWith('https://')) {
                         const backendUrl = import.meta.env.VITE_BACKEND_URL;
-                        if (imageUrl.startsWith('/')) {
-                          imageUrl = `${backendUrl}${imageUrl}`;
-                        } else {
-                          imageUrl = `${backendUrl}/${imageUrl}`;
-                        }
+                        imageUrl = `${backendUrl}${imageUrl}`;
                       }
                     } catch (error) {
                       imageUrl = product.size_guide_image; // Fallback to original
@@ -422,8 +400,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                           {
                             size: variantData.size,
                             color: variantData.color,
-                            actual_price: Number(variantData.actual_price),
-                            stock: Number(variantData.stock),
+                            price: Number(variantData.price),
                             sku: variantData.sku,
                           },
                           token
@@ -469,8 +446,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                         const variantPayload = {
                           size: variantData.size,
                           color: variantData.color,
-                          actual_price: Number(variantData.actual_price),
-                          stock: Number(variantData.stock),
+                          price: Number(variantData.price),
                           sku: variantData.sku,
                         };
 
@@ -527,7 +503,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                     <Card key={variant.id} className="border-l-4 border-l-blue-500 dark:border-l-blue-600 bg-card">
                       <CardContent className="p-4">
                         <div className="flex items-center justify-between">
-                          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 flex-1">
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 flex-1">
                             <div>
                               <Label className="text-sm text-muted-foreground">Size</Label>
                               <p className="font-medium text-foreground">{variant.size}</p>
@@ -539,13 +515,9 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                             <div>
                               <Label className="text-sm text-muted-foreground">Price</Label>
                               <p className="font-medium text-foreground">
-                                €{variant.actual_price !== undefined && variant.actual_price !== null && !isNaN(Number(variant.actual_price)) ? 
-                                  Number(variant.actual_price).toFixed(2) : 'Invalid'}
+                                €{variant.price !== undefined && variant.price !== null && !isNaN(Number(variant.price)) ?
+                                  Number(variant.price).toFixed(2) : 'Invalid'}
                               </p>
-                            </div>
-                            <div>
-                              <Label className="text-sm text-muted-foreground">Stock</Label>
-                              <p className="font-medium text-foreground">{variant.stock} units</p>
                             </div>
                           </div>
                           <div className="flex gap-2">

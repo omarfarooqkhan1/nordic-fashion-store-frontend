@@ -104,7 +104,6 @@ export const ProductReviews: React.FC<ProductReviewsProps> = ({
     return (
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-2xl font-bold">Customer Reviews</h2>
           <Button variant="outline" onClick={handleCancelReview}>
             Back to Reviews
           </Button>
@@ -120,10 +119,9 @@ export const ProductReviews: React.FC<ProductReviewsProps> = ({
   }
 
   return (
-    <div className="space-y-6 px-2 sm:px-4 md:px-8 max-w-3xl mx-auto w-full">
+    <div className="px-2 sm:px-4 md:px-8 max-w-7xl mx-auto w-full">
       {/* Header - Review status badges only visible to authenticated user */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0">
-        <h2 className="text-xl sm:text-2xl font-bold text-center sm:text-left">Customer Reviews</h2>
         {isAuthenticated && reviewStatus && (
           <div className="flex flex-wrap items-center gap-2 sm:gap-3 justify-center sm:justify-end">
             {!isLoadingStatus && (

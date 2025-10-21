@@ -136,10 +136,14 @@ const Cart = () => {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => {
-                          const currentQuantity = customItem.quantity || 1;
-                          if (currentQuantity > 1) {
-                            updateCustomJacketQuantity(customItem.id, currentQuantity - 1);
+                        onClick={async () => {
+                          try {
+                            const currentQuantity = customItem.quantity || 1;
+                            if (currentQuantity > 1) {
+                              await updateCustomJacketQuantity(customItem.id, currentQuantity - 1);
+                            }
+                          } catch (error) {
+                            throw error;
                           }
                         }}
                         className="w-8 h-8 p-0"
@@ -153,9 +157,13 @@ const Cart = () => {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => {
-                          const currentQuantity = customItem.quantity || 1;
-                          updateCustomJacketQuantity(customItem.id, currentQuantity + 1);
+                        onClick={async () => {
+                          try {
+                            const currentQuantity = customItem.quantity || 1;
+                            await updateCustomJacketQuantity(customItem.id, currentQuantity + 1);
+                          } catch (error) {
+                            throw error;
+                          }
                         }}
                         className="w-8 h-8 p-0"
                       >

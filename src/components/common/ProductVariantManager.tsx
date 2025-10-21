@@ -9,15 +9,13 @@ interface Variant {
   id: number;
   size: string;
   color: string;
-  actual_price: string | number;
-  stock: number;
+  price: string | number;
 }
 
 interface NewVariant {
   size: string;
   color: string;
-  actual_price: string;
-  stock: string;
+  price: string;
 }
 
 interface ProductVariantManagerProps {
@@ -51,7 +49,7 @@ export const ProductVariantManager: React.FC<ProductVariantManagerProps> = ({
             <CardTitle className="text-lg">Add New Variant</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <FormField
                 label="Size"
                 id="size"
@@ -59,7 +57,7 @@ export const ProductVariantManager: React.FC<ProductVariantManagerProps> = ({
                 onChange={(value) => onNewVariantChange('size', value)}
                 placeholder="XS, S, M, L, XL"
               />
-              
+
               <FormField
                 label="Color"
                 id="color"
@@ -67,24 +65,15 @@ export const ProductVariantManager: React.FC<ProductVariantManagerProps> = ({
                 onChange={(value) => onNewVariantChange('color', value)}
                 placeholder="Red, Blue, etc."
               />
-              
+
               <FormField
                 label="Price (€)"
                 id="price"
                 type="number"
                 step="0.01"
-                value={newVariant.actual_price}
-                onChange={(value) => onNewVariantChange('actual_price', value)}
+                value={newVariant.price}
+                onChange={(value) => onNewVariantChange('price', value)}
                 placeholder="0.00"
-              />
-              
-              <FormField
-                label="Stock"
-                id="stock"
-                type="number"
-                value={newVariant.stock}
-                onChange={(value) => onNewVariantChange('stock', value)}
-                placeholder="0"
               />
             </div>
             <Button 
@@ -109,7 +98,7 @@ export const ProductVariantManager: React.FC<ProductVariantManagerProps> = ({
                 <Card key={variant.id} className="border-l-4 border-l-blue-500">
                   <CardContent className="p-4">
                     <div className="flex items-center justify-between">
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 flex-1">
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 flex-1">
                         <div>
                           <Label className="text-sm text-muted-foreground">Size</Label>
                           <p className="font-medium">{variant.size}</p>
@@ -120,11 +109,7 @@ export const ProductVariantManager: React.FC<ProductVariantManagerProps> = ({
                         </div>
                         <div>
                           <Label className="text-sm text-muted-foreground">Price</Label>
-                          <p className="font-medium">€{variant.actual_price}</p>
-                        </div>
-                        <div>
-                          <Label className="text-sm text-muted-foreground">Stock</Label>
-                          <p className="font-medium">{variant.stock} units</p>
+                          <p className="font-medium">€{variant.price}</p>
                         </div>
                       </div>
                       <ConfirmationDialog

@@ -564,6 +564,9 @@ const translations = {
     'theme.darkMode': 'Dark Mode',
     'theme.lightMode': 'Light Mode',
     
+    // Review section
+    'product.customerReviews': 'Customer Reviews',
+    
     // Validation messages
     'validation.nameMinLength': 'Name must be at least 2 characters',
     'validation.emailInvalid': 'Please enter a valid email address',
@@ -620,6 +623,10 @@ const translations = {
     'nav.shopWomen': 'Shop Women',
     'nav.ourStory': 'Our Story',
     
+    // Similar products
+    'product.similarProducts': 'Similar Products',
+    'product.similarProductsDescription': 'You might also like these products',
+    
     // Error pages
     'error.404.title': 'Page Not Found',
     'error.404.desc': 'The page you\'re looking for doesn\'t exist or has been moved.',
@@ -639,6 +646,7 @@ const translations = {
   'product.freeShipping': 'Fri frakt på beställningar över €100',
   'product.noReviews': 'Inga recensioner än',
   'product.wishlistComingSoon': 'Önskelista kommer snart',
+  'product.customerReviews': 'Kundrecensioner',
     'nav.home': 'Hem',
     'nav.products': 'Produkter',
     'nav.about': 'Om oss',
@@ -1532,6 +1540,7 @@ const translations = {
     'product.selectColor': 'Velg farge',
     'product.selectSizeAndColor': 'Velg størrelse og farge',
     'product.chooseVariant': 'Velg din variant',
+    'product.customerReviews': 'Kundeomtaler',
     'common.share': 'Del',
     'common.each': 'hver',
     // Custom Jacket Configurator
@@ -1774,7 +1783,11 @@ const translations = {
     // Shop navigation
     'nav.shopMen': 'Herreklær',
     'nav.shopWomen': 'Dameklær',
-    'nav.ourStory': 'Vår historie'
+    'nav.ourStory': 'Vår historie',
+    
+    // Similar products
+    'product.similarProducts': 'Lignende produkter',
+    'product.similarProductsDescription': 'Du vil kanskje også like disse produktene'
   },
   da: {
   // ProductDetail specific missing translations
@@ -2173,6 +2186,7 @@ const translations = {
     'product.selectColor': 'Velg farge',
     'product.selectSizeAndColor': 'Velg størrelse og farge',
     'product.chooseVariant': 'Velg din variant',
+    'product.customerReviews': 'Kundeomtaler',
     'product.detailsDescription': 'Detaljert visning av {name}',
     'product.stylingTitle': 'Hvordan Andre Stiler Dette',
     'product.stylingDescription': 'Se hvordan andre stiler {name}',
@@ -2314,7 +2328,11 @@ const translations = {
     // Shop navigation
     'nav.shopMen': 'Herretøj',
     'nav.shopWomen': 'Dametøj',
-    'nav.ourStory': 'Vores historie'
+    'nav.ourStory': 'Vores historie',
+    
+    // Similar products
+    'product.similarProducts': 'Lignende produkter',
+    'product.similarProductsDescription': 'Du vil måske også synes godt om disse produkter'
   },
   fi: {
   // ProductDetail specific missing translations
@@ -2714,6 +2732,7 @@ const translations = {
     'product.selectColor': 'Valitse väri',
     'product.selectSizeAndColor': 'Valitse koko ja väri',
     'product.chooseVariant': 'Valitse variantti',
+    'product.customerReviews': 'Asiakasarvostelut',
     'product.detailsDescription': 'Yksityiskohtainen näkymä tuotteesta {name}',
     'product.stylingTitle': 'Miten Muut Käyttävät Tätä',
     'product.stylingDescription': 'Katso miten muut käyttävät tuotetta {name}',
@@ -2861,7 +2880,11 @@ const translations = {
     // Shop navigation
     'nav.shopMen': 'Miesten tuotteet',
     'nav.shopWomen': 'Naisten tuotteet',
-    'nav.ourStory': 'Meidän tarinamme'
+    'nav.ourStory': 'Meidän tarinamme',
+    
+    // Similar products
+    'product.similarProducts': 'Samankaltaiset tuotteet',
+    'product.similarProductsDescription': 'Saatat pitää myös näistä tuotteista'
   },
   is: {
   // ProductDetail specific missing translations
@@ -3261,6 +3284,7 @@ const translations = {
     'product.selectColor': 'Velja lit',
     'product.selectSizeAndColor': 'Veldu stærð og lit',
     'product.chooseVariant': 'Veldu afbrigði',
+    'product.customerReviews': 'Viðskiptavinir yfirfara',
     'product.detailsDescription': 'Nákvæm sýn á {name}',
     'product.stylingTitle': 'Hvernig Aðrir Nota Þetta',
     'product.stylingDescription': 'Sjáðu hvernig aðrir nota {name}',
@@ -3408,7 +3432,11 @@ const translations = {
     // Shop navigation
     'nav.shopMen': 'Karlavörur',
     'nav.shopWomen': 'Kvennavörur',
-    'nav.ourStory': 'Saga okkar'
+    'nav.ourStory': 'Saga okkar',
+    
+    // Similar products
+    'product.similarProducts': 'Svipaðar vörur',
+    'product.similarProductsDescription': 'Þú gætir líka líkað við þessar vörur'
   }
 };
 

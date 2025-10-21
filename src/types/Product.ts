@@ -45,6 +45,7 @@ export interface Product {
   allImages?: Image[]; // All images including size guide images
   availability?: Record<string, boolean>; // Added to match API response
   variantPrices?: Record<string, number>; // Added to match API response
+  similar_products?: Product[]; // Similar products
   created_at: string;
   updated_at: string;
   discount?: number;

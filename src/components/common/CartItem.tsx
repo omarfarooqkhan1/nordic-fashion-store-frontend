@@ -38,6 +38,15 @@ const CartItem: React.FC<CartItemProps> = ({
     ? `${VITE_BACKEND_URL}${item.variant.product.images[0].url}`
     : `https://placehold.co/96x96/EFEFEF/AAAAAA?text=Product`;
 
+  // Handle quantity change with error handling
+  const handleQuantityChange = async (newQuantity: number) => {
+    try {
+      await onQuantityChange(item.id, newQuantity);
+    } catch (error) {
+      // The error should be handled by the CartContext, but we can add additional logging here if needed
+    }
+  };
+
   return (
     <Card className="bg-card border-border rounded-lg shadow-md">
       <CardContent className="p-6">
@@ -101,7 +110,13 @@ const CartItem: React.FC<CartItemProps> = ({
               {/* Quantity Selector */}
               <QuantitySelector
                 value={item.quantity}
-                onChange={(newQuantity) => onQuantityChange(item.id, newQuantity)}
+                onChange={async (newQuantity) => {
+                  try {
+                    await onQuantityChange(item.id, newQuantity);
+                  } catch (error) {
+                    // Error will be handled by the CartContext, but we can add additional logging here
+                  }
+                }}
                 disabled={disabled}
                 size="md"
               />

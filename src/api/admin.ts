@@ -20,7 +20,6 @@ export interface ProductVariantFormData {
   color?: string;
   size?: string;
   price?: number;
-  stock: number;
   video_url?: string;
 }
 
@@ -68,9 +67,7 @@ export interface ProductVariant {
   sku: string;
   color?: string;
   size?: string;
-  price?: number;
-  stock: number;
-  actual_price: number;
+  price: number;
   created_at?: string;
   updated_at?: string;
   main_images?: ProductImage[];
@@ -109,13 +106,11 @@ export const createProduct = async (
     const product = response.data?.data || response.data;
     
     if (!product || !product.id) {
-      console.error('Invalid product response:', response.data);
       throw new Error('Invalid product response from server');
     }
     
     return product;
   } catch (error: any) {
-    console.error('Create product error:', error);
     throw new Error(error.response?.data?.message || 'Failed to create product');
   }
 };
@@ -612,7 +607,6 @@ export const uploadProductImage = async (
       }
     }
   } catch (error: any) {
-    console.error('Upload product image error:', error);
     throw new Error(error.response?.data?.message || 'Failed to upload product image');
   }
 };
@@ -668,8 +662,7 @@ export interface VariantFormData {
   size: string;
   color: string;
   sku?: string;
-  actual_price: number;
-  stock: number;
+  price: number;
   temp_image_ids?: number[]; // Add temp_image_ids for new variants
 }
 
@@ -890,5 +883,99 @@ export const deleteFaq = async (
     return response.data;
   } catch (error: any) {
     throw new Error(error.response?.data?.message || 'Failed to delete FAQ');
+  }
+};
+
+// Hero Image Management Types
+export interface HeroImage {
+  id: number;
+  image_url: string;
+  alt_text?: string;
+  sort_order: number;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface HeroImageFormData {
+  image_url: string;
+  alt_text?: string;
+  sort_order?: number;
+  is_active?: boolean;
+}
+
+export const createHeroImage = async (
+  heroImageData: FormData,
+  token: string
+): Promise<HeroImage> => {
+  try {
+
+    const response = await api.post(
+      '/admin/hero-images',
+      heroImageData,
+      {
+        headers: {
+          ...buildApiHeaders(undefined, token),
+          'Content-Type': heroImageData instanceof FormData ? 'multipart/form-data' : 'application/json',
+        },
+      }
+    );
+    return response.data.data || response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to create hero image');
+  }
+};
+
+export const updateHeroImage = async (
+  heroImageId: number,
+  heroImageData: FormData,
+  token: string
+): Promise<HeroImage> => {
+  try {
+    const response = await api.put(
+      `/admin/hero-images/${heroImageId}`,
+      heroImageData,
+      {
+        headers: buildApiHeaders(undefined, token),
+      }
+    );
+    return response.data.data || response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to update hero image');
+  }
+};
+
+export const deleteHeroImage = async (
+  heroImageId: number,
+  token: string
+): Promise<{ message: string }> => {
+  try {
+    const response = await api.delete(
+      `/admin/hero-images/${heroImageId}`,
+      {
+        headers: buildApiHeaders(undefined, token),
+      }
+    );
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to delete hero image');
+  }
+};
+
+export const reorderHeroImages = async (
+  images: { id: number; sort_order: number }[],
+  token: string
+): Promise<{ message: string }> => {
+  try {
+    const response = await api.post(
+      '/admin/hero-images/reorder',
+      { images },
+      {
+        headers: buildApiHeaders(undefined, token),
+      }
+    );
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to reorder hero images');
   }
 };

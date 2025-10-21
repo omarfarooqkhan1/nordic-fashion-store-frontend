@@ -34,14 +34,12 @@ export const VariantForm: React.FC<VariantFormProps> = ({
       return {
   ...variant,
   price: variant.price?.toString() || "",
-        stock: variant.stock?.toString() || "",
       };
     }
     return {
       size: "",
       color: "",
   price: "",
-      stock: "",
       video_url: "",
     };
   });
@@ -188,14 +186,6 @@ export const VariantForm: React.FC<VariantFormProps> = ({
       }
     }
     
-    if (!variantData.stock) {
-      newErrors.stock = "Stock is required";
-    } else {
-      const stock = Number.parseInt(variantData.stock);
-      if (isNaN(stock) || stock < 0) {
-        newErrors.stock = "Please enter a valid stock quantity";
-      }
-    }
     
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -213,16 +203,14 @@ export const VariantForm: React.FC<VariantFormProps> = ({
       }
 
     const price = Number.parseFloat(variantData.price);
-      const stock = Number.parseInt(variantData.stock);
 
       setIsUploading(true);
 
       let formattedVariantData: any = {
-        ...variantData,
-        id: variantData.id || Date.now(),
-  price: price,
-        stock: stock,
-      };
+         ...variantData,
+         id: variantData.id || Date.now(),
+   price: price,
+       };
 
       if (isNewProduct) {
         // For new products, just pass selected files up to ProductForm
@@ -407,23 +395,6 @@ export const VariantForm: React.FC<VariantFormProps> = ({
                 className={errors.price ? "border-red-500" : ""}
               />
               {errors.price && <p className="text-sm text-red-500 mt-1">{errors.price}</p>}
-            </div>
-            <div>
-              <Label htmlFor="variant-stock">Stock *</Label>
-              <Input
-                id="variant-stock"
-                type="number"
-                min="0"
-                value={variantData.stock}
-                onChange={(e) => {
-                  setVariantData({ ...variantData, stock: e.target.value });
-                  if (errors.stock) setErrors(prev => ({ ...prev, stock: '' }));
-                }}
-                placeholder="0"
-                required
-                className={errors.stock ? "border-red-500" : ""}
-              />
-              {errors.stock && <p className="text-sm text-red-500 mt-1">{errors.stock}</p>}
             </div>
           </div>
           {/* Main Images */}

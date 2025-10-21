@@ -7,7 +7,6 @@ import { useCart } from '../contexts/CartContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useCurrency } from '../contexts/CurrencyContext';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Heart, Share2, ShoppingCart, Edit, Star, ArrowLeft, ArrowRight, Check, X, Ruler, Play } from 'lucide-react';
@@ -20,6 +19,7 @@ import { LoadingState, ErrorState } from '@/components/common';
 import { ProductReviews } from '@/components/reviews';
 import { StarRating } from '@/components/ui/StarRating';
 import { SizeGuideModal } from '@/components/ui/SizeGuideModal';
+import { SimilarProducts } from '@/components/products/SimilarProducts';
 
 const ProductDetail = () => {
   // All state declarations must come first
@@ -237,7 +237,6 @@ const ProductDetail = () => {
   }
 
   if (isError || !product) {
-    console.error('[ProductDetail] Error loading product:', error);
     return (
       <ErrorState 
         title={t('error.notFound')}
@@ -260,7 +259,6 @@ const ProductDetail = () => {
   
   const variant = selectedVariant;
   const isVariantSelected = !!variant;
-  const isInStock = variant ? variant.stock > 0 : false;
   
   // Determine if main media is video or image
   const mainMedia = displayImages && displayImages.length > 0 ? displayImages[currentImageIndex] : null;
@@ -299,14 +297,6 @@ const ProductDetail = () => {
       return;
     }
 
-    if (variant.stock === 0) {
-      toast({ 
-        title: t('product.outOfStock'), 
-        description: t('product.outOfStock'), 
-        variant: 'destructive' 
-      });
-      return;
-    }
 
     try {
       // Pass variant.id and quantity (1) directly to addToCart
@@ -330,10 +320,10 @@ const ProductDetail = () => {
             <ArrowLeft className="h-4 w-4 mr-2" />
             {t('common.back')}
           </Button>
-          <div className="space-y-4">
+          <div className="flex flex-col items-center space-y-4">
             {displayImages && displayImages.length > 0 ? (
               <>
-                <div className="h-[60vh] sm:h-[70vh] md:h-[80vh] rounded-xl overflow-hidden relative bg-white flex items-center justify-center border border-gray-200 dark:border-slate-600 cursor-pointer"
+                <div className="h-[60vh] sm:h-[70vh] md:h-[80vh] rounded-xl overflow-hidden relative bg-white flex items-center justify-center border border-gray-200 dark:border-slate-600 cursor-pointer max-w-full"
                   onClick={() => setShowMediaModal(true)}
                   role="button"
                   tabIndex={0}
@@ -358,28 +348,26 @@ const ProductDetail = () => {
                 )}
                 {/* Thumbnails - Responsive grid for different screen sizes */}
                 {displayImages.length > 1 && (
-                  <div className="mt-2 sm:mt-4">
-                    <div className="flex justify-center w-full">
-                      <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 gap-2 sm:gap-3">
-                        {displayImages.map((img, i) => (
-                          <button
-                            key={img.id || i}
-                            onClick={() => setCurrentImageIndex(i)}
-                            className={`aspect-square rounded-lg overflow-hidden border-2 transition-all duration-200 hover:scale-105 ${
-                              i === currentImageIndex
-                                ? 'border-primary shadow-lg ring-2 ring-primary/20'
-                                : 'border-gray-200 dark:border-slate-600 hover:border-primary/50 shadow-md hover:shadow-lg'
-                            }`}
-                            aria-label={`View image ${i + 1}`}
-                          >
-                            <ProductImage
-                              src={img.url}
-                              alt={img.alt_text || `${product?.name || 'Product'} thumbnail ${i + 1}`}
-                              className="w-full h-full object-cover"
-                            />
-                          </button>
-                        ))}
-                      </div>
+                  <div className="mt-2 sm:mt-4 w-full flex justify-center">
+                    <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 gap-2 sm:gap-3 max-w-2xl">
+                      {displayImages.map((img, i) => (
+                        <button
+                          key={img.id || i}
+                          onClick={() => setCurrentImageIndex(i)}
+                          className={`aspect-square rounded-lg overflow-hidden border-2 transition-all duration-200 hover:scale-105 ${
+                            i === currentImageIndex
+                              ? 'border-primary shadow-lg ring-2 ring-primary/20'
+                              : 'border-gray-200 dark:border-slate-600 hover:border-primary/50 shadow-md hover:shadow-lg'
+                          }`}
+                          aria-label={`View image ${i + 1}`}
+                        >
+                          <ProductImage
+                            src={img.url}
+                            alt={img.alt_text || `${product?.name || 'Product'} thumbnail ${i + 1}`}
+                            className="w-full h-full object-cover"
+                          />
+                        </button>
+                      ))}
                     </div>
                   </div>
                 )}
@@ -452,10 +440,6 @@ const ProductDetail = () => {
               </div>
               <div className="flex flex-wrap gap-2 sm:gap-3" role="group" aria-label="Select product size">
                 {allSizes.map((size) => {
-                  // Check if a variant exists with the current size and selected color, and is in stock
-                  const hasStock = product.variants?.some((v) => 
-                    v.size === size && (selectedColor === '' || v.color === selectedColor) && v.stock > 0
-                  ) || false;
                   return (
                     <button
                       key={size}
@@ -463,13 +447,10 @@ const ProductDetail = () => {
                       className={`px-3 py-2 sm:px-4 sm:py-3 border-2 rounded-lg sm:rounded-xl text-sm sm:text-base font-semibold transition-all duration-200 min-w-[50px] sm:min-w-[60px] ${
                         selectedSize === size
                           ? 'border-2 border-green-500 bg-green-500 text-white shadow-lg ring-2 ring-green-500/30 font-bold'
-                          : hasStock
-                          ? 'border-gray-300 dark:border-slate-600 hover:border-primary hover:bg-primary/5 text-gray-700 dark:text-white hover:text-primary'
-                          : 'border-gray-200 dark:border-slate-700 text-gray-400 dark:text-slate-500 opacity-50 cursor-not-allowed'
+                          : 'border-gray-300 dark:border-slate-600 hover:border-primary hover:bg-primary/5 text-gray-700 dark:text-white hover:text-primary'
                       }`}
-                      disabled={!hasStock && selectedSize !== size}
                       aria-pressed={selectedSize === size}
-                      aria-label={`Size ${size}${!hasStock ? ' (out of stock)' : ''}`}
+                      aria-label={`Size ${size}`}
                     >
                       {size}
                     </button>
@@ -487,10 +468,6 @@ const ProductDetail = () => {
               </h3>
               <div className="flex flex-wrap gap-2 sm:gap-3" role="group" aria-label="Select product color">
                 {allColors.map((color) => {
-                  // Check if a variant exists with the current color and selected size, and is in stock
-                  const hasStock = product.variants?.some((v) => 
-                    v.color === color && (selectedSize === '' || v.size === selectedSize) && v.stock > 0
-                  ) || false;
                   return (
                     <button
                       key={color}
@@ -498,17 +475,14 @@ const ProductDetail = () => {
                       className={`px-3 py-2 sm:px-4 sm:py-3 border-2 rounded-lg sm:rounded-xl flex items-center gap-2 sm:gap-3 text-sm sm:text-base font-semibold transition-all duration-200 ${
                         selectedColor === color
                           ? 'border-2 border-green-500 bg-green-500 text-white shadow-lg ring-2 ring-green-500/30 font-bold'
-                          : hasStock
-                          ? 'border-gray-300 dark:border-slate-600 hover:border-primary hover:bg-primary/5 text-gray-700 dark:text-white hover:text-primary'
-                          : 'border-gray-200 dark:border-slate-700 text-gray-400 dark:text-slate-500 opacity-50 cursor-not-allowed'
+                          : 'border-gray-300 dark:border-slate-600 hover:border-primary hover:bg-primary/5 text-gray-700 dark:text-white hover:text-primary'
                       }`}
-                      disabled={!hasStock && selectedColor !== color}
                       aria-pressed={selectedColor === color}
-                      aria-label={`Color ${color}${!hasStock ? ' (out of stock)' : ''}`}
+                      aria-label={`Color ${color}`}
                     >
                       <span className="w-4 h-4 sm:w-5 sm:h-5 rounded-full border border-gray-300 shadow-sm" style={{ backgroundColor: color.toLowerCase() }} aria-hidden="true"></span>
                       <span className="hidden xs:inline">{color}</span>
-                      {hasStock ? <Check className="h-3 w-3 sm:h-4 sm:w-4" /> : <X className="h-3 w-3 sm:h-4 sm:w-4" />}
+                      <Check className="h-3 w-3 sm:h-4 sm:w-4" />
                     </button>
                   );
                 })}
@@ -539,38 +513,19 @@ const ProductDetail = () => {
               <div className="flex items-center gap-2">
                 {hasVariants ? (
                   isVariantSelected ? (
-                    isInStock ? (
-                      <>
-                        <Check className="text-green-500 h-4 w-4 sm:h-5 sm:w-5" />
-                        <span className="text-green-600 dark:text-green-400 font-medium text-xs sm:text-sm">
-                          {t('product.inStock')}
-                        </span>
-                      </>
-                    ) : (
-                      <>
-                        <X className="text-red-500 h-4 w-4 sm:h-5 sm:w-5" />
-                        <span className="text-red-600 dark:text-red-400 font-medium text-xs sm:text-sm">
-                          {t('product.outOfStock')}
-                        </span>
-                      </>
-                    )
+                    <>
+                      <Check className="text-green-500 h-4 w-4 sm:h-5 sm:w-5" />
+                      <span className="text-green-600 dark:text-green-400 font-medium text-xs sm:text-sm">
+                        {t('product.inStock')}
+                      </span>
+                    </>
                   ) : selectedColor ? (
-                    // When only color is selected, show color-specific availability
-                    product.variants?.some((v) => v.color === selectedColor && v.stock > 0) ? (
-                      <>
-                        <Check className="text-blue-500 h-4 w-4 sm:h-5 sm:w-5" />
-                        <span className="text-blue-600 dark:text-blue-400 font-medium text-xs sm:text-sm">
-                          {selectedColor} {t('product.available')} - {t('product.selectSize')}
-                        </span>
-                      </>
-                    ) : (
-                      <>
-                        <X className="text-red-500 h-4 w-4 sm:h-5 sm:w-5" />
-                        <span className="text-red-600 dark:text-red-400 font-medium text-xs sm:text-sm">
-                          {selectedColor} {t('product.outOfStock')}
-                        </span>
-                      </>
-                    )
+                    <>
+                      <Check className="text-blue-500 h-4 w-4 sm:h-5 sm:w-5" />
+                      <span className="text-blue-600 dark:text-blue-400 font-medium text-xs sm:text-sm">
+                        {selectedColor} {t('product.available')} - {t('product.selectSize')}
+                      </span>
+                    </>
                   ) : (
                     <span className="text-muted-foreground text-xs sm:text-sm">
                       {t('product.selectSizeAndColor')}
@@ -605,11 +560,11 @@ const ProductDetail = () => {
               <>
                 <Button
                   onClick={handleAddToCart}
-                  disabled={hasVariants && (!selectedSize || !selectedColor || !isVariantSelected || !isInStock)}
+                  disabled={hasVariants && (!selectedSize || !selectedColor || !isVariantSelected)}
                   className="w-full py-3 sm:py-4 md:py-5 text-base sm:text-lg font-bold disabled:opacity-50 rounded-xl bg-white hover:bg-gray-50 dark:hover:bg-slate-100 text-black border-2 border-gray-300 dark:border-slate-600 hover:border-gray-400 dark:hover:border-slate-500 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02] disabled:hover:scale-100"
                 >
                   {hasVariants ? (
-                    !selectedSize || !selectedColor ? t('product.chooseVariant') : !isVariantSelected ? t('product.chooseVariant') : !isInStock ? t('product.outOfStock') : t('product.addToCart')
+                    !selectedSize || !selectedColor ? t('product.chooseVariant') : !isVariantSelected ? t('product.chooseVariant') : t('product.addToCart')
                   ) : (
                     t('product.addToCart')
                   )}
@@ -672,17 +627,9 @@ const ProductDetail = () => {
           </div>
 
           <Separator />
-
-          {/* Customer Reviews Section */}
-          <div className="space-y-4 sm:space-y-6">
-            <ProductReviews 
-              productId={product?.id}
-              productName={product?.name}
-            />
-          </div>
         </div>
       </div>
-      
+
       {/* Detailed Pictures Section (Variant-based) - Responsive */}
       {(detailedImages && detailedImages.length > 0) ? (
         <div className="w-full py-8 sm:py-12 lg:py-16 mt-8 sm:mt-12 md:mt-16">
@@ -736,7 +683,7 @@ const ProductDetail = () => {
           </div>
         </div>
       ) : null}
-      
+
       {/* How Others Are Styling This Section - Responsive */}
       {(stylingMedia && stylingMedia.length > 0) ? (
         <div className="w-full py-8 sm:py-12 lg:py-16 bg-gray-50 dark:bg-slate-900">
@@ -818,8 +765,8 @@ const ProductDetail = () => {
                 </div>
               ) : (
                 <div
-                  className="flex flex-row gap-6 sm:gap-8 md:gap-10 overflow-x-auto scrollbar-hide px-6 mx-auto snap-x snap-mandatory"
-                  style={{ WebkitOverflowScrolling: 'touch', maxWidth: '99vw' }}
+                  className={`flex flex-row gap-6 sm:gap-8 md:gap-10 px-6 mx-auto ${stylingMedia.length <= 4 ? 'justify-center' : 'overflow-x-auto scrollbar-hide snap-x snap-mandatory'} ${stylingMedia.length <= 4 ? 'max-w-4xl' : ''}`}
+                  style={stylingMedia.length <= 4 ? {} : { WebkitOverflowScrolling: 'touch', maxWidth: '99vw' }}
                 >
                   {/* Video as first item if present */}
                   {videoUrl && (
@@ -834,13 +781,13 @@ const ProductDetail = () => {
                           preload="auto"
                         >
                           {/* Resolve video URL properly like images */}
-                          <source 
+                          <source
                             src={
-                              videoUrl.startsWith('http://') || videoUrl.startsWith('https://') 
-                                ? videoUrl 
+                              videoUrl.startsWith('http://') || videoUrl.startsWith('https://')
+                                ? videoUrl
                                 : `${import.meta.env.VITE_BACKEND_URL}${videoUrl.startsWith('/') ? videoUrl : `/${videoUrl}`}`
-                            } 
-                            type="video/mp4" 
+                            }
+                            type="video/mp4"
                           />
                           {t('product.videoNotSupported')}
                         </video>
@@ -887,6 +834,25 @@ const ProductDetail = () => {
           </div>
         </div>
       ) : null}
+
+      {/* Customer Reviews Section - Full Width */}
+      <div className="w-full py-5 sm:py-12 lg:py-16 mt-4 sm:mt-8 md:mt-12">
+        <div className="w-full px-0">
+          <div className="space-y-5 sm:space-y-12">
+            <ProductReviews
+              productId={product?.id || 0}
+              productName={product?.name || ''}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Similar Products Section */}
+      {product?.similar_products && product.similar_products.length > 0 && (
+        <div className="w-full mt-4 sm:mt-8 md:mt-12">
+          <SimilarProducts products={product.similar_products} />
+        </div>
+      )}
     </div>
   );
 };

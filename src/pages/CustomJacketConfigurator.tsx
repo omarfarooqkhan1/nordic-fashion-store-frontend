@@ -506,7 +506,6 @@ const CustomConfigurator = () => {
       toast({ title: 'Success', description: 'Custom jacket added to cart!' });
       resetConfigurator();
     } catch (error) {
-      console.error('Error adding custom jacket to cart:', error);
       let errorMessage = 'Failed to add custom jacket to cart';
       if (error instanceof Error) {
         errorMessage = error.message;

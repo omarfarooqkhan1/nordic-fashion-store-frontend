@@ -92,7 +92,12 @@ const Products = () => {
 
   // Sorting
   const sortedProducts = [...filteredProducts].sort((a, b) => {
-    if (sortBy === 'price') return a.price - b.price;
+    if (sortBy === 'price') {
+      // Get the first variant's price for sorting
+      const priceA = a.variants && a.variants.length > 0 ? a.variants[0].price : 0;
+      const priceB = b.variants && b.variants.length > 0 ? b.variants[0].price : 0;
+      return priceA - priceB;
+    }
     if (sortBy === 'name') return a.name.localeCompare(b.name);
     return 0;
   });
@@ -210,7 +215,7 @@ const Products = () => {
       {!isLoading && !isError && (
         <>
           {sortedProducts.length > 0 ? (
-            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-6 lg:gap-8 max-w-7xl mx-auto px-2 sm:px-4">
+            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-6 lg:gap-8 max-w-7xl mx-auto px-2 sm:px-4 mb-12">
               {sortedProducts.map((product) => (
                 <Card
                   key={product.id}
@@ -232,10 +237,10 @@ const Products = () => {
                             e.currentTarget.src = '/placeholder.svg';
                           }}
                         />
-                      ) : product.variants && product.variants.length > 0 && product.variants[0].images && product.variants[0].images.length > 0 ? (
+                      ) : product.variants && product.variants.length > 0 && product.variants[0].main_images && product.variants[0].main_images.length > 0 ? (
                         <img
-                          src={product.variants[0].images[0].url}
-                          alt={product.variants[0].images[0].alt_text || product.name}
+                          src={product.variants[0].main_images[0].url}
+                          alt={product.variants[0].main_images[0].alt_text || product.name}
                           className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                           onError={(e) => {
                             e.currentTarget.src = '/placeholder.svg';

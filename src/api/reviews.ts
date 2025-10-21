@@ -37,10 +37,6 @@ export interface ReviewsListResponse {
   success: boolean;
   data: {
     data: ProductReview[];
-    current_page: number;
-    last_page: number;
-    per_page: number;
-    total: number;
   };
   product: {
     id: number;
@@ -48,6 +44,12 @@ export interface ReviewsListResponse {
     average_rating: number;
     review_count: number;
   };
+  pagination: {
+    current_page: number;
+    last_page: number;
+    per_page: number;
+    total: number;  
+  }
 }
 
 export interface CanReviewResponse {

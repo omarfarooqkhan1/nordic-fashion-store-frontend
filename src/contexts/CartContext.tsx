@@ -45,10 +45,22 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setSessionId(currentSessionId);
   }, []); // Run only once on component mount
 
+  // Ensure session ID is always available for guest users
+  const getSessionId = () => {
+    if (token) return undefined; // Authenticated users don't need session ID
+    
+    let currentSessionId = localStorage.getItem('nordic_fashion_cart_session_id');
+    if (!currentSessionId) {
+      currentSessionId = crypto.randomUUID();
+      localStorage.setItem('nordic_fashion_cart_session_id', currentSessionId);
+    }
+    return currentSessionId;
+  };
+
   // Fetch cart data, enabled for both authenticated and guest users
   const { data: cart, isLoading, error } = useQuery({
     queryKey: ['cart', token ? 'user' : sessionId, token], // Use 'user' for authenticated, sessionId for guests
-    queryFn: () => fetchCart(token ? undefined : sessionId, token), // Pass undefined for authenticated users
+    queryFn: () => fetchCart(token ? undefined : getSessionId(), token), // Pass undefined for authenticated users
     staleTime: 5 * 60 * 1000, 
     enabled: !!(token || sessionId), // Enable for either token or sessionId
     retry: (failureCount, error) => {
@@ -65,7 +77,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Fetch custom jacket cart data
   const { data: customJacketCart, isLoading: isLoadingCustom } = useQuery({
     queryKey: ['customJacketCart', token ? 'user' : sessionId, token],
-    queryFn: () => fetchCustomJacketCart(token ? undefined : sessionId, token),
+    queryFn: () => fetchCustomJacketCart(token ? undefined : getSessionId(), token),
     staleTime: 5 * 60 * 1000,
     enabled: !!(token || sessionId),
     retry: (failureCount, error) => {
@@ -82,12 +94,12 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     mutationFn: ({ product_variant_id, quantity }: { product_variant_id: number; quantity: number; }) => {
       // For authenticated users, pass undefined as sessionId
       // For guest users, pass the actual sessionId
-      const sessionIdToUse = token ? undefined : sessionId;
+      const sessionIdToUse = token ? undefined : getSessionId();
       return addOrUpdateCartItem(product_variant_id, quantity, sessionIdToUse, token);
     },
     onSuccess: () => {
       // Invalidate both cart queries to ensure all cart data is refreshed
-      const cartIdentifier = token ? 'user' : sessionId;
+      const cartIdentifier = token ? 'user' : getSessionId();
       
       queryClient.invalidateQueries({ queryKey: ['cart', cartIdentifier, token] });
       queryClient.invalidateQueries({ queryKey: ['customJacketCart', cartIdentifier, token] });
@@ -131,12 +143,12 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     mutationFn: ({ itemId, quantity }: { itemId: number; quantity: number; }) => {
       // For authenticated users, pass undefined as sessionId
       // For guest users, pass the actual sessionId
-      const sessionIdToUse = token ? undefined : sessionId;
+      const sessionIdToUse = token ? undefined : getSessionId();
       return updateCartItem(itemId, quantity, sessionIdToUse, token);
     },
     onSuccess: () => {
       // Invalidate both cart queries to ensure all cart data is refreshed
-      const cartIdentifier = token ? 'user' : sessionId;
+      const cartIdentifier = token ? 'user' : getSessionId();
       queryClient.invalidateQueries({ queryKey: ['cart', cartIdentifier, token] });
       queryClient.invalidateQueries({ queryKey: ['customJacketCart', cartIdentifier, token] });
       toast({ title: t('toast.cartUpdated') });
@@ -174,12 +186,12 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     mutationFn: ({ itemId }: { itemId: number; }) => {
       // For authenticated users, pass undefined as sessionId
       // For guest users, pass the actual sessionId
-      const sessionIdToUse = token ? undefined : sessionId;
+      const sessionIdToUse = token ? undefined : getSessionId();
       return removeCartItem(itemId, sessionIdToUse, token);
     },
     onSuccess: () => {
       // Invalidate both cart queries to ensure all cart data is refreshed
-      const cartIdentifier = token ? 'user' : sessionId;
+      const cartIdentifier = token ? 'user' : getSessionId();
       
       queryClient.invalidateQueries({ queryKey: ['cart', cartIdentifier, token] });
       queryClient.invalidateQueries({ queryKey: ['customJacketCart', cartIdentifier, token] });
@@ -198,10 +210,10 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Custom jacket mutations
   const addCustomJacketMutation = useMutation({
     mutationFn: (customJacket: Omit<CustomJacketItem, 'id' | 'createdAt'>) =>
-      addCustomJacketToCart(customJacket, sessionId, token),
+      addCustomJacketToCart(customJacket, getSessionId(), token),
     onSuccess: () => {
       // Invalidate both cart queries to ensure all cart data is refreshed
-      const cartIdentifier = token ? 'user' : sessionId;
+      const cartIdentifier = token ? 'user' : getSessionId();
       queryClient.invalidateQueries({ queryKey: ['cart', cartIdentifier, token] });
       queryClient.invalidateQueries({ queryKey: ['customJacketCart', cartIdentifier, token] });
       toast({ title: 'Custom jacket added to cart' });
@@ -213,10 +225,10 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const removeCustomJacketMutation = useMutation({
     mutationFn: (customItemId: string) =>
-      removeCustomJacketFromCart(customItemId, sessionId, token),
+      removeCustomJacketFromCart(customItemId, getSessionId(), token),
     onSuccess: () => {
       // Invalidate both cart queries to ensure all cart data is refreshed
-      const cartIdentifier = token ? 'user' : sessionId;
+      const cartIdentifier = token ? 'user' : getSessionId();
       queryClient.invalidateQueries({ queryKey: ['cart', cartIdentifier, token] });
       queryClient.invalidateQueries({ queryKey: ['customJacketCart', cartIdentifier, token] });
       toast({ title: 'Custom jacket removed from cart' });
@@ -228,10 +240,10 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const updateCustomJacketQuantityMutation = useMutation({
     mutationFn: ({ customItemId, quantity }: { customItemId: string; quantity: number }) =>
-      updateCustomJacketQuantity(customItemId, quantity, sessionId, token),
+      updateCustomJacketQuantity(customItemId, quantity, getSessionId(), token),
     onSuccess: () => {
       // Invalidate both cart queries to ensure all cart data is refreshed
-      const cartIdentifier = token ? 'user' : sessionId;
+      const cartIdentifier = token ? 'user' : getSessionId();
       queryClient.invalidateQueries({ queryKey: ['cart', cartIdentifier, token] });
       queryClient.invalidateQueries({ queryKey: ['customJacketCart', cartIdentifier, token] });
       toast({ title: 'Custom jacket quantity updated' });
@@ -245,12 +257,12 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     mutationFn: () => {
       // For authenticated users, pass undefined as sessionId
       // For guest users, pass the actual sessionId
-      const sessionIdToUse = token ? undefined : sessionId;
+      const sessionIdToUse = token ? undefined : getSessionId();
       return clearCart(sessionIdToUse, token);
     },
     onSuccess: () => {
       // Invalidate both cart queries to ensure all cart data is refreshed
-      const cartIdentifier = token ? 'user' : sessionId;
+      const cartIdentifier = token ? 'user' : getSessionId();
       
       queryClient.invalidateQueries({ queryKey: ['cart', cartIdentifier, token] });
       queryClient.invalidateQueries({ queryKey: ['customJacketCart', cartIdentifier, token] });
@@ -269,7 +281,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const addToCart = async (product_variant_id: number, quantity: number) => {
     // For authenticated users, we can proceed without sessionId
     // For guest users, we need sessionId
-    if (!token && !sessionId) {
+    if (!token && !getSessionId()) {
       toast({ title: t('error.generic'), description: t('common.loading'), variant: 'destructive' });
       return;
     }
@@ -279,7 +291,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const updateQuantity = async (itemId: number, quantity: number) => {
     // For authenticated users, we can proceed without sessionId
     // For guest users, we need sessionId
-    if (!token && !sessionId) {
+    if (!token && !getSessionId()) {
       toast({ title: t('error.generic'), description: t('common.loading'), variant: 'destructive' });
       return;
     }
@@ -287,13 +299,18 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       await removeFromCart(itemId); 
       return;
     }
-    await updateMutation.mutateAsync({ itemId, quantity });
+    try {
+      await updateMutation.mutateAsync({ itemId, quantity });
+    } catch (error) {
+      // Log the error for debugging
+      throw error;
+    }
   };
 
   const removeFromCart = async (itemId: number) => {
     // For authenticated users, we can proceed without sessionId
     // For guest users, we need sessionId
-    if (!token && !sessionId) {
+    if (!token && !getSessionId()) {
       toast({ title: t('error.generic'), description: t('common.loading'), variant: 'destructive' });
       return;
     }
@@ -303,7 +320,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const clearCartItems = async () => {
     // For authenticated users, we can proceed without sessionId
     // For guest users, we need sessionId
-    if (!token && !sessionId) {
+    if (!token && !getSessionId()) {
       toast({ title: t('error.generic'), description: t('common.loading'), variant: 'destructive' });
       return;
     }

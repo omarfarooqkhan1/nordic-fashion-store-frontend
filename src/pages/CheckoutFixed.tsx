@@ -260,7 +260,6 @@ const CheckoutFixed: React.FC = () => {
       });
       
     } catch (error: any) {
-      console.log('Error creating order after payment:', error);
       toast.toast({
         title: 'Error',
         description: 'Payment succeeded but there was an error creating your order',

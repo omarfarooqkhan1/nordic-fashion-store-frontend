@@ -10,6 +10,7 @@ import { useCurrency } from "@/contexts/CurrencyContext"
 import { fetchProducts } from "@/api/products"
 import { LoadingState } from "@/components/common/LoadingState"
 import { usePerformanceOptimization } from "@/hooks/usePerformanceOptimization"
+import api from "@/api/axios"
 
 const Index = () => {
   const { t } = useLanguage()
@@ -17,12 +18,30 @@ const Index = () => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
   const { getQueryOptions, optimizeImageLoading } = usePerformanceOptimization()
 
-  const heroImages = [
+  // Fetch hero images from API
+  const { data: heroImages = [] } = useQuery({
+    queryKey: ["hero-images"],
+    queryFn: async () => {
+      try {
+        const response = await api.get("/hero-images")
+        return response.data || []
+      } catch (error) {
+        // Return empty array on error, will fallback to static images
+        return []
+      }
+    },
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  })
+
+  // Fallback to static images if no dynamic images are available
+  const fallbackHeroImages = [
     "/lovable-uploads/731fa0a1-188d-4f8d-9829-7fde55e5e458.png",
     "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=1200&h=800&fit=crop",
     "https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=1200&h=800&fit=crop",
     "https://images.unsplash.com/photo-1506629905814-b9daf261d74f?w=1200&h=800&fit=crop",
   ]
+
+  const displayHeroImages = (Array.isArray(heroImages) && heroImages.length > 0) ? heroImages : fallbackHeroImages
 
   // Scroll to top when component mounts
   useEffect(() => {
@@ -31,10 +50,10 @@ const Index = () => {
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setCurrentImageIndex((prev) => (prev + 1) % heroImages.length)
+      setCurrentImageIndex((prev) => (prev + 1) % displayHeroImages.length)
     }, 4000)
     return () => clearInterval(interval)
-  }, [heroImages.length])
+  }, [displayHeroImages.length])
 
   const {
     data: products = [],
@@ -51,24 +70,24 @@ const Index = () => {
 
   // Preload hero images for better LCP
   useEffect(() => {
-    heroImages.forEach((image, index) => {
+    displayHeroImages.forEach((image, index) => {
       if (index === 0) {
         // Preload the first hero image for LCP
         const link = document.createElement("link")
         link.rel = "preload"
         link.as = "image"
-        link.href = image
+        link.href = typeof image === 'string' ? image : image.image_url
         document.head.appendChild(link)
       }
     })
-  }, [])
+  }, [displayHeroImages])
 
   return (
     <div className="space-y-0 sm:space-y-0">
       {/* Hero Section */}
       <section className="relative h-[70vh] min-h-[500px] md:h-[80vh] md:min-h-[600px] overflow-hidden">
         <div className="absolute inset-0">
-          {heroImages.map((image, index) => (
+          {displayHeroImages.map((image, index) => (
             <div
               key={index}
               className={`absolute inset-0 transition-opacity duration-1000 ${
@@ -76,8 +95,8 @@ const Index = () => {
               }`}
             >
               <img
-                src={image || "/placeholder.svg"}
-                alt={`Nord Flex craftsmanship ${index + 1}`}
+                src={typeof image === 'string' ? image : `${import.meta.env.VITE_BACKEND_URL}${image.image_url}` || "/placeholder.svg"}
+                alt={typeof image === 'string' ? `Nord Flex craftsmanship ${index + 1}` : image.alt_text || `Nord Flex craftsmanship ${index + 1}`}
                 className="w-full h-full object-cover"
                 loading={index === 0 ? "eager" : "lazy"}
                 sizes="100vw"
@@ -129,7 +148,7 @@ const Index = () => {
 
         <div className="absolute bottom-6 sm:bottom-8 left-1/2 transform -translate-x-1/2 z-20">
           <div className="flex space-x-2 bg-black/20 backdrop-blur-sm rounded-full px-3 py-2">
-            {heroImages.map((_, index) => (
+            {displayHeroImages.map((_, index) => (
               <button
                 key={index}
                 className={`w-2 h-2 sm:w-3 sm:h-3 rounded-full transition-all duration-300 ${

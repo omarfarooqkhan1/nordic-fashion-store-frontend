@@ -75,7 +75,7 @@ export const updateCartItem = async (
         
         return response.data;
     } catch (error) {
-        throw new Error(error.response?.data?.message || 'Failed to update cart item');
+      throw new Error(error.response?.data?.message || error.message || 'Failed to update cart item');
     }
 };
 

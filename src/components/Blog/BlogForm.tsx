@@ -212,7 +212,7 @@ const BlogForm: React.FC<BlogFormProps> = ({
                   {featuredImagePreview && (
                     <div className="relative w-32 h-32 border rounded overflow-hidden">
                       <img
-                        src={featuredImagePreview}
+                        src={`${import.meta.env.VITE_BACKEND_URL}${featuredImagePreview}`}
                         alt="Featured image preview"
                         className="object-cover w-full h-full"
                       />

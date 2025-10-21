@@ -72,6 +72,7 @@ import AdminFaqs from "@/components/admin/AdminFaqs"
 import ContactForms from "@/components/admin/ContactForms"
 import UserManagement from "@/components/admin/UserManagement"
 import { ProductForm } from "@/components/admin/ProductForm"
+import { AdminHeroImages } from "@/components/admin/AdminHeroImages"
 import { getPendingReviews, approveReview, rejectReview, type ProductReview } from "@/api/reviews"
 import { fetchProductById } from "@/api/products"
 import { LoadingState } from "@/components/common"
@@ -118,10 +119,10 @@ const AdminDashboard: React.FC = () => {
       } else if (images) {
         await createProductMutation.mutateAsync({ data, images, variants })
       }
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: "Error",
-        description: "Failed to save product. Please try again.",
+        description: error.message || "Failed to save product. Please try again.",
         variant: "destructive",
       })
     }
@@ -407,13 +408,7 @@ const AdminDashboard: React.FC = () => {
                   validateStatus: (status) => status < 500
                 }
               );
-            } catch (nestedError) {
-              console.error('Both delete attempts failed for variant:', {
-                variantId: variantToDelete.id,
-                error: (nestedError as any).response?.data || (nestedError as Error).message,
-                response: (nestedError as any).response
-              });
-              
+            } catch (nestedError) {              
               // Try a direct fetch as a last resort
               try {
                 const response = await fetch(
@@ -433,18 +428,9 @@ const AdminDashboard: React.FC = () => {
                 const data = await response.json();
                 if (!response.ok) throw new Error(data.message || 'Failed to delete variant');
               } catch (fetchError) {
-                console.error('All delete attempts failed for variant:', {
-                  variantId: variantToDelete.id,
-                  error: fetchError instanceof Error ? fetchError.message : 'Unknown error'
-                });
               }
             }
           } catch (error) {
-            console.error('Unexpected error during variant deletion:', {
-              variantId: variantToDelete.id,
-              error: (error as any).response?.data || (error as Error).message,
-              stack: (error as Error).stack
-            });
           }
         }
         
@@ -452,7 +438,6 @@ const AdminDashboard: React.FC = () => {
         for (const variant of variants) {
           try {
             if (!variant.size || !variant.color) {
-              console.error('Variant is missing required fields (size or color):', variant);
               continue;
             }
             
@@ -475,11 +460,6 @@ const AdminDashboard: React.FC = () => {
                   validateStatus: (status) => status < 500 // Don't throw on 4xx errors
                 }
               ).catch(error => {
-                console.error('Error updating variant:', {
-                  variantKey,
-                  variantId: existingVariant.id,
-                  error: error.response?.data || error.message
-                });
                 throw error;
               });
             } else {
@@ -498,18 +478,10 @@ const AdminDashboard: React.FC = () => {
                   validateStatus: (status) => status < 500 // Don't throw on 4xx errors
                 }
               ).catch(error => {
-                console.error('Error creating variant:', {
-                  variantKey,
-                  error: error.response?.data || error.message
-                });
                 throw error;
               });
             }
           } catch (error) {
-            console.error('Error processing variant:', {
-              variant,
-              error: error instanceof Error ? error.message : 'Unknown error'
-            });
             // Continue with next variant even if one fails
             continue;
           }
@@ -524,12 +496,6 @@ const AdminDashboard: React.FC = () => {
       setEditingProduct(null)
     },
     onError: (error: any) => {
-      console.error('Update product error:', error)
-      toast({
-        title: "Error updating product",
-        description: error.response?.data?.message || error.message || 'Failed to update product',
-        variant: "destructive",
-      })
     },
   })
 
@@ -727,11 +693,11 @@ const AdminDashboard: React.FC = () => {
               <span className="hidden sm:inline">Categories</span>
               <span className="sm:hidden">Cat.</span>
             </TabsTrigger>
-            <TabsTrigger value="bulk-upload" className="text-xs sm:text-sm px-2 sm:px-3">
+            {/* <TabsTrigger value="bulk-upload" className="text-xs sm:text-sm px-2 sm:px-3">
               <span className="hidden lg:inline">Bulk Upload</span>
               <span className="lg:hidden hidden sm:inline">Upload</span>
               <span className="sm:hidden">CSV</span>
-            </TabsTrigger>
+            </TabsTrigger> */}
             <TabsTrigger value="orders" className="text-xs sm:text-sm px-2 sm:px-3">
               Orders
             </TabsTrigger>
@@ -751,6 +717,11 @@ const AdminDashboard: React.FC = () => {
             <TabsTrigger value="faqs" className="text-xs sm:text-sm px-2 sm:px-3">
               FAQs
             </TabsTrigger>
+            <TabsTrigger value="hero-images" className="text-xs sm:text-sm px-2 sm:px-3">
+              <span className="hidden lg:inline">Hero Images</span>
+              <span className="lg:hidden hidden sm:inline">Hero</span>
+              <span className="sm:hidden">Hero</span>
+            </TabsTrigger>
           </TabsList>
         </div>
 
@@ -758,6 +729,11 @@ const AdminDashboard: React.FC = () => {
         {/* FAQ Management Tab */}
         <TabsContent value="faqs" className="space-y-6">
           <AdminFaqs />
+        </TabsContent>
+
+        {/* Hero Images Management Tab */}
+        <TabsContent value="hero-images" className="space-y-6">
+          <AdminHeroImages />
         </TabsContent>
         <TabsContent value="overview" className="space-y-4 sm:space-y-6">
           {statsLoading ? (
@@ -1058,7 +1034,7 @@ const AdminDashboard: React.FC = () => {
                           <div className="flex items-center gap-2 sm:gap-4 text-sm">
                             <Badge variant="default">{product.variants?.length || 0} variants</Badge>
                             <span className="text-muted-foreground">
-                              Stock: {product.variants?.reduce((total, v) => total + v.stock, 0) || 0}
+                              Variants: {product.variants?.length || 0}
                             </span>
                           </div>
                         </div>
@@ -1086,8 +1062,8 @@ const AdminDashboard: React.FC = () => {
           />
         </TabsContent>
 
-        {/* Bulk Upload Tab */}
-        <TabsContent value="bulk-upload" className="space-y-4 sm:space-y-6">
+        {/* Bulk Upload Tab - Temporarily commented out */}
+        {/* <TabsContent value="bulk-upload" className="space-y-4 sm:space-y-6">
           <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-6">
             <Card>
               <CardHeader>
@@ -1268,7 +1244,7 @@ const AdminDashboard: React.FC = () => {
               </CardContent>
             </Card>
           </div>
-        </TabsContent>
+        </TabsContent> */}
 
         {/* Orders Tab */}
         <TabsContent value="orders" className="space-y-6">
@@ -1668,4 +1644,395 @@ const CategoryManagement: React.FC<CategoryManagementProps> = ({
 }
 
 export default AdminDashboard;
+
+// Hero Image Management Component
+interface HeroImage {
+  id: number;
+  image_url: string;
+  alt_text: string | null;
+  sort_order: number;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+const HeroImageManagement: React.FC = () => {
+  const { token } = useAuth();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [editingImage, setEditingImage] = useState<HeroImage | null>(null);
+  const [heroImageForm, setHeroImageForm] = useState({
+    image_url: "",
+    alt_text: "",
+    sort_order: 0,
+    is_active: true,
+  });
+
+  // Fetch hero images
+  const { data: heroImages = [], isLoading } = useQuery({
+    queryKey: ["admin-hero-images"],
+    queryFn: async () => {
+      const response = await api.get("/admin/hero-images", {
+        headers: buildApiHeaders(undefined, token!)
+      });
+      return response.data as HeroImage[];
+    },
+    enabled: !!token,
+  });
+
+  // Create hero image mutation
+  const createHeroImageMutation = useMutation({
+    mutationFn: async (data: typeof heroImageForm) => {
+      const response = await api.post("/admin/hero-images", data, {
+        headers: buildApiHeaders(undefined, token!)
+      });
+      return response.data;
+    },
+    onSuccess: () => {
+      toast({
+        title: "Success",
+        description: "Hero image created successfully",
+      });
+      setIsCreateDialogOpen(false);
+      setHeroImageForm({ image_url: "", alt_text: "", sort_order: 0, is_active: true });
+      queryClient.invalidateQueries({ queryKey: ["admin-hero-images"] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.response?.data?.message || "Failed to create hero image",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Update hero image mutation
+  const updateHeroImageMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: number; data: Partial<typeof heroImageForm> }) => {
+      const response = await api.put(`/admin/hero-images/${id}`, data, {
+        headers: buildApiHeaders(undefined, token!)
+      });
+      return response.data;
+    },
+    onSuccess: () => {
+      toast({
+        title: "Success",
+        description: "Hero image updated successfully",
+      });
+      setEditingImage(null);
+      queryClient.invalidateQueries({ queryKey: ["admin-hero-images"] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.response?.data?.message || "Failed to update hero image",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Delete hero image mutation
+  const deleteHeroImageMutation = useMutation({
+    mutationFn: async (id: number) => {
+      await api.delete(`/admin/hero-images/${id}`, {
+        headers: buildApiHeaders(undefined, token!)
+      });
+    },
+    onSuccess: () => {
+      toast({
+        title: "Success",
+        description: "Hero image deleted successfully",
+      });
+      queryClient.invalidateQueries({ queryKey: ["admin-hero-images"] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.response?.data?.message || "Failed to delete hero image",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Reorder hero images mutation
+  const reorderHeroImagesMutation = useMutation({
+    mutationFn: async (images: { id: number; sort_order: number }[]) => {
+      const response = await api.post("/admin/hero-images/reorder", { images }, {
+        headers: buildApiHeaders(undefined, token!)
+      });
+      return response.data;
+    },
+    onSuccess: () => {
+      toast({
+        title: "Success",
+        description: "Hero images reordered successfully",
+      });
+      queryClient.invalidateQueries({ queryKey: ["admin-hero-images"] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.response?.data?.message || "Failed to reorder hero images",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleCreateHeroImage = () => {
+    if (!heroImageForm.image_url.trim()) {
+      toast({
+        title: "Error",
+        description: "Image URL is required",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    createHeroImageMutation.mutate(heroImageForm);
+  };
+
+  const handleUpdateHeroImage = () => {
+    if (!editingImage) return;
+
+    updateHeroImageMutation.mutate({
+      id: editingImage.id,
+      data: heroImageForm,
+    });
+  };
+
+  const handleDeleteHeroImage = (image: HeroImage) => {
+    if (window.confirm(`Are you sure you want to delete this hero image?`)) {
+      deleteHeroImageMutation.mutate(image.id);
+    }
+  };
+
+  const openEditDialog = (image: HeroImage) => {
+    setEditingImage(image);
+    setHeroImageForm({
+      image_url: image.image_url,
+      alt_text: image.alt_text || "",
+      sort_order: image.sort_order,
+      is_active: image.is_active,
+    });
+  };
+
+  const closeEditDialog = () => {
+    setEditingImage(null);
+    setHeroImageForm({ image_url: "", alt_text: "", sort_order: 0, is_active: true });
+  };
+
+  const handleReorder = (dragIndex: number, hoverIndex: number) => {
+    const draggedImage = heroImages[dragIndex];
+    const newImages = [...heroImages];
+
+    // Remove dragged item
+    newImages.splice(dragIndex, 1);
+    // Insert at new position
+    newImages.splice(hoverIndex, 0, draggedImage);
+
+    // Update sort orders
+    const reorderedImages = newImages.map((image, index) => ({
+      id: image.id,
+      sort_order: index,
+    }));
+
+    reorderHeroImagesMutation.mutate(reorderedImages);
+  };
+
+  return (
+    <div className="space-y-4 sm:space-y-6">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 sm:gap-4">
+        <h2 className="text-xl sm:text-2xl font-bold">Hero Image Management</h2>
+        <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+          <DialogTrigger asChild>
+            <Button className="w-full sm:w-auto">
+              <Plus className="h-4 w-4 mr-2" />
+              Add Hero Image
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Create New Hero Image</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="hero-image-url">Image URL</Label>
+                <Input
+                  id="hero-image-url"
+                  value={heroImageForm.image_url}
+                  onChange={(e) => setHeroImageForm({ ...heroImageForm, image_url: e.target.value })}
+                  placeholder="Enter image URL"
+                />
+              </div>
+              <div>
+                <Label htmlFor="hero-alt-text">Alt Text (Optional)</Label>
+                <Input
+                  id="hero-alt-text"
+                  value={heroImageForm.alt_text}
+                  onChange={(e) => setHeroImageForm({ ...heroImageForm, alt_text: e.target.value })}
+                  placeholder="Enter alt text for accessibility"
+                />
+              </div>
+              <div>
+                <Label htmlFor="hero-sort-order">Sort Order</Label>
+                <Input
+                  id="hero-sort-order"
+                  type="number"
+                  value={heroImageForm.sort_order}
+                  onChange={(e) => setHeroImageForm({ ...heroImageForm, sort_order: parseInt(e.target.value) || 0 })}
+                  placeholder="0"
+                />
+              </div>
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="hero-is-active"
+                  checked={heroImageForm.is_active}
+                  onCheckedChange={(checked) => setHeroImageForm({ ...heroImageForm, is_active: checked as boolean })}
+                />
+                <Label htmlFor="hero-is-active">Active</Label>
+              </div>
+              <div className="flex justify-end space-x-2">
+                <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
+                  Cancel
+                </Button>
+                <Button onClick={handleCreateHeroImage} disabled={createHeroImageMutation.isPending}>
+                  {createHeroImageMutation.isPending ? "Creating..." : "Create Hero Image"}
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Hero Images ({heroImages.length})</CardTitle>
+          <p className="text-sm text-muted-foreground">
+            Drag and drop to reorder images. Only active images will be displayed on the homepage.
+          </p>
+        </CardHeader>
+        <CardContent>
+          {isLoading ? (
+            <div className="text-center py-8">Loading hero images...</div>
+          ) : heroImages.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              No hero images found. Create your first hero image to get started.
+            </div>
+          ) : (
+            <div className="space-y-3 sm:space-y-4">
+              {heroImages.map((image, index) => (
+                <div
+                  key={image.id}
+                  className="flex flex-col sm:flex-row gap-4 p-4 border rounded-lg bg-white shadow-sm"
+                >
+                  <div className="w-full sm:w-32 h-24 bg-gray-200 rounded-lg overflow-hidden flex-shrink-0">
+                    <img
+                      src={image ? `${import.meta.env.VITE_BACKEND_URL}${image.image_url}` : null}
+                      alt={image.alt_text || "Hero image"}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        e.currentTarget.src = '/placeholder.svg';
+                      }}
+                    />
+                  </div>
+                  <div className="flex-1 min-w-0 space-y-2">
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-medium truncate">Hero Image #{image.id}</h3>
+                      <Badge variant={image.is_active ? "default" : "secondary"}>
+                        {image.is_active ? "Active" : "Inactive"}
+                      </Badge>
+                    </div>
+                    {image.alt_text && (
+                      <p className="text-sm text-muted-foreground">
+                        Alt: {image.alt_text}
+                      </p>
+                    )}
+                    <p className="text-sm text-muted-foreground">
+                      Sort Order: {image.sort_order}
+                    </p>
+                  </div>
+                  <div className="flex flex-col gap-2 sm:items-end sm:justify-center">
+                    <div className="flex gap-2">
+                      <Button variant="outline" size="sm" onClick={() => openEditDialog(image)}>
+                        <Edit className="h-4 w-4" />
+                        <span className="hidden sm:inline ml-1">Edit</span>
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleDeleteHeroImage(image)}
+                        disabled={deleteHeroImageMutation.isPending}
+                        className="text-red-500 hover:text-red-700"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                        <span className="hidden sm:inline ml-1">Delete</span>
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Edit Hero Image Dialog */}
+      <Dialog open={!!editingImage} onOpenChange={(open) => !open && closeEditDialog()}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Hero Image</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="edit-hero-image-url">Image URL</Label>
+              <Input
+                id="edit-hero-image-url"
+                value={heroImageForm.image_url}
+                onChange={(e) => setHeroImageForm({ ...heroImageForm, image_url: e.target.value })}
+                placeholder="Enter image URL"
+              />
+            </div>
+            <div>
+              <Label htmlFor="edit-hero-alt-text">Alt Text (Optional)</Label>
+              <Input
+                id="edit-hero-alt-text"
+                value={heroImageForm.alt_text}
+                onChange={(e) => setHeroImageForm({ ...heroImageForm, alt_text: e.target.value })}
+                placeholder="Enter alt text for accessibility"
+              />
+            </div>
+            <div>
+              <Label htmlFor="edit-hero-sort-order">Sort Order</Label>
+              <Input
+                id="edit-hero-sort-order"
+                type="number"
+                value={heroImageForm.sort_order}
+                onChange={(e) => setHeroImageForm({ ...heroImageForm, sort_order: parseInt(e.target.value) || 0 })}
+                placeholder="0"
+              />
+            </div>
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="edit-hero-is-active"
+                checked={heroImageForm.is_active}
+                onCheckedChange={(checked) => setHeroImageForm({ ...heroImageForm, is_active: checked as boolean })}
+              />
+              <Label htmlFor="edit-hero-is-active">Active</Label>
+            </div>
+            <div className="flex justify-end space-x-2">
+              <Button variant="outline" onClick={closeEditDialog}>
+                Cancel
+              </Button>
+              <Button onClick={handleUpdateHeroImage} disabled={updateHeroImageMutation.isPending}>
+                {updateHeroImageMutation.isPending ? "Updating..." : "Update Hero Image"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+};
 
