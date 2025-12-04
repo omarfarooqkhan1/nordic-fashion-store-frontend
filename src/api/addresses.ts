@@ -35,7 +35,6 @@ export const fetchUserAddresses = async (): Promise<Address[]> => {
     const response = await api.get('/user/addresses')
     return response.data.data || []
   } catch (error: any) {
-    console.error('Error fetching addresses:', error)
     throw new Error(error.response?.data?.message || 'Failed to fetch addresses')
   }
 }
@@ -54,7 +53,6 @@ export const createAddress = async (addressData: CreateAddressData): Promise<Add
     })
     return response.data.data
   } catch (error: any) {
-    console.error('Error creating address:', error)
     throw new Error(error.response?.data?.message || 'Failed to create address')
   }
 }
@@ -74,7 +72,6 @@ export const updateAddress = async (addressId: string, addressData: UpdateAddres
     })
     return response.data.data
   } catch (error: any) {
-    console.error('Error updating address:', error)
     throw new Error(error.response?.data?.message || 'Failed to update address')
   }
 }
@@ -84,7 +81,6 @@ export const deleteAddress = async (addressId: string): Promise<void> => {
   try {
     await api.delete(`/user/addresses/${addressId}`)
   } catch (error: any) {
-    console.error('Error deleting address:', error)
     throw new Error(error.response?.data?.message || 'Failed to delete address')
   }
 }
@@ -95,7 +91,6 @@ export const setDefaultAddress = async (addressId: string): Promise<Address> => 
     const response = await api.patch(`/user/addresses/${addressId}/default`)
     return response.data.data
   } catch (error: any) {
-    console.error('Error setting default address:', error)
     throw new Error(error.response?.data?.message || 'Failed to set default address')
   }
 }

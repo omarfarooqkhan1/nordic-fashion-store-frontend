@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Trash2 } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useCurrency } from '@/contexts/CurrencyContext';
 import QuantitySelector from './QuantitySelector';
 import PriceDisplay from './PriceDisplay';
 
@@ -23,23 +24,28 @@ const CartItem: React.FC<CartItemProps> = ({
   disabled = false
 }) => {
   const { t } = useLanguage();
+  const { getCurrencySymbol } = useCurrency();
 
   const itemPrice = getItemPrice(item);
   const totalPrice = itemPrice * item.quantity;
 
-  // Get product image - prioritize variant images, then fall back to product images
-  const productImage = item.variant?.images?.[0]?.url || 
-    item.variant?.product?.images?.[0]?.url ||
-    `https://placehold.co/96x96/EFEFEF/AAAAAA?text=Product`;
+  // Get product image - prioritize variant mainImages[0], then variant images[0], then product images[0]
 
-  // Debug logging for image loading
-  console.log('🖼️ CartItem image debug:', {
-    itemId: item.id,
-    variantImages: item.variant?.images,
-    productImages: item.variant?.product?.images,
-    selectedImage: productImage,
-    variant: item.variant
-  });
+  // Add VITE_BACKEND_URL to image URLs if they are relative paths
+  const VITE_BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
+
+  const productImage = item.variant.product?.images?.[0]?.url
+    ? `${VITE_BACKEND_URL}${item.variant.product.images[0].url}`
+    : `https://placehold.co/96x96/EFEFEF/AAAAAA?text=Product`;
+
+  // Handle quantity change with error handling
+  const handleQuantityChange = async (newQuantity: number) => {
+    try {
+      await onQuantityChange(item.id, newQuantity);
+    } catch (error) {
+      // The error should be handled by the CartContext, but we can add additional logging here if needed
+    }
+  };
 
   return (
     <Card className="bg-card border-border rounded-lg shadow-md">
@@ -53,11 +59,9 @@ const CartItem: React.FC<CartItemProps> = ({
                 alt={item.variant?.product?.name || 'Product'} 
                 className="w-full h-full object-cover rounded-lg"
                 onError={(e) => { 
-                  console.warn(`🖼️ Failed to load image for item ${item.id}:`, productImage);
                   e.currentTarget.src = 'https://placehold.co/96x96/EFEFEF/AAAAAA?text=No+Image'; 
                 }}
                 onLoad={() => {
-                  console.log(`✅ Image loaded successfully for item ${item.id}:`, productImage);
                 }}
               />
             ) : (
@@ -106,7 +110,13 @@ const CartItem: React.FC<CartItemProps> = ({
               {/* Quantity Selector */}
               <QuantitySelector
                 value={item.quantity}
-                onChange={(newQuantity) => onQuantityChange(item.id, newQuantity)}
+                onChange={async (newQuantity) => {
+                  try {
+                    await onQuantityChange(item.id, newQuantity);
+                  } catch (error) {
+                    // Error will be handled by the CartContext, but we can add additional logging here
+                  }
+                }}
                 disabled={disabled}
                 size="md"
               />
@@ -119,7 +129,7 @@ const CartItem: React.FC<CartItemProps> = ({
                   className="mb-1"
                 />
                 <p className="text-sm text-muted-foreground">
-                  €{itemPrice.toFixed(2)} {t('common.each') || 'each'}
+                  {getCurrencySymbol()}{Number(itemPrice).toFixed(2)} {t('common.each') || 'each'}
                 </p>
               </div>
             </div>

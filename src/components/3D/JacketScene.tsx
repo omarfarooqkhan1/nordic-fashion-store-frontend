@@ -88,8 +88,8 @@ const JacketScene: React.FC<JacketSceneProps> = ({ bodyColor, leftArmColor, righ
     if (!canvas) return;
     const handler = (e: Event) => {
       e.preventDefault();
-      alert('WebGL context was lost. Please reload the page.');
-      console.error('WebGL context lost:', e);
+      // WebGL context was lost, reload the page
+      window.location.reload();
     };
     canvas.addEventListener('webglcontextlost', handler, false);
     return () => {

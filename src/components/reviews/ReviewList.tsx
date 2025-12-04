@@ -15,7 +15,16 @@ const MediaPreviewModal: React.FC<{
         {media.type === 'image' ? (
           <img src={media.url} alt="Media preview" className="max-w-[80vw] max-h-[80vh] object-contain" />
         ) : media.type === 'video' ? (
-          <video src={media.url} controls autoPlay className="max-w-[80vw] max-h-[80vh] object-contain" />
+          <video 
+            src={
+              media.url.startsWith('http://') || media.url.startsWith('https://') 
+                ? media.url 
+                : `${import.meta.env.VITE_BACKEND_URL}${media.url.startsWith('/') ? media.url : `/${media.url}`}`
+            } 
+            controls 
+            autoPlay 
+            className="max-w-[80vw] max-h-[80vh] object-contain" 
+          />
         ) : null}
       </div>
     </div>
@@ -64,36 +73,33 @@ const ReviewList: React.FC<ReviewListProps> = ({
   const [isDeleting, setIsDeleting] = useState<number | null>(null);
 
   useEffect(() => {
-    fetchReviews();
+    if (productId && productId > 0) {
+      fetchReviews();
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [productId, currentPage]);
 
   const fetchReviews = async () => {
+    if (!productId || productId <= 0) {
+      setIsLoading(false);
+      return;
+    }
+    
     try {
       setIsLoading(true);
-      const response = await getProductReviews(productId, currentPage);
-      // Try to handle both possible shapes
+      const response = await getProductReviews(productId, currentPage);      
+      // Handle the correct response structure from backend
       let reviews: ProductReview[] = [];
       let product: ReviewsListResponse['product'] | null = null;
       let totalPages = 1;
-      if (response.data) {
-        // Laravel resource shape: { data: ProductReview[], ...pagination, product }
-        if (Array.isArray(response.data.data)) {
-          reviews = response.data.data;
-          product = (response.data as any).product || null;
-          totalPages = response.data.last_page || 1;
-        } else if (
-          response.data.data &&
-          typeof response.data.data === 'object' &&
-          Array.isArray((response.data.data as any).data)
-        ) {
-          // Nested shape: { data: { data: ProductReview[], last_page, ... }, product }
-          const nested = response.data.data as { data: ProductReview[]; last_page?: number };
-          reviews = nested.data;
-          product = (response.data as any).product || null;
-          totalPages = nested.last_page || 1;
-        }
+      
+      if (response.success && response.data) {
+        // Correct structure: { success: true, data: { data: [...], ...pagination }, product: {...} }
+        reviews = Array.isArray(response.data) ? response.data : [];
+        product = response.product || null;
+        totalPages = response.pagination.last_page || 1;
       }
+      
       setReviews(reviews);
       setProductInfo(product);
       setTotalPages(totalPages);
@@ -123,7 +129,6 @@ const ReviewList: React.FC<ReviewListProps> = ({
       onReviewDelete(reviewId);
       fetchReviews();
     } catch (error: any) {
-      console.error('Error deleting review:', error);
       toast({
         title: 'Error',
         description: error.response?.data?.message || 'Failed to delete review. Please try again.',
@@ -146,7 +151,7 @@ const ReviewList: React.FC<ReviewListProps> = ({
         (user && review.user_id === user.id)
     );
   }
-
+  
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-8">
@@ -169,65 +174,70 @@ const ReviewList: React.FC<ReviewListProps> = ({
     }
     return (
       <Card>
-        <CardContent className="py-8 text-center">
-          <MessageSquare className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-          <h3 className="text-lg font-semibold mb-2">No Reviews Yet</h3>
-          <p className="text-muted-foreground mb-4">
-            Be the first to share your experience with this product!
-          </p>
-          {canUserWriteReview && (
-            <Button onClick={onWriteReview}>
-              Write the First Review
-            </Button>
-          )}
+        <CardContent className="py-8">
+          <div className="text-center space-y-3 sm:space-y-4">
+            <MessageSquare className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+            <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 dark:text-white">
+              No Reviews Yet
+            </h2>
+            <p className="text-base sm:text-lg md:text-xl text-gray-600 dark:text-slate-300 max-w-2xl sm:max-w-3xl mx-auto">
+              Be the first to share your experience with this product!
+            </p>
+            {canUserWriteReview && (
+              <Button onClick={onWriteReview} className="mt-4">
+                Write the First Review
+              </Button>
+            )}
+          </div>
         </CardContent>
       </Card>
     );
   }
 
   return (
-    <div className="space-y-6 px-2 sm:px-4 md:px-8 max-w-3xl mx-auto">
-      {/* Reviews Summary */}
+    <div className="space-y-2 px-2 sm:px-4 md:px-6 lg:px-8 max-w-7xl mx-auto w-full">
       {productInfo && (
-        <Card>
-          <CardContent className="py-4">
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-              <div className="flex flex-col sm:flex-row items-center gap-4 w-full md:w-auto">
-                <div className="text-center min-w-[100px]">
-                  <div className="text-3xl font-bold text-primary">
-                    {Number(productInfo.average_rating).toFixed(1)}
-                  </div>
-                  <StarRating rating={productInfo.average_rating} size="sm" />
-                  <div className="text-sm text-muted-foreground">
-                    {productInfo.review_count} review{productInfo.review_count !== 1 ? 's' : ''}
-                  </div>
-                </div>
-                <Separator orientation="vertical" className="h-16 hidden sm:block" />
-                <div className="text-center sm:text-left">
-                  <h3 className="font-semibold mb-2">Customer Reviews</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Based on verified purchases
-                  </p>
-                </div>
+        <div className="text-center space-y-1 sm:space-y-4">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 dark:text-white">
+            Customer Reviews
+          </h2>
+          <p className="text-base sm:text-lg md:text-xl text-gray-600 dark:text-slate-300 max-w-2xl sm:max-w-3xl mx-auto">
+            Based on verified purchases
+          </p>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-6 sm:gap-8 mt-4 sm:mt-6">
+            <div className="text-center">
+              <div className="text-3xl font-bold text-primary">
+                {Number(productInfo.average_rating).toFixed(1)}
               </div>
-              {/* Only show the button if user can write a review */}
-              {canUserWriteReview && (
-                <Button onClick={onWriteReview} className="w-full md:w-auto mt-4 md:mt-0">
-                  Write a Review
-                </Button>
-              )}
+              <StarRating rating={productInfo.average_rating} size="sm" />
+              <div className="text-sm text-muted-foreground">
+                {productInfo.review_count} review{productInfo.review_count !== 1 ? 's' : ''}
+              </div>
             </div>
-          </CardContent>
-        </Card>
+            {/* Only show the button if user can write a review */}
+            {canUserWriteReview && (
+              <Button onClick={onWriteReview} className="w-full sm:w-auto">
+                Write a Review
+              </Button>
+            )}
+          </div>
+        </div>
+      )}
+      
+      {/* Debug: Show when productInfo is not available */}
+      {!productInfo && (
+        <div className="text-center py-4">
+          <p>Product information not available</p>
+        </div>
       )}
 
       {/* Reviews List */}
-      <div className="space-y-4">
+      <div className="space-y-5">
         {filteredReviews.map((review) => {
           const isOwnReview = user && review.user && user.id === review.user.id;
           return (
             <Card key={review.id}>
-              <CardContent className="py-4">
+              <CardContent className="py-5">
                 <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-3 mb-3">
                   <div className="flex items-center gap-3 w-full md:w-auto">
                     <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
@@ -236,8 +246,16 @@ const ReviewList: React.FC<ReviewListProps> = ({
                       </span>
                     </div>
                     <div>
-                      <div className="font-medium">
+                      <div className="font-medium flex items-center gap-2">
                         {isOwnReview ? 'Your review' : (review.user && review.user.name ? review.user.name : 'Unknown')}
+                        {review.is_verified_purchase && (
+                          <span className="inline-flex items-center rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800 dark:bg-green-900 dark:text-green-100">
+                            <svg className="mr-1 h-3 w-3" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                            </svg>
+                            Verified Purchase
+                          </span>
+                        )}
                         {/* Show email only for admin and only for pending reviews */}
                         {isAdmin && review.status === 'pending' && review.user?.email ? ` (${review.user.email})` : ''}
                       </div>
@@ -247,12 +265,6 @@ const ReviewList: React.FC<ReviewListProps> = ({
                     </div>
                   </div>
                   <div className="flex flex-wrap items-center gap-2 mt-2 md:mt-0">
-                    {review.is_verified_purchase && (
-                      <Badge variant="secondary" className="text-xs">
-                        <CheckCircle className="w-3 h-3 mr-1" />
-                        Verified Purchase
-                      </Badge>
-                    )}
                     {/* Moderation status badge */}
                     {review.status === 'pending' && (
                       <Badge variant="outline" className="text-xs text-yellow-600 border-yellow-400 bg-yellow-50">
@@ -307,7 +319,7 @@ const ReviewList: React.FC<ReviewListProps> = ({
                               toast({ title: 'Error approving review', description: (e as any)?.response?.data?.message || undefined, variant: 'destructive' });
                             }
                           }}
-                          className="h-8 w-8 p-0 text-green-600 hover:text-green-800"
+                          className="h-8 w-88 p-0 text-green-600 hover:text-green-800"
                         >
                           <CheckCircle className="w-4 h-4" />
                         </Button>
@@ -372,7 +384,11 @@ const ReviewList: React.FC<ReviewListProps> = ({
                           />
                         ) : media.type === 'video' ? (
                           <video
-                            src={media.url}
+                            src={
+                              media.url.startsWith('http://') || media.url.startsWith('https://') 
+                                ? media.url 
+                                : `${import.meta.env.VITE_BACKEND_URL}${media.url.startsWith('/') ? media.url : `/${media.url}`}`
+                            }
                             className="object-cover w-full h-full"
                             muted
                             playsInline

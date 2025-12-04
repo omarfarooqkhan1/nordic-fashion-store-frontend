@@ -42,26 +42,53 @@ const ProductImage: React.FC<ProductImageProps> = ({
         src="/placeholder.svg" 
         alt="No image available" 
         className={fallbackClassName}
+        onError={handleError}
+        onLoad={handleLoad}
       />
     );
   }
 
+  // Handle URL resolution for relative paths with better error handling
+  let resolvedSrc = src;
+  try {
+    // If src is already a full URL, use it as is
+    if (src.startsWith('http://') || src.startsWith('https://')) {
+      resolvedSrc = src;
+    } else {
+      // For relative paths, construct the full URL
+      const backendUrl = import.meta.env.VITE_BACKEND_URL;
+      // Ensure we don't double up on slashes
+      if (src.startsWith('/')) {
+        resolvedSrc = `${backendUrl}${src}`;
+      } else {
+        resolvedSrc = `${backendUrl}/${src}`;
+      }
+    }
+  } catch (error) {
+    resolvedSrc = src; // Fallback to original src
+  }
+
   return (
-    <>
+    <div className="relative w-full h-full">
       {isLoading && (
-        <div className="absolute inset-0 flex items-center justify-center bg-muted animate-pulse">
-          <span className="text-2xl text-muted-foreground">⏳</span>
+        <div className="absolute inset-0 flex items-center justify-center bg-muted animate-pulse z-10">
+          <div className="w-8 h-8 border-2 border-muted-foreground/20 border-t-muted-foreground/60 rounded-full animate-spin" />
         </div>
       )}
       <img
-        src={src}
+        src={resolvedSrc}
         alt={alt}
-        className={className}
+        className={`${className} transition-opacity duration-300`}
         onError={handleError}
         onLoad={handleLoad}
-        style={{ display: isLoading ? 'none' : 'block' }}
+        style={{ 
+          opacity: isLoading ? 0 : 1,
+          transition: 'opacity 0.3s ease-in-out'
+        }}
+        loading="lazy"
+        sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 40vw"
       />
-    </>
+    </div>
   );
 };
 

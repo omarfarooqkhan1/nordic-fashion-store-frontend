@@ -1,6 +1,4 @@
-import axios from 'axios';
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api';
+import api from './axios';
 
 export interface CreatePaymentIntentRequest {
   amount: number;
@@ -33,52 +31,27 @@ export interface ConfirmPaymentResponse {
 // Create a payment intent
 export const createPaymentIntent = async (
   data: CreatePaymentIntentRequest,
-  token: string
+  token?: string
 ): Promise<CreatePaymentIntentResponse> => {
-  const response = await axios.post(
-    `${API_BASE_URL}/stripe/create-payment-intent`,
-    data,
-    {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-    }
-  );
+  const response = await api.post('/stripe/create-payment-intent', data);
   return response.data;
 };
 
 // Confirm a payment
 export const confirmPayment = async (
   data: ConfirmPaymentRequest,
-  token: string
+  token?: string
 ): Promise<ConfirmPaymentResponse> => {
-  const response = await axios.post(
-    `${API_BASE_URL}/stripe/confirm-payment`,
-    data,
-    {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-    }
-  );
+  const response = await api.post('/stripe/confirm-payment', data);
   return response.data;
 };
 
 // Get payment intent status
 export const getPaymentIntentStatus = async (
   paymentIntentId: string,
-  token: string
+  token?: string
 ): Promise<{ status: string }> => {
-  const response = await axios.get(
-    `${API_BASE_URL}/stripe/payment-intent/${paymentIntentId}`,
-    {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-      },
-    }
-  );
+  const response = await api.get(`/stripe/payment-intent/${paymentIntentId}`);
   return response.data;
 };
 

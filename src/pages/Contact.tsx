@@ -48,27 +48,33 @@ const Contact = () => {
     setIsSubmitting(true);
     
     try {
-      await api.post('/contact', formData);
+      const response = await api.post('/contact', formData);
       
-      toast({
-        title: 'Message sent successfully!',
-        description: 'Thank you for your message! We will get back to you soon.',
-        className: 'bg-green-500 text-white'
-      });
-      
-      // Reset form
-      setFormData({
-        firstName: '',
-        lastName: '',
-        email: '',
-        subject: '',
-        message: ''
-      });
+      if (response.data.success) {
+        toast({
+          title: 'Message sent successfully!',
+          description: response.data.message || 'Thank you for your message! We will get back to you soon.',
+          className: 'bg-green-500 text-white'
+        });
+        
+        // Reset form
+        setFormData({
+          firstName: '',
+          lastName: '',
+          email: '',
+          subject: '',
+          message: ''
+        });
+      } else {
+        throw new Error(response.data.message || 'Failed to send message');
+      }
       
     } catch (error: any) {
+      const errorMessage = error.response?.data?.message || error.message || 'Failed to send message. Please try again later.';
+      
       toast({
         title: 'Failed to send message',
-        description: error.response?.data?.message || 'Something went wrong. Please try again.',
+        description: errorMessage,
         variant: 'destructive'
       });
     } finally {
@@ -77,7 +83,7 @@ const Contact = () => {
   };
 
   return (
-    <div className="container mx-auto px-2 sm:px-4 py-10 sm:py-16 space-y-12">
+    <div className="container mx-auto px-2 sm:px-4 py-0 sm:py-0 space-y-12">
       {/* Hero Section */}
       <section className="relative py-10 sm:py-16 overflow-hidden bg-gradient-to-br from-leather-100 to-leather-200 dark:from-leather-900 dark:to-leather-800 rounded-lg">
         <div className="absolute inset-0 bg-gradient-to-br from-gold-50/30 to-leather-100/20 dark:from-gold-900/20 dark:to-leather-800/30"></div>

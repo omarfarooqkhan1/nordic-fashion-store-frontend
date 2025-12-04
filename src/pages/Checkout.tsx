@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '@/contexts/CartContext';
 import { useAuth } from '@/contexts/AuthContext';
+import { useCurrency } from '@/contexts/CurrencyContext';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -12,7 +13,9 @@ import { Separator } from '@/components/ui/separator';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { CreditCard, Truck, Shield, ArrowLeft, Plus, MapPin } from 'lucide-react';
 import { createOrder } from '@/api/orders';
-import { createAddress } from '@/api/addresses';
+import { createAddress, fetchUserAddresses, setDefaultAddress } from '@/api/addresses';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Address } from '@/types/address';
 
 interface CheckoutFormData {
   shipping_name: string;
@@ -45,13 +48,115 @@ const Checkout: React.FC = () => {
   const navigate = useNavigate();
   const { items, customItems, getCartTotal, getCartItemsCount, clearCartItems, isLoading } = useCart();
   const { user, token } = useAuth();
+  const { convertPrice, getCurrencySymbol } = useCurrency();
   const { toast } = useToast();
   const [isProcessing, setIsProcessing] = useState(false);
+  const [savedAddresses, setSavedAddresses] = useState<Address[]>([]);
+  const [isLoadingAddresses, setIsLoadingAddresses] = useState(true);
+  const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
   
-  // Debug cart state
-  console.log('🏪 Checkout rendered - Cart items:', items?.length || 0, 'Custom items:', customItems?.length || 0, 'isLoading:', isLoading, 'isProcessing:', isProcessing);
-  console.log('🔍 Full cart data:', { items, customItems, getCartTotal: getCartTotal(), getCartItemsCount: getCartItemsCount() });
+  // Fetch saved addresses when component mounts or user changes
+  useEffect(() => {
+    const loadAddresses = async () => {
+      if (user && token) {
+        try {
+          setIsLoadingAddresses(true);
+          const addresses = await fetchUserAddresses();
+          setSavedAddresses(addresses);
+          
+          // Find and set the default address
+          const defaultAddress = addresses.find(addr => addr.is_default);
+          if (defaultAddress) {
+            setSelectedAddressId(defaultAddress.id);
+            fillFormWithAddress(defaultAddress);
+          }
+        } catch (error) {
+          toast({
+            title: 'Error',
+            description: 'Failed to load saved addresses',
+            variant: 'destructive',
+          });
+        } finally {
+          setIsLoadingAddresses(false);
+        }
+      } else {
+        setIsLoadingAddresses(false);
+      }
+    };
+    
+    loadAddresses();
+  }, [user, token, toast]);
   
+  // Fill form with address data
+  const fillFormWithAddress = (address: Address) => {
+    setFormData(prev => ({
+      ...prev,
+      shipping_name: address.name || user?.name || '',
+      shipping_address: address.street || '',
+      shipping_city: address.city || '',
+      shipping_state: address.state || 'Turku',
+      shipping_postal_code: address.postal_code || '',
+      shipping_country: address.country || 'Finland',
+      shipping_phone: address.phone || '',
+    }));
+  };
+  
+  // Handle address selection
+  const handleAddressSelect = (addressId: string) => {
+    setSelectedAddressId(addressId);
+    const selectedAddress = savedAddresses.find(addr => addr.id === addressId);
+    if (selectedAddress) {
+      fillFormWithAddress(selectedAddress);
+    }
+  };
+  
+  // Save current address to user's address book if logged in
+  const saveCurrentAddress = async (): Promise<Address | null> => {
+    if (!user || !token) return null;
+    
+    try {
+      const addressData = {
+        type: 'home' as const,
+        label: 'My Address',
+        street: formData.shipping_address,
+        city: formData.shipping_city,
+        state: formData.shipping_state,
+        postal_code: formData.shipping_postal_code,
+        country: formData.shipping_country,
+        phone: formData.shipping_phone,
+      };
+
+      const newAddress = await createAddress(addressData);
+      
+      // Update the addresses list
+      setSavedAddresses(prev => [...prev, newAddress]);
+      
+      // Set as default
+      await setDefaultAddress(newAddress.id);
+      setSelectedAddressId(newAddress.id);
+      
+      return newAddress;
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to save address',
+        variant: 'destructive',
+      });
+      return null;
+    }
+  };
+  
+  // Update form data when user changes
+  useEffect(() => {
+    if (user) {
+      setFormData(prev => ({
+        ...prev,
+        shipping_name: user.name || '',
+        shipping_email: user.email || '',
+      }));
+    }
+  }, [user]);
+
   const [formData, setFormData] = useState<CheckoutFormData>({
     shipping_name: user?.name || '',
     shipping_email: user?.email || '',
@@ -82,21 +187,14 @@ const Checkout: React.FC = () => {
 
   // Wait for cart to load before checking if it's empty
   useEffect(() => {
-    console.log('🔄 useEffect - isLoading:', isLoading, 'items:', items?.length, 'customItems:', customItems?.length, 'isProcessing:', isProcessing);
-    console.log('🔍 useEffect - Full data:', { items, customItems });
-    
     // Only check cart status after loading is complete
     if (!isLoading && !isProcessing) {
       const totalItems = (items?.length || 0) + (customItems?.length || 0);
-      console.log('📊 Total items calculation:', { itemsCount: items?.length || 0, customItemsCount: customItems?.length || 0, totalItems });
       if (totalItems === 0) {
-        console.log('⚠️ Cart is empty after loading, redirecting to cart page');
         navigate('/cart');
       } else {
-        console.log('✅ Cart has items, staying on checkout');
       }
     } else {
-      console.log('🔄 Still loading or processing, waiting...');
     }
   }, [isLoading, items, customItems, navigate, isProcessing]);
 
@@ -140,18 +238,12 @@ const Checkout: React.FC = () => {
   };
 
   const handleSubmit = async (e?: React.FormEvent | React.MouseEvent) => {
-    console.log('🚀 handleSubmit called');
-    console.log('🔍 User:', user);
-    console.log('🔑 Token:', token);
-    console.log('🛒 Cart items:', items);
-    console.log('💳 Form data:', formData);
     
     if (e) {
       e.preventDefault();
     }
     
     if (!validateForm()) {
-      console.log('❌ Form validation failed');
       toast({
         title: 'Please fix the errors',
         description: 'Check the form fields and try again',
@@ -160,18 +252,15 @@ const Checkout: React.FC = () => {
       return;
     }
 
-    console.log('✅ Form validation passed');
     setIsProcessing(true);
 
     try {
-      console.log('💰 Starting payment processing...');
       // Simulate payment processing delay
       await new Promise(resolve => setTimeout(resolve, 2000));
 
       // Save shipping address to user's address book if user is authenticated
       if (user && token) {
         try {
-          console.log('🏠 Saving shipping address to address book...');
           const addressData = {
             type: 'home' as const,
             label: 'Checkout Address',
@@ -183,20 +272,13 @@ const Checkout: React.FC = () => {
           };
           
           await createAddress(addressData);
-          console.log('✅ Shipping address saved to address book');
         } catch (addressError) {
-          console.warn('⚠️ Failed to save address to address book:', addressError);
           // Don't fail the order if address saving fails
         }
       }
 
-      console.log('📝 Creating order with API call...');
-      console.log('📤 Order data being sent:', formData);
-      console.log('🔐 Using token:', token);
-      
       // Create order
       const orderData = await createOrder(formData, token);
-      console.log('✅ Order created successfully:', orderData);
       
       if (!orderData || !orderData.order) {
         throw new Error('Invalid order response from server');
@@ -208,26 +290,15 @@ const Checkout: React.FC = () => {
         className: "bg-green-500 text-white"
       });
 
-      console.log('🧭 Navigating to order page...');
       // Navigate to order confirmation
       navigate(`/orders/${orderData.order.id}`, { 
         state: { orderData: orderData.order, fromCheckout: true }
       });
 
-      console.log('🧹 Clearing cart...');
       // Clear cart after successful navigation
       await clearCartItems();
-      console.log('✅ Cart cleared');
 
     } catch (error: any) {
-      console.error('💥 Checkout error details:', {
-        error,
-        message: error.message,
-        response: error.response,
-        status: error.response?.status,
-        data: error.response?.data
-      });
-      
       toast({
         title: 'Payment failed',
         description: error.message || 'There was an error processing your order',
@@ -235,7 +306,6 @@ const Checkout: React.FC = () => {
       });
     } finally {
       setIsProcessing(false);
-      console.log('🏁 handleSubmit finished, isProcessing set to false');
     }
   };
 
@@ -246,7 +316,6 @@ const Checkout: React.FC = () => {
 
   // Show loading while cart is loading
   if (isLoading) {
-    console.log('🔄 Showing loading state');
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="flex items-center justify-center h-64">
@@ -259,7 +328,6 @@ const Checkout: React.FC = () => {
 
   // Don't render if cart is empty and we're not processing
   if ((!items || items.length === 0) && !isProcessing) {
-    console.log('🚫 Cart is empty, not rendering checkout');
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="text-center py-8">
@@ -287,6 +355,7 @@ const Checkout: React.FC = () => {
             <h1 className="text-3xl font-bold text-foreground mb-2">Checkout</h1>
             <p className="text-muted-foreground">Complete your order information</p>
           </div>
+          <form id="checkout-form" onSubmit={handleSubmit}>
 
           <div className="space-y-6">
             {/* Shipping Information */}
@@ -583,7 +652,7 @@ const Checkout: React.FC = () => {
                         {item.variant?.size} - {item.variant?.color} × {item.quantity}
                       </p>
                     </div>
-                    <span className="font-medium">€{(getCartTotal() / getCartItemsCount() * item.quantity).toFixed(2)}</span>
+                    <span className="font-medium">{getCurrencySymbol()}{convertPrice(getCartTotal() / getCartItemsCount() * item.quantity).toFixed(2)}</span>
                   </div>
                 ))}
                 
@@ -601,7 +670,7 @@ const Checkout: React.FC = () => {
                         </p>
                       )}
                     </div>
-                    <span className="font-medium">€{(Number(customItem.price) || 0).toFixed(2)}</span>
+                    <span className="font-medium">{getCurrencySymbol()}{convertPrice(Number(customItem.price) || 0).toFixed(2)}</span>
                   </div>
                 ))}
               </div>
@@ -611,29 +680,26 @@ const Checkout: React.FC = () => {
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
                   <span>Subtotal</span>
-                  <span>€{subtotal.toFixed(2)}</span>
+                  <span>{getCurrencySymbol()}{convertPrice(subtotal).toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Shipping</span>
-                  <span>{shipping === 0 ? 'Free' : `€${shipping.toFixed(2)}`}</span>
+                  <span>{shipping === 0 ? 'Free' : `${getCurrencySymbol()}${convertPrice(shipping).toFixed(2)}`}</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Tax (25% VAT)</span>
-                  <span>€{tax.toFixed(2)}</span>
+                  <span>{getCurrencySymbol()}{convertPrice(tax).toFixed(2)}</span>
                 </div>
                 <Separator />
                 <div className="flex justify-between font-bold text-lg">
                   <span>Total</span>
-                  <span>€{total.toFixed(2)}</span>
+                  <span>{getCurrencySymbol()}{convertPrice(total).toFixed(2)}</span>
                 </div>
               </div>
 
               <Button
-                type="button"
-                onClick={() => {
-                  console.log('🔘 Checkout button clicked!');
-                  handleSubmit();
-                }}
+                type="submit"
+                form="checkout-form"
                 disabled={isProcessing}
                 className="w-full bg-gold-500 hover:bg-gold-600 text-leather-900 font-semibold py-3 border border-gold-400 hover:border-gold-500"
               >
@@ -643,17 +709,18 @@ const Checkout: React.FC = () => {
                     Processing Payment...
                   </>
                 ) : (
-                  `Complete Order - €${total.toFixed(2)}`
+                  `Complete Order - ${getCurrencySymbol()}${convertPrice(total).toFixed(2)}`
                 )}
               </Button>
 
               <div className="text-xs text-muted-foreground space-y-1">
                 <p>• Secure payment processing</p>
-                <p>• Free shipping on orders over €100</p>
+                <p>• Free shipping on orders over {getCurrencySymbol()}100</p>
                 <p>• 30-day return policy</p>
               </div>
             </CardContent>
           </Card>
+          </form>
         </div>
       </div>
     </div>

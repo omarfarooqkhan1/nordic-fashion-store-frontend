@@ -29,7 +29,11 @@ const MediaPreviewModal: React.FC<MediaPreviewModalProps> = ({ open, onClose, me
           />
         ) : (
           <video
-            src={media.url}
+            src={
+              media.url.startsWith('http://') || media.url.startsWith('https://') 
+                ? media.url 
+                : `${import.meta.env.VITE_BACKEND_URL}${media.url.startsWith('/') ? media.url : `/${media.url}`}`
+            }
             className="max-h-[80vh] max-w-[80vw] object-contain"
             controls
             autoPlay

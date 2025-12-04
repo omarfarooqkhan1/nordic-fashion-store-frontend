@@ -20,7 +20,6 @@ const CheckoutSuccess: React.FC = () => {
     
     if (paymentIntentId) {
       // You can use this to fetch order details or redirect to orders page
-      console.log('Payment Intent ID:', paymentIntentId);
     }
   }, [location]);
 

@@ -33,7 +33,7 @@ const About = () => {
   ];
 
   return (
-    <div className="container mx-auto px-2 sm:px-4 py-10 sm:py-16 space-y-12 sm:space-y-16">
+    <div className="container mx-auto px-2 sm:px-4 py-0 sm:py-0 space-y-12 sm:space-y-16">
       {/* Hero Section */}
       <section className="relative py-10 sm:py-20 overflow-hidden rounded-lg bg-gradient-to-br from-primary/10 to-secondary/20">
         <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=1200&h=600&fit=crop')] bg-cover bg-center opacity-20"></div>

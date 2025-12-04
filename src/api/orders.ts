@@ -96,16 +96,8 @@ export const createOrder = async (
   try {
     const sessionId = localStorage.getItem('nordic_fashion_cart_session_id');
     
-    console.log('🔧 createOrder function called with:', {
-      orderData,
-      bearerToken: bearerToken ? 'Present' : 'Not provided',
-      sessionId: sessionId ? 'Present' : 'Not found'
-    });
-    
     const headers = buildApiHeaders(sessionId, bearerToken);
-    console.log('📋 Request headers:', headers);
     
-    console.log('📡 Making API request to /orders/test');
     const response = await api.post(
       '/orders',
       orderData,
@@ -115,20 +107,8 @@ export const createOrder = async (
       }
     );
     
-    console.log('📥 API response received:', {
-      status: response.status,
-      data: response.data
-    });
-    
     return response.data;
   } catch (error: any) {
-    console.error('🚨 Error in createOrder:', {
-      message: error.message,
-      status: error.response?.status,
-      statusText: error.response?.statusText,
-      data: error.response?.data,
-      headers: error.response?.headers
-    });
     throw new Error(error.response?.data?.message || 'Failed to create order');
   }
 };
@@ -137,18 +117,32 @@ export const fetchOrders = async (
   bearerToken?: string
 ): Promise<Order[]> => {
   try {
-    const sessionId = localStorage.getItem('nordic_fashion_cart_session_id');
+    // Get session ID from localStorage with fallback to sessionStorage
+    let sessionId = localStorage.getItem('nordic_fashion_cart_session_id') || 
+                   sessionStorage.getItem('nordic_fashion_cart_session_id') ||
+                   localStorage.getItem('cart_session_id') ||
+                   sessionStorage.getItem('cart_session_id');
     
     const response = await api.get(
       '/orders',
       {
-        headers: buildApiHeaders(sessionId, bearerToken),
+        headers: buildApiHeaders(sessionId || undefined, bearerToken),
       }
     );
     
-    return response.data;
+    // Handle both paginated and non-paginated responses
+    if (response.data && Array.isArray(response.data)) {
+      // If the response is already an array, return it directly
+      return response.data;
+    } else if (response.data && response.data.data && Array.isArray(response.data.data)) {
+      // If the response has a data property that's an array, return that
+      return response.data.data;
+    }
+    
+    // If we get here, the response format is unexpected
+    return [];
+    
   } catch (error: any) {
-    console.error('Error fetching orders:', error);
     throw new Error(error.response?.data?.message || 'Failed to fetch orders');
   }
 };
@@ -169,7 +163,6 @@ export const fetchOrder = async (
     
     return response.data;
   } catch (error: any) {
-    console.error('Error fetching order:', error);
     throw new Error(error.response?.data?.message || 'Failed to fetch order');
   }
 };
@@ -186,9 +179,10 @@ export const fetchAllOrders = async (
       }
     );
     
-    return response.data;
+    // The API returns { data: Order[], pagination: {...} }
+    // We need to extract the data array
+    return response.data.data || [];
   } catch (error: any) {
-    console.error('Error fetching all orders:', error);
     throw new Error(error.response?.data?.message || 'Failed to fetch orders');
   }
 };
@@ -216,7 +210,6 @@ export const updateOrderStatus = async (
     
     return response.data;
   } catch (error: any) {
-    console.error('Error updating order:', error);
     throw new Error(error.response?.data?.message || 'Failed to update order');
   }
 };

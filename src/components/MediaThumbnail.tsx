@@ -7,9 +7,12 @@ interface MediaThumbnailProps {
 }
 
 const MediaThumbnail: React.FC<MediaThumbnailProps> = ({ media, onClick, className = '' }) => {
+  // Default thumbnail size if no className provided
+  const defaultClasses = className || 'w-20 h-20';
+  
   return (
     <div
-      className={`flex-shrink-0 flex items-center justify-center w-20 h-20 bg-gray-100 rounded-lg overflow-hidden border relative cursor-pointer group ${className}`}
+      className={`flex-shrink-0 flex items-center justify-center bg-white rounded-lg overflow-hidden border relative cursor-pointer group ${defaultClasses}`}
       onClick={media ? onClick : undefined}
       tabIndex={media ? 0 : -1}
       role={media ? 'button' : undefined}
@@ -20,12 +23,16 @@ const MediaThumbnail: React.FC<MediaThumbnailProps> = ({ media, onClick, classNa
           <img
             src={media.url}
             alt="media thumbnail"
-            className="object-cover w-full h-full group-hover:scale-105 transition-transform"
+            className="object-contain w-full h-full group-hover:scale-105 transition-transform"
           />
         ) : (
           <>
             <video
-              src={media.url}
+              src={
+                media.url.startsWith('http://') || media.url.startsWith('https://') 
+                  ? media.url 
+                  : `${import.meta.env.VITE_BACKEND_URL}${media.url.startsWith('/') ? media.url : `/${media.url}`}`
+              }
               className="object-cover w-full h-full"
               style={{ pointerEvents: 'none' }}
               tabIndex={-1}

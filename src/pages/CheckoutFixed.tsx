@@ -260,7 +260,6 @@ const CheckoutFixed: React.FC = () => {
       });
       
     } catch (error: any) {
-      console.error('Failed to handle payment success:', error);
       toast.toast({
         title: 'Error',
         description: 'Payment succeeded but there was an error creating your order',
@@ -281,7 +280,6 @@ const CheckoutFixed: React.FC = () => {
   // Add global error handler for unhandled promise rejections
   useEffect(() => {
     const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
-      console.error('Unhandled promise rejection:', event.reason);
       toast.toast({
         title: 'Unexpected Error',
         description: 'An unexpected error occurred. Please try again.',
@@ -362,6 +360,7 @@ const CheckoutFixed: React.FC = () => {
           setIsCreatingPaymentIntent(true);
           
           // Create payment intent first (without order_id)
+          // Pass token for authenticated users, empty string for guests
           const paymentIntent = await createPaymentIntent({
             amount: Math.round(total * 100), // Convert to cents
             currency: 'eur',
@@ -386,7 +385,6 @@ const CheckoutFixed: React.FC = () => {
               billing_country: formData.billing_same_as_shipping ? formData.shipping_country : formData.shipping_country,
             }
           }, token).catch(error => {
-            console.error('Error creating payment intent:', error);
             throw error; // Re-throw to be caught by the outer try-catch
           });
           
@@ -409,7 +407,6 @@ const CheckoutFixed: React.FC = () => {
           });
           
         } catch (error: any) {
-          console.error('Failed to create payment intent:', error);
           toast.toast({
             title: 'Payment Error',
             description: error.message || 'Failed to create payment intent',
@@ -441,7 +438,6 @@ const CheckoutFixed: React.FC = () => {
       }
       
     } catch (error: any) {
-      console.error('Failed to create order:', error);
       toast.toast({
         title: t('checkout.orderFailed'),
         description: error.message || t('checkout.orderFailedDesc'),
@@ -898,7 +894,7 @@ const CheckoutFixed: React.FC = () => {
                         {item.variant?.size} - {item.variant?.color} × {item.quantity}
                       </p>
                     </div>
-                    <span className="font-medium">€{((item.variant?.actual_price || 0) * item.quantity).toFixed(2)}</span>
+                    <span className="font-medium">€{(((item.variant?.price ?? Number(item.variant?.product?.price)) || 0) * item.quantity).toFixed(2)}</span>
                   </div>
                 ))}
                 
@@ -946,7 +942,6 @@ const CheckoutFixed: React.FC = () => {
               <Button
                 type="button"
                 onClick={() => {
-                  console.log('🔘 Checkout button clicked!');
                   handleSubmit();
                 }}
                 disabled={isProcessing || isCreatingPaymentIntent}

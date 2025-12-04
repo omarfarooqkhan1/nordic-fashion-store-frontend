@@ -10,7 +10,7 @@ export default defineConfig(({ mode }) => ({
     port: 3000, // Changed to 3000 to avoid conflict with Laravel (8000)
     proxy: {
       '/api': {
-        target: 'http://localhost:8000',
+        target: 'https://backend.nordflex.shop',
         changeOrigin: true,
         secure: false,
       },
@@ -26,23 +26,4 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
-  build: {
-    outDir: 'dist',
-    assetsDir: 'assets',
-    rollupOptions: {
-      output: {
-        manualChunks: {
-          vendor: ['react', 'react-dom'],
-          ui: ['@radix-ui/react-dialog', '@radix-ui/react-dropdown-menu', '@radix-ui/react-select'],
-          three: ['@react-three/fiber', '@react-three/drei', 'three'],
-        },
-      },
-    },
-    // Ensure assets are built with proper names for production
-    manifest: true,
-    // Copy .htaccess to build output
-    copyPublicDir: true,
-  },
-  // Base path for production (when served from Laravel)
-  base: mode === 'production' ? '/' : '/',
 }));

@@ -10,7 +10,6 @@ const CheckoutTest: React.FC = () => {
   const { user, token } = useAuth();
   const navigate = useNavigate();
 
-  console.log('🧪 CheckoutTest - isLoading:', isLoading, 'items:', items?.length);
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -70,27 +69,13 @@ const CheckoutTest: React.FC = () => {
           <Button 
             className="w-full bg-green-500 hover:bg-green-600 text-white"
             onClick={() => {
-              console.log('🔘 Test button clicked!');
-              alert('Checkout test button works! Cart has ' + (items?.length || 0) + ' items');
+              // Test checkout functionality
             }}
           >
             Test Checkout Button (Items: {items?.length || 0})
           </Button>
         </div>
 
-        <div className="mt-6">
-          <h3 className="text-lg font-semibold mb-2">Debug Info:</h3>
-          <pre className="bg-gray-100 dark:bg-gray-800 p-4 rounded text-xs overflow-auto max-h-64">
-            {JSON.stringify({
-              isLoading,
-              itemsLength: items?.length,
-              user: user ? { id: user.id, name: user.name, email: user.email } : null,
-              hasToken: !!token,
-              cartTotal: getCartTotal?.(),
-              itemsCount: getCartItemsCount?.()
-            }, null, 2)}
-          </pre>
-        </div>
       </div>
     </div>
   );

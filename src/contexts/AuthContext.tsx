@@ -1,7 +1,5 @@
-"use client"
 
-import type React from "react"
-import { createContext, useContext, useEffect, useState, type ReactNode } from "react"
+import React, { createContext, useContext, useEffect, useState, type ReactNode } from "react"
 import { useAuth0 } from "@auth0/auth0-react"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { useToast } from "@/hooks/use-toast"
@@ -83,7 +81,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             className: "bg-green-500 text-white",
           })
         } catch (error) {
-          console.error("Auth0 login failed:", error)
           toast({
             title: t('toast.loginError'),
             description: t('toast.error'),
@@ -108,7 +105,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           setToken(storedToken)
           setUser(JSON.parse(storedUser))
         } catch (error) {
-          console.error("Error parsing stored user:", error)
           localStorage.removeItem("token")
           localStorage.removeItem("user")
         }
@@ -198,10 +194,38 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         className: "bg-green-500 text-white",
       })
     },
-    onError: (error: any) => {
+    onError: async (error: any) => {
+      const errorData = error.response?.data;
+      
+      // Handle email verification required
+      if (error.response?.status === 403 && errorData?.require_verification) {
+        // Automatically resend OTP when email is not verified
+        try {
+          await api.post("/customer/resend-verification", { 
+            user_id: errorData.user_id 
+          });
+          
+          toast({
+            title: "Email Not Verified",
+            description: "A new verification code has been sent to your email",
+            className: "bg-blue-500 text-white",
+          });
+        } catch (resendError) {
+          toast({
+            title: "Email Not Verified",
+            description: "Please verify your email before logging in",
+            variant: "destructive",
+          });
+        }
+        
+        // Redirect to verification page
+        window.location.href = `/verify-email?user_id=${errorData.user_id}&email=${errorData.email || ''}`;
+        return;
+      }
+      
       toast({
         title: t('toast.loginError'),
-        description: error.response?.data?.message || t('toast.loginError'),
+        description: errorData?.message || t('toast.loginError'),
         variant: "destructive",
       })
     },

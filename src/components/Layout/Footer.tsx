@@ -6,28 +6,47 @@ const scrollToTop = () => {
   window.scrollTo({ top: 0, behavior: 'smooth' });
 };
 import { useLanguage } from '@/contexts/LanguageContext';
+import { SocialMediaIcons } from '@/components/common/SocialMediaIcons';
 
 export const Footer: React.FC = () => {
   const { t } = useLanguage();
 
   return (
-    <footer className="border-t border-border bg-background">
+    <footer className="border-t border-border bg-background mt-12">
       <div className="container py-12">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-8">
           {/* Brand */}
           <div className="space-y-4">
-            <div className="flex items-center space-x-2">
-              <div className="text-xl font-bold text-leather-800 dark:text-leather-100">NORD</div>
-              <div className="text-xl font-light text-gold-500">FLEX</div>
+            <div className="flex items-center space-x-3">
+              <img 
+                src="/logo.png" 
+                alt="Nord Flex Logo" 
+                className="w-20 h-20 object-contain dark:brightness-0 dark:invert"
+              />
+              <div className="flex items-center space-x-1">
+                <div className="text-xl font-bold text-leather-800 dark:text-leather-100">NORD</div>
+                <div className="text-xl font-light text-gold-500">FLEX</div>
+              </div>
             </div>
             <p className="text-sm text-muted-foreground">
               {t('footer.brand.desc')}
             </p>
           </div>
 
+          {/* Social Media */}
+          <div className="space-y-4">
+            <h3 className="text-base font-semibold text-foreground">{t('footer.social')}</h3>
+            <p className="text-sm text-muted-foreground mb-4">{t('footer.social.desc')}</p>
+            <SocialMediaIcons 
+              className="flex flex-wrap gap-3" 
+              iconSize={28}
+              showLabels={false}
+            />
+          </div>
+
           {/* Quick Links */}
           <div className="space-y-4">
-            <h3 className="text-sm font-semibold text-foreground">{t('footer.quicklinks')}</h3>
+            <h3 className="text-base font-semibold text-foreground">{t('footer.quicklinks')}</h3>
             <ul className="space-y-2 text-sm">
               <li>
                 <Link to="/" className="text-muted-foreground hover:text-gold-500 transition-colors" onClick={scrollToTop}>
@@ -49,12 +68,22 @@ export const Footer: React.FC = () => {
                   {t('nav.contact')}
                 </Link>
               </li>
+              <li>
+                <Link to="/blogs" className="text-muted-foreground hover:text-gold-500 transition-colors" onClick={scrollToTop}>
+                  Blogs
+                </Link>
+              </li>
+              <li>
+                <Link to="/faqs" className="text-muted-foreground hover:text-gold-500 transition-colors" onClick={scrollToTop}>
+                  {t('nav.faq')}
+                </Link>
+              </li>
             </ul>
           </div>
 
           {/* Categories */}
           <div className="space-y-4">
-            <h3 className="text-sm font-semibold text-foreground">{t('footer.categories')}</h3>
+            <h3 className="text-base font-semibold text-foreground">{t('footer.categories')}</h3>
             <ul className="space-y-2 text-sm">
               <li>
                 <Link to="/products?category=bags" className="text-muted-foreground hover:text-gold-500 transition-colors" onClick={scrollToTop}>
@@ -81,12 +110,11 @@ export const Footer: React.FC = () => {
 
           {/* Contact Info */}
           <div className="space-y-4">
-            <h3 className="text-sm font-semibold text-foreground">{t('footer.contact')}</h3>
+            <h3 className="text-base font-semibold text-foreground">{t('footer.contact')}</h3>
             <div className="space-y-2 text-sm text-muted-foreground">
               <p>{t('footer.company')}</p>
               <p>{t('footer.location')}</p>
               <p>+358 44 9782549</p>
-              <a href="mailto:support@nordflex.shop">support@nordflex.shop</a>
             </div>
           </div>
         </div>
@@ -97,10 +125,10 @@ export const Footer: React.FC = () => {
               {t('footer.copyright')}
             </p>
             <div className="flex space-x-4 mt-4 md:mt-0">
-              <Link to="/privacy" className="text-sm text-muted-foreground hover:text-gold-500 transition-colors">
+              <Link to="/privacy" className="text-sm text-muted-foreground hover:text-gold-500 transition-colors" onClick={scrollToTop}>
                 {t('footer.privacy')}
               </Link>
-              <Link to="/terms" className="text-sm text-muted-foreground hover:text-gold-500 transition-colors">
+              <Link to="/terms" className="text-sm text-muted-foreground hover:text-gold-500 transition-colors" onClick={scrollToTop}>
                 {t('footer.terms')}
               </Link>
             </div>

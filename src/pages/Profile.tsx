@@ -1,4 +1,3 @@
-"use client"
 
 import type React from "react"
 import { useState } from "react"
@@ -506,7 +505,9 @@ const Profile: React.FC = () => {
               
               {addressesError && (
                 <Alert variant="destructive">
-                  <AlertDescription>{t('toast.error')}</AlertDescription>
+                  <AlertDescription>
+                    {addressesError instanceof Error ? addressesError.message : t('toast.error')}
+                  </AlertDescription>
                 </Alert>
               )}
 

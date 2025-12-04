@@ -12,6 +12,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { mockProducts, Product } from '@/lib/mockData';
 import { Pencil, Trash2, Plus, Package, Users, TrendingUp, Euro } from 'lucide-react';
 import { LoadingState } from '@/components/common';
+import AdminHeroImages from '@/components/admin/AdminHeroImages';
 
 const Admin = () => {
   const { t } = useLanguage();
@@ -187,9 +188,10 @@ const Admin = () => {
       </div>
 
       <Tabs defaultValue="overview" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="products">Products</TabsTrigger>
+          <TabsTrigger value="hero-images">Hero Images</TabsTrigger>
           <TabsTrigger value="orders">Orders</TabsTrigger>
         </TabsList>
 
@@ -343,6 +345,10 @@ const Admin = () => {
               </Card>
             ))}
           </div>
+        </TabsContent>
+
+        <TabsContent value="hero-images" className="space-y-6">
+          <AdminHeroImages />
         </TabsContent>
 
         <TabsContent value="orders" className="space-y-6">

@@ -1,4 +1,3 @@
-"use client"
 
 import type React from "react"
 
@@ -49,7 +48,16 @@ const CustomerSignup: React.FC = () => {
       // Redirect to verify email page
       navigate("/verify-email", { state: { userId: result.user_id, email: data.email } });
     } catch (err: any) {
-      setError(err.message || t('toast.signupError'));
+      if (err.response?.data?.message) {
+        setError(err.response.data.message);
+      } else if (err.response?.data?.errors) {
+        // Handle validation errors
+        const errors = err.response.data.errors;
+        const errorMessages = Object.values(errors).flat();
+        setError(errorMessages.join(', '));
+      } else {
+        setError(err.message || t('toast.signupError'));
+      }
     }
   };
 
@@ -63,10 +71,10 @@ const CustomerSignup: React.FC = () => {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen">
-      <div className="w-full max-w-md">
+    <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 p-4 sm:p-6 lg:p-8">
+      <div className="w-full max-w-md sm:max-w-lg lg:max-w-xl">
         {/* Google Signup Button */}
-        <Button onClick={handleGoogleSignup} variant="outline" className="w-full mb-4" type="button">
+        <Button onClick={handleGoogleSignup} variant="outline" className="w-full mb-4 dark:border-slate-600 dark:bg-slate-700 dark:text-white dark:hover:bg-slate-600" type="button">
           <svg className="w-4 h-4 mr-2" viewBox="0 0 24 24">
             <path
               fill="currentColor"
@@ -89,10 +97,10 @@ const CustomerSignup: React.FC = () => {
         </Button>
         <div className="relative mb-4">
           <div className="absolute inset-0 flex items-center">
-            <Separator className="w-full" />
+            <Separator className="w-full dark:bg-slate-600" />
           </div>
           <div className="relative flex justify-center text-xs uppercase">
-            <span className="bg-background px-2 text-muted-foreground">{t('auth.email')}</span>
+            <span className="bg-background dark:bg-slate-800 px-2 text-muted-foreground dark:text-slate-400">{t('auth.email')}</span>
           </div>
         </div>
         <AuthForm
@@ -112,7 +120,7 @@ const CustomerSignup: React.FC = () => {
                 id="name"
                 type="text"
                 placeholder={t('auth.name')}
-                className="pl-10"
+                className="pl-10 h-10 sm:h-11 text-sm sm:text-base dark:bg-slate-700 dark:border-slate-600 dark:text-white dark:placeholder-slate-400"
                 value={name}
                 onChange={e => setName(e.target.value)}
                 required
@@ -128,7 +136,7 @@ const CustomerSignup: React.FC = () => {
                 id="confirmPassword"
                 type={showConfirmPassword ? "text" : "password"}
                 placeholder={t('auth.confirmPassword')}
-                className="pl-10 pr-10"
+                className="pl-10 pr-10 h-10 sm:h-11 text-sm sm:text-base dark:bg-slate-700 dark:border-slate-600 dark:text-white dark:placeholder-slate-400"
                 value={confirmPassword}
                 onChange={e => setConfirmPassword(e.target.value)}
                 required
@@ -151,7 +159,7 @@ const CustomerSignup: React.FC = () => {
           </div>
           <div className="text-center text-sm mt-4">
             <span className="text-muted-foreground">{t('auth.alreadyHaveAccount')} </span>
-            <Link to="/login" className="text-primary hover:underline font-medium">
+            <Link to="/login" className="text-primary hover:underline font-medium hover:text-primary/80 transition-colors">
               {t('auth.login')}
             </Link>
           </div>

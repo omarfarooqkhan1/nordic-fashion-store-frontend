@@ -41,7 +41,7 @@ npm run type-check   # TypeScript type checking
 
 ## 🔧 Configuration
 
-Backend API endpoint is configured to `http://localhost:8000` by default.
+Backend API endpoint is configured to `https://backend.nordflex.shop` by default.
 No additional configuration needed for development.
 
 ## � Project Structure
