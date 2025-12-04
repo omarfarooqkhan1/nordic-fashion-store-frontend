@@ -37,7 +37,7 @@ export const SimilarProducts: React.FC<SimilarProductsProps> = ({ products }) =>
             {products.map((product) => {
               // Get first variant price or 0 if no variants
               const price = product.variants && product.variants.length > 0
-                ? product.variants[0].price
+                ? Number(product.variants[0].price)
                 : 0;
 
               // Get first image or fallback

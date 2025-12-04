@@ -921,7 +921,7 @@ const AdminDashboard: React.FC = () => {
                           <div className="font-medium">Order #{order.order_number}</div>
                           <div className="text-sm text-muted-foreground">{order.customer_name}</div>
                           <div className="text-xs text-muted-foreground">
-                            €{order.total.toFixed(2)} • {order.time_ago}
+                            €{Number(order.total).toFixed(2)} • {order.time_ago}
                           </div>
                         </div>
                         <Badge 

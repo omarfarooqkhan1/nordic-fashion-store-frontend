@@ -7,6 +7,7 @@ import ErrorBoundary from "./components/ErrorBoundary"
 import TestComponent from "./TestComponent"
 import TestProductData from "./TestProductData"
 import ProtectedRoute from "./components/Auth/ProtectedRoute"
+import { Chatbot } from "@/components/Chatbot/Chatbot"
 
 // Critical Pages (loaded immediately)
 import Index from "./pages/Index"
@@ -156,6 +157,7 @@ const App: React.FC = () => {
                           </ErrorBoundary>
                         </main>
                         <Footer />
+                        <Chatbot />
                       </div>
       </Router>
     </AppProviders>
