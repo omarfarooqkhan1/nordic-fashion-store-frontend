@@ -10,7 +10,7 @@ npm install
 
 # Start development server
 npm run dev
-# Runs on http://localhost:3001
+# Runs on http://localhost:3000
 ```
 
 ## 📦 Scripts
@@ -20,41 +20,50 @@ npm run dev          # Development server with HMR
 npm run build        # Production build
 npm run preview      # Preview production build
 npm run type-check   # TypeScript type checking
+npm run lint         # Run ESLint
 ```
 
-## �️ Tech Stack
+## 🛠️ Tech Stack
 
-- **React 18** with TypeScript
-- **Vite** for fast development and building
-- **TanStack Query** for server state management
-- **Tailwind CSS** with shadcn/ui components
-- **React Router** v6 for routing
+- **React 18.3.1** with TypeScript
+- **Vite 5.4.1** for fast development and building
+- **TanStack Query 5.81.2** for server state management
+- **Tailwind CSS 3.4.11** with shadcn/ui components
+- **React Router 6.26.2** for routing
+- **Three.js** for 3D configurator
+- **Auth0** for authentication
 
 ## 🧩 Key Features
 
-- **17 Reusable Components** with 75% code reduction
+- **17+ Reusable Components** with 75% code reduction
 - **Dark Mode Support** with proper contrast
 - **Guest Checkout** functionality
 - **Order Tracking** integration
 - **Multi-language** support
 - **Responsive Design** mobile-first approach
+- **3D Product Configurator** with leather textures
+- **Product Review System** with star ratings
+- **Stripe Payment Integration**
 
 ## 🔧 Configuration
 
 Backend API endpoint is configured to `https://backend.nordflex.shop` by default.
-No additional configuration needed for development.
+Development server runs on port 3000.
 
-## � Project Structure
+## 📁 Project Structure
 
 ```
 src/
-├── components/       # Reusable UI components
-├── pages/           # Route components
-├── hooks/           # Custom React hooks
+├── api/             # API integration
+├── components/      # Reusable UI components
+├── config/          # Configuration files
 ├── contexts/        # React context providers
-├── api/            # API integration
-├── lib/            # Utilities and helpers
-└── types/          # TypeScript type definitions
+├── hooks/           # Custom React hooks
+├── lib/             # Utilities and helpers
+├── pages/           # Route components
+├── providers/       # React providers
+├── types/           # TypeScript type definitions
+└── utils/           # Utility functions
 ```
 
 For full project documentation, see the main README.md in the parent directory.
@@ -81,19 +90,42 @@ Follow these steps to set up the project locally.
     ```bash
     npm run dev  # or yarn dev
     ```
-    The application will typically be available at `http://localhost:5173` (or another port Vite assigns).
+    The application will be available at `http://localhost:3000`.
 
-## 💡 Dummy Data & Admin Panel
+## 🎨 Texture Customization
 
-This initial version of the frontend uses **dummy data** for products, variants, and stock. The "admin panel" functionality is a placeholder designed to demonstrate future capabilities for managing stock. It **does not currently interact with a real backend** or persistent storage. Data displayed and manipulated within the admin panel is temporary and will reset upon page refresh.
+The configurator supports custom leather textures. You can add your own textures by following the guides:
+- [Cowhide Leather Texture Setup Guide](./TEXTURE_SETUP_GUIDE.md)
+- [Adding Custom Textures Guide](./ADD_CUSTOM_TEXTURES.md)
+
+Place your PNG texture files in the `public/textures/` directory and configure them in the code.
+
+## ⭐ Product Review System
+
+The platform includes a comprehensive product review system with the following features:
+- Purchase verification (only customers who bought the product can review)
+- One review per product per user
+- Star rating system (1-5 stars)
+- Review management (edit/delete)
+- Verified purchase badges
+
+See [Review System Documentation](./REVIEW_SYSTEM_README.md) for implementation details.
+
+## 💡 Current Implementation Status
+
+This version of the frontend uses a mix of dummy data and real API integrations:
+- Authentication is implemented with Auth0
+- Stripe payment integration is functional
+- 3D configurator with real-time texture preview
+- Some components still use mock data for demonstration
 
 ## 🛣️ Future Enhancements
 
-* **Backend Integration:** Connect to a Laravel API (or similar) for real data fetching, authentication, and persistent storage.
-* **Authentication:** Implement user login/registration using real authentication services (e.g., Auth0).
-* **Shopping Cart Logic:** Persist cart data and integrate with order placement.
-* **Real-time Stock Updates:** Implement real-time updates for stock availability.
-* **Payment Gateway Integration:** Integrate with payment processing services.
+* **Full Backend Integration:** Complete integration with Laravel API for all data operations
+* **Enhanced Admin Panel:** Full-featured admin dashboard with real data management
+* **Advanced Analytics:** Implementation of user behavior tracking and analytics
+* **Mobile App:** Native mobile application development
+* **AI Recommendations:** Personalized product recommendations
 
 ## 🤝 Contributing
 
