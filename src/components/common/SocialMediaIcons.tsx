@@ -91,7 +91,7 @@ const socialMediaLinks = [
   },
   {
     name: 'TikTok',
-    url: 'https://www.tiktok.com/@nordflex',
+    url: 'https://www.tiktok.com/@nordflex.store',
     icon: () => (
       <svg
         width="20"
@@ -142,7 +142,7 @@ const socialMediaLinks = [
   },
   {
     name: 'Email',
-    url: 'mailto:support@nordflex.shop',
+    url: 'mailto:support@nordflex.store',
     icon: () => (
       <svg
         width="20"

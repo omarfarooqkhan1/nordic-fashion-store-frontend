@@ -135,7 +135,7 @@ const PrivacyPolicy = () => {
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <a 
-                href="mailto:support@nordflex.shop"
+                href="mailto:support@nordflex.store"
                 className="inline-flex items-center px-6 py-3 bg-gold-500 hover:bg-gold-600 text-gold-950 dark:text-gold-50 font-semibold rounded-lg transition-colors duration-300"
               >
                 📧 {t('contact.emailUs')}

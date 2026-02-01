@@ -1,5 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
+import { fetchCategories } from '@/api/admin';
 
 // Utility to scroll to top
 const scrollToTop = () => {
@@ -10,6 +12,14 @@ import { SocialMediaIcons } from '@/components/common/SocialMediaIcons';
 
 export const Footer: React.FC = () => {
   const { t } = useLanguage();
+
+  // Fetch categories from API
+  const { data: categories = [] } = useQuery({
+    queryKey: ['footer-categories'],
+    queryFn: fetchCategories,
+    staleTime: 1000 * 60 * 30, // 30 minutes
+    retry: 1,
+  });
 
   return (
     <footer className="border-t border-border bg-background mt-12">
@@ -85,26 +95,43 @@ export const Footer: React.FC = () => {
           <div className="space-y-4">
             <h3 className="text-base font-semibold text-foreground">{t('footer.categories')}</h3>
             <ul className="space-y-2 text-sm">
-              <li>
-                <Link to="/products?category=bags" className="text-muted-foreground hover:text-gold-500 transition-colors" onClick={scrollToTop}>
-                  {t('products.bags')}
-                </Link>
-              </li>
-              <li>
-                <Link to="/products?category=wallets" className="text-muted-foreground hover:text-gold-500 transition-colors" onClick={scrollToTop}>
-                  {t('products.wallets')}
-                </Link>
-              </li>
-              <li>
-                <Link to="/products?category=belts" className="text-muted-foreground hover:text-gold-500 transition-colors" onClick={scrollToTop}>
-                  {t('products.belts')}
-                </Link>
-              </li>
-              <li>
-                <Link to="/products?category=jackets" className="text-muted-foreground hover:text-gold-500 transition-colors" onClick={scrollToTop}>
-                  {t('products.jackets')}
-                </Link>
-              </li>
+              {categories.length > 0 ? (
+                categories.slice(0, 6).map((category) => (
+                  <li key={category.id}>
+                    <Link 
+                      to={`/products?category=${category.name.toLowerCase()}`} 
+                      className="text-muted-foreground hover:text-gold-500 transition-colors" 
+                      onClick={scrollToTop}
+                    >
+                      {category.name}
+                    </Link>
+                  </li>
+                ))
+              ) : (
+                // Fallback to static categories if API fails
+                <>
+                  <li>
+                    <Link to="/products?category=bags" className="text-muted-foreground hover:text-gold-500 transition-colors" onClick={scrollToTop}>
+                      {t('products.bags')}
+                    </Link>
+                  </li>
+                  <li>
+                    <Link to="/products?category=wallets" className="text-muted-foreground hover:text-gold-500 transition-colors" onClick={scrollToTop}>
+                      {t('products.wallets')}
+                    </Link>
+                  </li>
+                  <li>
+                    <Link to="/products?category=belts" className="text-muted-foreground hover:text-gold-500 transition-colors" onClick={scrollToTop}>
+                      {t('products.belts')}
+                    </Link>
+                  </li>
+                  <li>
+                    <Link to="/products?category=jackets" className="text-muted-foreground hover:text-gold-500 transition-colors" onClick={scrollToTop}>
+                      {t('products.jackets')}
+                    </Link>
+                  </li>
+                </>
+              )}
             </ul>
           </div>
 
@@ -124,12 +151,20 @@ export const Footer: React.FC = () => {
             <p className="text-sm text-muted-foreground">
               {t('footer.copyright')}
             </p>
-            <div className="flex space-x-4 mt-4 md:mt-0">
+            <div className="flex flex-wrap gap-4 mt-4 md:mt-0 items-center">
               <Link to="/privacy" className="text-sm text-muted-foreground hover:text-gold-500 transition-colors" onClick={scrollToTop}>
                 {t('footer.privacy')}
               </Link>
               <Link to="/terms" className="text-sm text-muted-foreground hover:text-gold-500 transition-colors" onClick={scrollToTop}>
                 {t('footer.terms')}
+              </Link>
+              <Link 
+                to="/newsletter" 
+                className="group relative text-sm font-medium text-gold-600 hover:text-gold-500 transition-all duration-300 animate-bounce hover:animate-none px-3 py-1.5 rounded-full border border-gold-200 hover:border-gold-400 hover:bg-gold-50 dark:border-gold-800 dark:hover:border-gold-600 dark:hover:bg-gold-950/20" 
+                onClick={scrollToTop}
+              >
+                <span className="relative z-10">📧 Subscribe to Newsletter</span>
+                <div className="absolute inset-0 rounded-full bg-gradient-to-r from-gold-100 to-gold-200 dark:from-gold-900/20 dark:to-gold-800/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
               </Link>
             </div>
           </div>

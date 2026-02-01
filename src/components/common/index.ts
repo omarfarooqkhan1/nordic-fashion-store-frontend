@@ -20,3 +20,4 @@ export { default as CartItem } from './CartItem';
 export { default as OrderSummary } from './OrderSummary';
 export { default as StatusBadge } from './StatusBadge';
 export { default as ProductGrid } from './ProductGrid';
+export { CheckoutNewsletterSubscription } from './CheckoutNewsletterSubscription';

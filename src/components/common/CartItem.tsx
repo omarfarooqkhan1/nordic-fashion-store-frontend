@@ -24,7 +24,7 @@ const CartItem: React.FC<CartItemProps> = ({
   disabled = false
 }) => {
   const { t } = useLanguage();
-  const { getCurrencySymbol } = useCurrency();
+  const { getCurrencySymbol, convertPrice } = useCurrency();
 
   const itemPrice = getItemPrice(item);
   const totalPrice = itemPrice * item.quantity;
@@ -129,7 +129,7 @@ const CartItem: React.FC<CartItemProps> = ({
                   className="mb-1"
                 />
                 <p className="text-sm text-muted-foreground">
-                  {getCurrencySymbol()}{Number(itemPrice).toFixed(2)} {t('common.each') || 'each'}
+                  {getCurrencySymbol()}{convertPrice(itemPrice).toFixed(2)} {t('common.each') || 'each'}
                 </p>
               </div>
             </div>

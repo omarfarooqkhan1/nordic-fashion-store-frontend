@@ -131,32 +131,121 @@ const ProductDetail = () => {
   // Check if product has variants
   const hasVariants = product?.variants && Array.isArray(product.variants) && product.variants.length > 0;
   
-  // Robust, scalable image selection logic
-  // Main images: Prefer variant.main_images, fallback to product.images
-  const displayImages = (hasVariants && selectedVariant && selectedVariant.main_images && selectedVariant.main_images.length > 0)
-    ? selectedVariant.main_images
-    : (product?.images && product.images.length > 0)
-    ? product.images
-    : [];
+  // Robust, scalable image selection logic with better fallbacks
+  // Main images: Try selected variant -> any variant with images -> product images -> empty
+  const displayImages = (() => {
+    // If we have a selected variant with images, use those
+    if (hasVariants && selectedVariant && selectedVariant.main_images && selectedVariant.main_images.length > 0) {
+      return selectedVariant.main_images;
+    }
+    
+    // If selected variant has no images, try to find any variant with images
+    if (hasVariants && product?.variants && Array.isArray(product.variants)) {
+      for (const variant of product.variants) {
+        if (variant.main_images && variant.main_images.length > 0) {
+          return variant.main_images;
+        }
+      }
+    }
+    
+    // Fallback to product-level images
+    if (product?.images && product.images.length > 0) {
+      return product.images;
+    }
+    
+    // No images available
+    return [];
+  })();
 
-  // Detailed images: Prefer variant.detailed_images, fallback to product.detailed_images
-  const detailedImages = (hasVariants && selectedVariant && selectedVariant.detailed_images && selectedVariant.detailed_images.length > 0)
-    ? selectedVariant.detailed_images
-    : (product?.detailed_images && product.detailed_images.length > 0)
-    ? product.detailed_images
-    : [];
+  // Detailed images: Try selected variant -> any variant with images -> product detailed images -> empty
+  const detailedImages = (() => {
+    // If we have a selected variant with detailed images, use those
+    if (hasVariants && selectedVariant && selectedVariant.detailed_images && selectedVariant.detailed_images.length > 0) {
+      return selectedVariant.detailed_images;
+    }
+    
+    // If selected variant has no detailed images, try to find any variant with detailed images
+    if (hasVariants && product?.variants && Array.isArray(product.variants)) {
+      for (const variant of product.variants) {
+        if (variant.detailed_images && variant.detailed_images.length > 0) {
+          return variant.detailed_images;
+        }
+      }
+    }
+    
+    // Fallback to product-level detailed images
+    if (product?.detailed_images && product.detailed_images.length > 0) {
+      return product.detailed_images;
+    }
+    
+    // No detailed images available
+    return [];
+  })();
 
-  // Mobile detailed images: Prefer variant.mobile_detailed_images, fallback to product.mobile_detailed_images
-  const mobileDetailedImages = (hasVariants && selectedVariant && selectedVariant.mobile_detailed_images && selectedVariant.mobile_detailed_images.length > 0)
-    ? selectedVariant.mobile_detailed_images
-    : (product?.mobile_detailed_images && product.mobile_detailed_images.length > 0)
-    ? product.mobile_detailed_images
-    : [];
+  // Mobile detailed images: Try selected variant -> any variant with images -> product mobile detailed images -> empty
+  const mobileDetailedImages = (() => {
+    // If we have a selected variant with mobile detailed images, use those
+    if (hasVariants && selectedVariant && selectedVariant.mobile_detailed_images && selectedVariant.mobile_detailed_images.length > 0) {
+      return selectedVariant.mobile_detailed_images;
+    }
+    
+    // If selected variant has no mobile detailed images, try to find any variant with mobile detailed images
+    if (hasVariants && product?.variants && Array.isArray(product.variants)) {
+      for (const variant of product.variants) {
+        if (variant.mobile_detailed_images && variant.mobile_detailed_images.length > 0) {
+          return variant.mobile_detailed_images;
+        }
+      }
+    }
+    
+    // Fallback to product-level mobile detailed images
+    if (product?.mobile_detailed_images && product.mobile_detailed_images.length > 0) {
+      return product.mobile_detailed_images;
+    }
+    
+    // No mobile detailed images available
+    return [];
+  })();
 
-  // Styling images: Prefer variant.styling_images, fallback to empty array
-  const stylingImages = (hasVariants && selectedVariant && selectedVariant.styling_images && selectedVariant.styling_images.length > 0)
-    ? selectedVariant.styling_images
-    : [];
+  // Styling images: Try selected variant -> any variant with images -> empty
+  const stylingImages = (() => {
+    // If we have a selected variant with styling images, use those
+    if (hasVariants && selectedVariant && selectedVariant.styling_images && selectedVariant.styling_images.length > 0) {
+      return selectedVariant.styling_images;
+    }
+    
+    // If selected variant has no styling images, try to find any variant with styling images
+    if (hasVariants && product?.variants && Array.isArray(product.variants)) {
+      for (const variant of product.variants) {
+        if (variant.styling_images && variant.styling_images.length > 0) {
+          return variant.styling_images;
+        }
+      }
+    }
+    
+    // No styling images available
+    return [];
+  })();
+
+  // Check if we're showing images from a different variant than selected
+  const isShowingFallbackImages = (() => {
+    if (!hasVariants || !selectedVariant) return false;
+    
+    // Check if selected variant has its own images
+    const selectedHasImages = selectedVariant.main_images && selectedVariant.main_images.length > 0;
+    
+    // If selected variant has images and we're showing them, not a fallback
+    if (selectedHasImages && displayImages === selectedVariant.main_images) {
+      return false;
+    }
+    
+    // If selected variant has no images but we're showing images, it's a fallback
+    if (!selectedHasImages && displayImages.length > 0) {
+      return true;
+    }
+    
+    return false;
+  })();
 
   // Support both video_path and video_url for compatibility
   // @ts-expect-error: video_url may exist in backend data
@@ -323,6 +412,16 @@ const ProductDetail = () => {
           <div className="flex flex-col items-center space-y-4">
             {displayImages && displayImages.length > 0 ? (
               <>
+                {/* Fallback image indicator */}
+                {isShowingFallbackImages && (
+                  <div className="w-full max-w-md mx-auto mb-2">
+                    <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-2 text-center">
+                      <p className="text-xs text-amber-700 dark:text-amber-300">
+                        📷 Showing available product images
+                      </p>
+                    </div>
+                  </div>
+                )}
                 <div className="h-[60vh] sm:h-[70vh] md:h-[80vh] rounded-xl overflow-hidden relative bg-white flex items-center justify-center border border-gray-200 dark:border-slate-600 cursor-pointer max-w-full"
                   onClick={() => setShowMediaModal(true)}
                   role="button"
@@ -564,7 +663,25 @@ const ProductDetail = () => {
                   className="w-full py-3 sm:py-4 md:py-5 text-base sm:text-lg font-bold disabled:opacity-50 rounded-xl bg-white hover:bg-gray-50 dark:hover:bg-slate-100 text-black border-2 border-gray-300 dark:border-slate-600 hover:border-gray-400 dark:hover:border-slate-500 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02] disabled:hover:scale-100"
                 >
                   {hasVariants ? (
-                    !selectedSize || !selectedColor ? t('product.chooseVariant') : !isVariantSelected ? t('product.chooseVariant') : t('product.addToCart')
+                    (() => {
+                      if (!selectedSize && !selectedColor) {
+                        return allSizes.length > 0 && allColors.length > 0 
+                          ? 'Select Size and Color' 
+                          : allSizes.length > 0 
+                            ? 'Select Size' 
+                            : allColors.length > 0 
+                              ? 'Select Color' 
+                              : t('product.chooseVariant');
+                      } else if (!selectedSize) {
+                        return 'Select Size';
+                      } else if (!selectedColor) {
+                        return 'Select Color';
+                      } else if (!isVariantSelected) {
+                        return 'Select Size and Color';
+                      } else {
+                        return t('product.addToCart');
+                      }
+                    })()
                   ) : (
                     t('product.addToCart')
                   )}

@@ -98,9 +98,7 @@ export const Chatbot: React.FC = () => {
       };
 
       setMessages(prev => [...prev, botMessage]);
-    } catch (error: any) {
-      console.error('Chatbot error:', error);
-      const errorMessage: Message = {
+    } catch (error: any) {const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
         content: `Sorry, I encountered an error: ${error.message || 'Unknown error'}. Please try again.`,

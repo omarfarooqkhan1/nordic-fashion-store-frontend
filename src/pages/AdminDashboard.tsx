@@ -32,6 +32,7 @@ import {
   ShoppingCart,
   FileSpreadsheet,
   X,
+  Mail,
 } from "lucide-react"
 
 import { fetchProducts } from "@/api/products"
@@ -73,6 +74,8 @@ import ContactForms from "@/components/admin/ContactForms"
 import UserManagement from "@/components/admin/UserManagement"
 import { ProductForm } from "@/components/admin/ProductForm"
 import { AdminHeroImages } from "@/components/admin/AdminHeroImages"
+import { NewsletterManagement } from "@/components/admin/NewsletterManagement"
+import { AdminTabsNavigation } from "@/components/admin/AdminTabsNavigation"
 import { getPendingReviews, approveReview, rejectReview, type ProductReview } from "@/api/reviews"
 import { fetchProductById } from "@/api/products"
 import { LoadingState } from "@/components/common"
@@ -192,9 +195,9 @@ const AdminDashboard: React.FC = () => {
   } = useQuery({
     queryKey: ["admin-products"],
     queryFn: async () => {
-      const data = await fetchProducts()
+      const response = await fetchProducts({ per_page: 100 })
       // Cast to admin Product type for compatibility
-      return data as unknown as Product[]
+      return response.data as unknown as Product[]
     },
     enabled: isAuthenticated,
   })
@@ -677,53 +680,7 @@ const AdminDashboard: React.FC = () => {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4 sm:space-y-6">
-        <div className="overflow-x-auto">
-          <TabsList className="grid w-full min-w-max grid-cols-10 gap-1 p-1">
-            <TabsTrigger value="overview" onClick={() => navigate("/admin/dashboard")} className="text-xs sm:text-sm px-2 sm:px-3">
-              <span className="hidden sm:inline">Overview</span>
-              <span className="sm:hidden">Home</span>
-            </TabsTrigger>
-            <TabsTrigger value="products" onClick={() => navigate("/admin/products")} className="text-xs sm:text-sm px-2 sm:px-3">
-              Products
-            </TabsTrigger>
-            <TabsTrigger value="users" className="text-xs sm:text-sm px-2 sm:px-3">
-              Users
-            </TabsTrigger>
-            <TabsTrigger value="categories" className="text-xs sm:text-sm px-2 sm:px-3">
-              <span className="hidden sm:inline">Categories</span>
-              <span className="sm:hidden">Cat.</span>
-            </TabsTrigger>
-            {/* <TabsTrigger value="bulk-upload" className="text-xs sm:text-sm px-2 sm:px-3">
-              <span className="hidden lg:inline">Bulk Upload</span>
-              <span className="lg:hidden hidden sm:inline">Upload</span>
-              <span className="sm:hidden">CSV</span>
-            </TabsTrigger> */}
-            <TabsTrigger value="orders" className="text-xs sm:text-sm px-2 sm:px-3">
-              Orders
-            </TabsTrigger>
-            <TabsTrigger value="pending-reviews" className="text-xs sm:text-sm px-2 sm:px-3">
-              <span className="hidden lg:inline">Pending Reviews</span>
-              <span className="lg:hidden hidden sm:inline">Reviews</span>
-              <span className="sm:hidden">Rev.</span>
-            </TabsTrigger>
-            <TabsTrigger value="contact-forms" className="text-xs sm:text-sm px-2 sm:px-3">
-              <span className="hidden lg:inline">Contact Forms</span>
-              <span className="lg:hidden hidden sm:inline">Contacts</span>
-              <span className="sm:hidden">Con.</span>
-            </TabsTrigger>
-            <TabsTrigger value="blogs" onClick={() => navigate("/admin/blogs")} className="text-xs sm:text-sm px-2 sm:px-3">
-              Blogs
-            </TabsTrigger>
-            <TabsTrigger value="faqs" className="text-xs sm:text-sm px-2 sm:px-3">
-              FAQs
-            </TabsTrigger>
-            <TabsTrigger value="hero-images" className="text-xs sm:text-sm px-2 sm:px-3">
-              <span className="hidden lg:inline">Hero Images</span>
-              <span className="lg:hidden hidden sm:inline">Hero</span>
-              <span className="sm:hidden">Hero</span>
-            </TabsTrigger>
-          </TabsList>
-        </div>
+        <AdminTabsNavigation activeTab={activeTab} adminStats={adminStats} />
 
   {/* Overview Tab */}
         {/* FAQ Management Tab */}
@@ -734,6 +691,11 @@ const AdminDashboard: React.FC = () => {
         {/* Hero Images Management Tab */}
         <TabsContent value="hero-images" className="space-y-6">
           <AdminHeroImages />
+        </TabsContent>
+
+        {/* Newsletter Management Tab */}
+        <TabsContent value="newsletter" className="space-y-6">
+          <NewsletterManagement />
         </TabsContent>
         <TabsContent value="overview" className="space-y-4 sm:space-y-6">
           {statsLoading ? (

@@ -56,16 +56,17 @@ const Index = () => {
   }, [displayHeroImages.length])
 
   const {
-    data: products = [],
+    data: productsResponse,
     isLoading,
     isError,
     error,
   } = useQuery({
     queryKey: ["products"],
-    queryFn: fetchProducts,
+    queryFn: () => fetchProducts({ per_page: 12 }),
     ...getQueryOptions(5 * 60 * 1000, 10 * 60 * 1000), // 5 min stale, 10 min cache
   })
 
+  const products = productsResponse?.data || []
   const featuredProducts = products.slice(0, 6)
 
   // Preload hero images for better LCP
@@ -85,8 +86,9 @@ const Index = () => {
   return (
     <div className="space-y-0 sm:space-y-0">
       {/* Hero Section */}
-      <section className="relative h-[70vh] min-h-[500px] md:h-[80vh] md:min-h-[600px] overflow-hidden">
-        <div className="absolute inset-0">
+      <section className="relative w-full overflow-hidden">
+        {/* Mobile: aspect-ratio approach */}
+        <div className="block sm:hidden w-full aspect-[16/9] relative">
           {displayHeroImages.map((image, index) => (
             <div
               key={index}
@@ -97,7 +99,28 @@ const Index = () => {
               <img
                 src={typeof image === 'string' ? image : `${import.meta.env.VITE_BACKEND_URL}${image.image_url}` || "/placeholder.svg"}
                 alt={typeof image === 'string' ? `Nord Flex craftsmanship ${index + 1}` : image.alt_text || `Nord Flex craftsmanship ${index + 1}`}
-                className="w-full h-full object-cover"
+                className="w-full h-full object-cover object-center"
+                loading={index === 0 ? "eager" : "lazy"}
+                sizes="100vw"
+              />
+            </div>
+          ))}
+          <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-black/40 to-black/70"></div>
+        </div>
+
+        {/* Tablet and Desktop: viewport height approach */}
+        <div className="hidden sm:block relative h-[60vh] min-h-[400px] md:h-[65vh] md:min-h-[450px] lg:h-[70vh] lg:min-h-[500px]">
+          {displayHeroImages.map((image, index) => (
+            <div
+              key={index}
+              className={`absolute inset-0 transition-opacity duration-1000 ${
+                index === currentImageIndex ? "opacity-100" : "opacity-0"
+              }`}
+            >
+              <img
+                src={typeof image === 'string' ? image : `${import.meta.env.VITE_BACKEND_URL}${image.image_url}` || "/placeholder.svg"}
+                alt={typeof image === 'string' ? `Nord Flex craftsmanship ${index + 1}` : image.alt_text || `Nord Flex craftsmanship ${index + 1}`}
+                className="w-full h-full object-cover object-center"
                 loading={index === 0 ? "eager" : "lazy"}
                 sizes="100vw"
               />
@@ -106,28 +129,28 @@ const Index = () => {
           <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/50 to-black/60"></div>
         </div>
 
-        <div className="relative z-10 h-full flex items-center">
-          <div className="container mx-auto px-4 sm:px-6">
+        <div className="absolute inset-0 z-10 flex items-start justify-center sm:items-center sm:pt-0">
+          <div className="container mx-auto px-4 sm:px-6 -mt-2 sm:mt-0">
             <div className="max-w-2xl md:max-w-4xl mx-auto text-center text-white">
-              <div className="mb-4 sm:mb-6">
-                <span className="inline-block px-3 py-1.5 sm:px-4 sm:py-2 bg-white/25 backdrop-blur-md rounded-full text-xs sm:text-sm font-semibold tracking-wider uppercase mb-3 sm:mb-4 border border-white/20">
+              <div className="mb-8 mt-5 sm:mt-12 md:mt-12 lg:mt-12">
+                <span className="inline-block px-2 sm:px-3 sm:py-1 md:px-4 md:py-1.5 bg-white/20 backdrop-blur-sm rounded-full text-xs sm:text-sm font-medium tracking-wide uppercase mb-1 sm:mb-2 md:mb-3 lg:mb-4 border border-white/20">
                   {t("hero.authentic")}
                 </span>
               </div>
-              <h1 className="text-3xl sm:text-4xl md:text-6xl lg:text-7xl font-bold mb-4 sm:mb-6 leading-[1.1] sm:leading-tight">
+              <h1 className="text-lg sm:text-2xl md:text-4xl lg:text-5xl xl:text-6xl font-bold mb-1 sm:mb-5 md:mb-4 lg:mb-6 leading-tight -mt-2 sm:mt-0">
                 <span className="block text-balance">{t("hero.title")}</span>
-                <span className="block text-xl sm:text-3xl md:text-5xl lg:text-6xl mt-1 sm:mt-2 opacity-90 font-medium">
+                <span className="block text-sm sm:text-lg md:text-3xl lg:text-4xl xl:text-5xl mt-0.5 sm:mt-1 md:mt-2 opacity-90 font-medium">
                   {t("hero.from")}
                 </span>
               </h1>
-              <p className="text-sm sm:text-lg md:text-xl lg:text-2xl mb-6 sm:mb-8 max-w-lg sm:max-w-2xl md:max-w-3xl mx-auto opacity-90 leading-relaxed text-pretty px-2 sm:px-0">
+              <p className="text-xs sm:text-sm md:text-base lg:text-lg xl:text-xl mb-2 sm:mb-4 md:mb-6 lg:mb-8 max-w-xs sm:max-w-lg md:max-w-2xl lg:max-w-3xl mx-auto opacity-85 leading-relaxed text-pretty px-2 sm:px-0 -mt-1 sm:mt-0">
                 {t("hero.description")}
               </p>
-              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center px-4 sm:px-0">
+              <div className="hidden sm:flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center px-8 sm:mb-6">
                 <Link to="/products" className="w-full sm:w-auto">
                   <Button
                     size="lg"
-                    className="w-full sm:w-auto bg-white text-black hover:bg-gray-100 font-semibold px-6 sm:px-8 py-3.5 sm:py-4 text-sm sm:text-lg shadow-xl hover:shadow-2xl transition-all duration-300 border border-gray-200 hover:border-gray-300 rounded-xl"
+                    className="w-full sm:w-auto bg-white text-black hover:bg-gray-100 font-semibold px-6 sm:px-8 py-3 sm:py-4 text-sm sm:text-lg shadow-xl hover:shadow-2xl transition-all duration-300 border border-gray-200 hover:border-gray-300 rounded-xl"
                   >
                     {t("hero.explore")}
                   </Button>
@@ -136,7 +159,7 @@ const Index = () => {
                   <Button
                     variant="outline"
                     size="lg"
-                    className="w-full sm:w-auto border-2 border-white/80 text-white bg-black/30 hover:bg-white hover:text-black font-semibold px-6 sm:px-8 py-3.5 sm:py-4 text-sm sm:text-lg backdrop-blur-md transition-all duration-300 rounded-xl hover:border-white"
+                    className="w-full sm:w-auto border-2 border-white/80 text-white bg-black/30 hover:bg-white hover:text-black font-semibold px-6 sm:px-8 py-3 sm:py-4 text-sm sm:text-lg backdrop-blur-md transition-all duration-300 rounded-xl hover:border-white"
                   >
                     {t("hero.story")}
                   </Button>
@@ -146,8 +169,8 @@ const Index = () => {
           </div>
         </div>
 
-        <div className="absolute bottom-6 sm:bottom-8 left-1/2 transform -translate-x-1/2 z-20">
-          <div className="flex space-x-2 bg-black/20 backdrop-blur-sm rounded-full px-3 py-2">
+        <div className="absolute bottom-4 sm:bottom-6 md:bottom-8 left-1/2 transform -translate-x-1/2 z-20">
+          <div className="flex space-x-2 bg-black/30 backdrop-blur-sm rounded-full px-3 py-2 border border-white/20">
             {displayHeroImages.map((_, index) => (
               <button
                 key={index}
@@ -155,6 +178,7 @@ const Index = () => {
                   index === currentImageIndex ? "bg-white scale-110" : "bg-white/60 hover:bg-white/80"
                 }`}
                 onClick={() => setCurrentImageIndex(index)}
+                aria-label={`Go to slide ${index + 1}`}
               />
             ))}
           </div>
@@ -246,7 +270,7 @@ const Index = () => {
                       <div className="flex items-center justify-center">
                         <div className="flex items-center gap-2">
                           <span className="text-lg font-bold text-cognac-500">
-                            {getCurrencySymbol()}{convertPrice(product.variants && product.variants.length > 0 ? product.variants[0].price : product.price).toFixed(2)}
+                            {getCurrencySymbol()}{convertPrice(product.variants && product.variants.length > 0 ? product.variants[0].price : 0).toFixed(2)}
                           </span>
                         </div>
                       </div>

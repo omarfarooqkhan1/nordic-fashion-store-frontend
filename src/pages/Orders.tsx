@@ -19,8 +19,10 @@ import {
 
 import { useAuth } from "@/contexts/AuthContext"
 import { useLanguage } from "@/contexts/LanguageContext"
+import { useCurrency, type Currency } from "@/contexts/CurrencyContext"
 import { fetchOrders, fetchOrder, type Order as ApiOrder, type OrderItem as ApiOrderItem } from "@/api/orders"
 import { useToast } from "@/hooks/use-toast"
+import { getFullImageUrl, handleImageError } from "@/utils/imageUtils"
 
 // Helper to format date
 const formatDate = (dateString: string) => {
@@ -69,7 +71,22 @@ const getStatusIcon = (status: ApiOrder['status']) => {
 const Orders: React.FC = () => {
   const { user, token } = useAuth();
   const { t } = useLanguage();
+  const { convertPrice, getCurrencySymbol } = useCurrency();
   const { toast } = useToast();
+  
+  // Helper function to get currency symbol for any currency
+  const getCurrencySymbolForCurrency = (currencyCode: string): string => {
+    const symbols: Record<string, string> = {
+      'USD': '$', 'EUR': '€', 'GBP': '£', 'JPY': '¥', 'CNY': '¥', 'AUD': 'A$', 'CAD': 'C$', 'CHF': 'CHF',
+      'SEK': 'kr', 'NOK': 'kr', 'DKK': 'kr', 'PLN': 'zł', 'CZK': 'Kč', 'HUF': 'Ft', 'ISK': 'kr',
+      'HKD': 'HK$', 'SGD': 'S$', 'NZD': 'NZ$', 'KRW': '₩', 'TWD': 'NT$', 'THB': '฿', 'MYR': 'RM',
+      'PHP': '₱', 'IDR': 'Rp', 'VND': '₫', 'INR': '₹', 'PKR': '₨', 'BDT': '৳', 'LKR': '₨',
+      'MXN': '$', 'BRL': 'R$', 'ARS': '$', 'CLP': '$', 'COP': '$', 'PEN': 'S/', 'UYU': '$U',
+      'AED': 'د.إ', 'SAR': '﷼', 'QAR': '﷼', 'KWD': 'د.ك', 'BHD': '.د.ب', 'OMR': '﷼', 'JOD': 'د.ا',
+      'ILS': '₪', 'EGP': 'E£', 'ZAR': 'R', 'NGN': '₦', 'KES': 'KSh', 'GHS': '₵', 'TRY': '₺', 'RUB': '₽'
+    };
+    return symbols[currencyCode] || '€';
+  };
   const location = useLocation();
   const params = useParams();
   const navigate = useNavigate();
@@ -237,8 +254,45 @@ const Orders: React.FC = () => {
                   <div className="space-y-2 sm:space-y-3">
                     {singleOrder.items.map((item) => (
                       <div key={item.id} className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3 p-3 border rounded-lg">
-                        <div className="w-14 h-14 sm:w-16 sm:h-16 bg-gray-200 dark:bg-gray-700 rounded flex items-center justify-center">
-                          <Package className="h-7 w-7 sm:h-8 sm:w-8 text-gray-400 dark:text-gray-500" />
+                        {/* Product Image */}
+                        <div className="w-14 h-14 sm:w-16 sm:h-16 flex-shrink-0">
+                          {item.product_snapshot?.custom_jacket ? (
+                            // Custom jacket image
+                            <img
+                              src={getFullImageUrl(item.product_snapshot.custom_jacket.front_image_url)}
+                              alt={item.product_name}
+                              className="w-full h-full object-cover rounded-lg border border-gray-200 dark:border-gray-600"
+                              onError={(e) => handleImageError(e, 'Custom Jacket')}
+                            />
+                          ) : (
+                            // Regular product image
+                            <img
+                              src={
+                                item.variant?.images?.[0]?.url 
+                                  ? `${import.meta.env.VITE_BACKEND_URL}${item.variant.images[0].url}`
+                                  : item.variant?.product?.images?.[0]?.url
+                                  ? `${import.meta.env.VITE_BACKEND_URL}${item.variant.product.images[0].url}`
+                                  : undefined
+                              }
+                              alt={item.product_name}
+                              className="w-full h-full object-cover rounded-lg border border-gray-200 dark:border-gray-600"
+                              onError={(e) => {
+                                // Fallback to package icon if image fails to load
+                                const target = e.currentTarget;
+                                target.style.display = 'none';
+                                const parent = target.parentElement;
+                                if (parent) {
+                                  parent.innerHTML = `
+                                    <div class="w-full h-full bg-gray-200 dark:bg-gray-700 rounded-lg flex items-center justify-center">
+                                      <svg class="h-7 w-7 sm:h-8 sm:w-8 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+                                      </svg>
+                                    </div>
+                                  `;
+                                }
+                              }}
+                            />
+                          )}
                         </div>
                         <div className="flex-1">
                           <p className="font-medium text-sm sm:text-base">{item.product_name}</p>
@@ -246,8 +300,8 @@ const Orders: React.FC = () => {
                           <p className="text-xs sm:text-sm text-muted-foreground">{t('orders.quantity')}: {item.quantity}</p>
                         </div>
                         <div className="text-right">
-                          <p className="font-medium text-sm sm:text-base">€{Number(item.subtotal || 0).toFixed(2)}</p>
-                          <p className="text-xs sm:text-sm text-muted-foreground">€{Number(item.price || 0).toFixed(2)} {t('orders.each')}</p>
+                          <p className="font-medium text-sm sm:text-base">{getCurrencySymbolForCurrency(singleOrder.currency || 'EUR')}{Number(item.converted_subtotal || item.subtotal || 0).toFixed(2)}</p>
+                          <p className="text-xs sm:text-sm text-muted-foreground">{getCurrencySymbolForCurrency(singleOrder.currency || 'EUR')}{Number(item.converted_price || item.price || 0).toFixed(2)} {t('orders.each')}</p>
                         </div>
                       </div>
                     ))}
@@ -262,20 +316,20 @@ const Orders: React.FC = () => {
                   <div className="space-y-1 sm:space-y-2 text-xs sm:text-sm">
                     <div className="flex justify-between">
                       <span>{t('orders.subtotal')}</span>
-                      <span>€{Number(singleOrder.subtotal || 0).toFixed(2)}</span>
+                      <span>{getCurrencySymbolForCurrency(singleOrder.currency || 'EUR')}{Number(singleOrder.subtotal || 0).toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between">
                       <span>{t('orders.shipping')}</span>
-                      <span>€{Number(singleOrder.shipping || 0).toFixed(2)}</span>
+                      <span>{getCurrencySymbolForCurrency(singleOrder.currency || 'EUR')}{Number(singleOrder.shipping || 0).toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between">
                       <span>{t('orders.tax')}</span>
-                      <span>€{Number(singleOrder.tax || 0).toFixed(2)}</span>
+                      <span>{getCurrencySymbolForCurrency(singleOrder.currency || 'EUR')}{Number(singleOrder.tax || 0).toFixed(2)}</span>
                     </div>
                     <Separator />
                     <div className="flex justify-between font-bold text-base sm:text-lg">
                       <span>{t('orders.total')}</span>
-                      <span>€{Number(singleOrder.total || 0).toFixed(2)}</span>
+                      <span>{getCurrencySymbolForCurrency(singleOrder.currency || 'EUR')}{Number(singleOrder.total || 0).toFixed(2)}</span>
                     </div>
                   </div>
                 </div>
@@ -405,7 +459,7 @@ const Orders: React.FC = () => {
                             <span className="text-xs text-blue-600">{t('orders.shippingTime')}</span>
                           </div>
                         )}
-                        <p className="text-base sm:text-lg font-semibold">€{Number(order.total || 0).toFixed(2)}</p>
+                        <p className="text-base sm:text-lg font-semibold">{getCurrencySymbolForCurrency(order.currency || 'EUR')}{Number(order.total || 0).toFixed(2)}</p>
                       </div>
                     </div>
                   </CardHeader>
@@ -420,8 +474,45 @@ const Orders: React.FC = () => {
                               key={item.id}
                               className="flex-shrink-0 flex items-center gap-2 p-2 bg-muted rounded-lg min-w-[120px]"
                             >
-                              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gray-200 dark:bg-gray-700 rounded flex items-center justify-center">
-                                <Package className="h-5 w-5 sm:h-6 sm:w-6 text-gray-400 dark:text-gray-500" />
+                              {/* Product Image */}
+                              <div className="w-10 h-10 sm:w-12 sm:h-12 flex-shrink-0">
+                                {item.product_snapshot?.custom_jacket ? (
+                                  // Custom jacket image
+                                  <img
+                                    src={getFullImageUrl(item.product_snapshot.custom_jacket.front_image_url)}
+                                    alt={item.product_name}
+                                    className="w-full h-full object-cover rounded border border-gray-200 dark:border-gray-600"
+                                    onError={(e) => handleImageError(e, 'Custom Jacket')}
+                                  />
+                                ) : (
+                                  // Regular product image
+                                  <img
+                                    src={
+                                      item.variant?.images?.[0]?.url 
+                                        ? `${import.meta.env.VITE_BACKEND_URL}${item.variant.images[0].url}`
+                                        : item.variant?.product?.images?.[0]?.url
+                                        ? `${import.meta.env.VITE_BACKEND_URL}${item.variant.product.images[0].url}`
+                                        : undefined
+                                    }
+                                    alt={item.product_name}
+                                    className="w-full h-full object-cover rounded border border-gray-200 dark:border-gray-600"
+                                    onError={(e) => {
+                                      // Fallback to package icon if image fails to load
+                                      const target = e.currentTarget;
+                                      target.style.display = 'none';
+                                      const parent = target.parentElement;
+                                      if (parent) {
+                                        parent.innerHTML = `
+                                          <div class="w-full h-full bg-gray-200 dark:bg-gray-700 rounded flex items-center justify-center">
+                                            <svg class="h-5 w-5 sm:h-6 sm:w-6 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+                                            </svg>
+                                          </div>
+                                        `;
+                                      }
+                                    }}
+                                  />
+                                )}
                               </div>
                               <div className="min-w-0">
                                 <p className="text-xs sm:text-sm font-medium truncate">{item.product_name}</p>

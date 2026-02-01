@@ -4,10 +4,7 @@ import { Header } from "@/components/Layout/Header"
 import { Footer } from "@/components/Layout/Footer"
 import AppProviders from "./providers/AppProviders"
 import ErrorBoundary from "./components/ErrorBoundary"
-import TestComponent from "./TestComponent"
-import TestProductData from "./TestProductData"
 import ProtectedRoute from "./components/Auth/ProtectedRoute"
-import { Chatbot } from "@/components/Chatbot/Chatbot"
 
 // Critical Pages (loaded immediately)
 import Index from "./pages/Index"
@@ -21,6 +18,8 @@ import ProductDetail from "./pages/ProductDetail"
 import Cart from "./pages/Cart"
 import AdminLogin from "./pages/AdminLogin"
 import NotFound from "./pages/NotFound"
+import NewsletterUnsubscribe from "./pages/NewsletterUnsubscribe"
+import Newsletter from "./pages/Newsletter"
 
 // Auth Pages
 import CustomerLogin from "./pages/auth/CustomerLogin"
@@ -29,6 +28,7 @@ import VerifyEmail from "./pages/auth/VerifyEmail"
 import Auth0Callback from "./pages/auth/Auth0Callback"
 import ForgotPassword from "./pages/auth/ForgotPassword"
 import ResetPassword from "./pages/auth/ResetPassword"
+import AdminForgotPassword from "./pages/auth/AdminForgotPassword"
 
 // Success Pages
 import CheckoutSuccess from "./pages/CheckoutSuccess"
@@ -39,7 +39,7 @@ import {
   LazyAdminDashboard,
   LazyAdminProductEdit,
   LazyAdminBlogManagement,
-  LazyCheckoutFixed,
+  LazyCheckout,
   LazyProfile,
   LazyOrders,
   LazyBlog,
@@ -64,7 +64,6 @@ const App: React.FC = () => {
                               <Route path="/faqs" element={<FAQ />} />
                               <Route path="/products" element={<Products />} />
                               <Route path="/product/:id" element={<ProductDetail />} />
-                              <Route path="/test-product/:id" element={<TestProductData />} />
                               
                               {/* Blog Routes */}
                               <Route path="/blogs" element={<LazyBlog />} />
@@ -76,15 +75,18 @@ const App: React.FC = () => {
                               <Route path="/signup" element={<CustomerSignup />} />
                               <Route path="/verify-email" element={<VerifyEmail />} />
                               <Route path="/admin/login" element={<AdminLogin />} />
+                              <Route path="/admin/forgot-password" element={<AdminForgotPassword />} />
                               <Route path="/forgot-password" element={<ForgotPassword />} />
                               <Route path="/reset-password/:token" element={<ResetPassword />} />
                               <Route path="/auth/callback" element={<Auth0Callback />} />
+                              <Route path="/newsletter" element={<Newsletter />} />
+                              <Route path="/newsletter/unsubscribe/:email" element={<NewsletterUnsubscribe />} />
 
                               {/* Cart Route - Can be accessed by customers or guests */}
                               <Route path="/cart" element={<Cart />} />
 
                               {/* Checkout Route - Can be accessed by customers or guests */}
-                              <Route path="/checkout" element={<LazyCheckoutFixed />} />
+                              <Route path="/checkout" element={<LazyCheckout />} />
                               <Route path="/checkout/success" element={<CheckoutSuccess />} />
 
                               {/* Customer Protected Routes */}
@@ -157,7 +159,6 @@ const App: React.FC = () => {
                           </ErrorBoundary>
                         </main>
                         <Footer />
-                        <Chatbot />
                       </div>
       </Router>
     </AppProviders>

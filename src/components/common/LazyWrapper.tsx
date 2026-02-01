@@ -40,8 +40,8 @@ export const LazyAdminBlogManagement = withLazyLoading(
   () => import('@/pages/AdminBlogManagement')
 );
 
-export const LazyCheckoutFixed = withLazyLoading(
-  () => import('@/pages/CheckoutFixed')
+export const LazyCheckout = withLazyLoading(
+  () => import('@/pages/Checkout')
 );
 
 export const LazyProfile = withLazyLoading(

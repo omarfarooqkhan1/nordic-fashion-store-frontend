@@ -64,11 +64,18 @@ const UserManagement: React.FC = () => {
     return <LoadingState />;
   }
 
-  if (error) {
-    return (
+  if (error) {return (
       <Card className="p-6">
         <div className="text-center text-red-600">
           <p>Error loading users: {(error as Error).message}</p>
+          <Button 
+            onClick={() => refetch()} 
+            className="mt-4"
+            variant="outline"
+          >
+            <RotateCcw className="w-4 h-4 mr-2" />
+            Retry
+          </Button>
         </div>
       </Card>
     );
@@ -150,7 +157,12 @@ const UserManagement: React.FC = () => {
                             <User className="w-5 h-5 text-blue-600" />
                           </div>
                           <div>
-                            <div className="font-medium">{user.name}</div>
+                            <div className="font-medium flex items-center gap-2">
+                              {user.name}
+                              {user.user_type === 'guest' && (
+                                <Badge variant="outline" className="text-xs">Guest</Badge>
+                              )}
+                            </div>
                             <div className="text-sm text-gray-500 flex items-center gap-1">
                               <Mail className="w-3 h-3" />
                               {user.email}
@@ -172,11 +184,13 @@ const UserManagement: React.FC = () => {
                         <Badge 
                           variant={
                             user.status === 'active' ? 'default' : 
-                            user.status === 'banned' ? 'destructive' : 'secondary'
+                            user.status === 'banned' ? 'destructive' : 
+                            user.status === 'guest' ? 'secondary' : 'secondary'
                           }
                         >
                           {user.status === 'active' && <Check className="w-3 h-3 mr-1" />}
                           {user.status === 'banned' && <Ban className="w-3 h-3 mr-1" />}
+                          {user.status === 'guest' && <User className="w-3 h-3 mr-1" />}
                           {user.status}
                         </Badge>
                       </td>

@@ -5,11 +5,13 @@ export interface Address {
   user_id: number
   type?: 'home' | 'work' | 'other'
   label?: string
+  name?: string
   street: string
   city: string
   state: string
   postal_code: string
   country: string
+  phone?: string
   is_default: boolean
   created_at?: string
   updated_at?: string
@@ -18,11 +20,13 @@ export interface Address {
 export interface CreateAddressData {
   type?: 'home' | 'work' | 'other'
   label?: string
+  name?: string
   street: string
   city: string
   state?: string
   postal_code: string
   country: string
+  phone?: string
 }
 
 export interface UpdateAddressData extends CreateAddressData {
@@ -45,11 +49,13 @@ export const createAddress = async (addressData: CreateAddressData): Promise<Add
     const response = await api.post('/user/addresses', {
       type: addressData.type,
       label: addressData.label,
+      name: addressData.name,
       street: addressData.street,
       city: addressData.city,
       state: addressData.state,
       postal_code: addressData.postal_code,
       country: addressData.country,
+      phone: addressData.phone,
     })
     return response.data.data
   } catch (error: any) {
@@ -63,11 +69,13 @@ export const updateAddress = async (addressId: string, addressData: UpdateAddres
     const response = await api.put(`/user/addresses/${addressId}`, {
       type: addressData.type,
       label: addressData.label,
+      name: addressData.name,
       street: addressData.street,
       city: addressData.city,
       state: addressData.state,
       postal_code: addressData.postal_code,
       country: addressData.country,
+      phone: addressData.phone,
       is_default: addressData.is_default,
     })
     return response.data.data

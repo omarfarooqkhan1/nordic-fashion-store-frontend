@@ -1,6 +1,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useCurrency } from '@/contexts/CurrencyContext';
 import { useCart } from '@/contexts/CartContext';
 import { Trash2 } from 'lucide-react';
 import { 
@@ -10,9 +11,11 @@ import {
   CartItem, 
   OrderSummary 
 } from '@/components/common';
+import { getFullImageUrl, handleImageError } from '@/utils/imageUtils';
 
 const Cart = () => {
   const { t } = useLanguage();
+  const { currency, convertPrice, getCurrencySymbol } = useCurrency();
   const { items, customItems, isLoading, updateQuantity, updateCustomJacketQuantity, removeFromCart, removeCustomJacketFromCart, clearCartItems, getCartTotal, getItemPrice } = useCart();
   
   // Scroll to top when component mounts
@@ -51,8 +54,8 @@ const Cart = () => {
     );
   }
 
-  const subtotal = getCartTotal() ?? 0;
-  const shipping = subtotal > 100 ? 0 : 9.99;
+  const subtotal = convertPrice(getCartTotal() ?? 0);
+  const shipping = subtotal > convertPrice(100) ? 0 : convertPrice(9.99);
   const tax = subtotal * 0.25;
   const total = subtotal + shipping + tax;
 
@@ -84,23 +87,19 @@ const Cart = () => {
                 <div className="flex gap-2 sm:gap-4 w-full sm:w-1/3">
                   <div className="flex-1">
                     <img 
-                      src={customItem.frontImageUrl} 
+                      src={getFullImageUrl(customItem.frontImageUrl)} 
                       alt="Front View" 
                       className="w-full h-20 sm:h-32 object-cover rounded-lg border border-gray-200 dark:border-gray-600"
-                      onError={(e) => {
-                        e.currentTarget.src = 'https://placehold.co/200x200/EFEFEF/AAAAAA?text=Front+View';
-                      }}
+                      onError={(e) => handleImageError(e, 'Front View')}
                     />
                     <p className="text-xs text-gray-500 text-center mt-1">Front</p>
                   </div>
                   <div className="flex-1">
                     <img 
-                      src={customItem.backImageUrl} 
+                      src={getFullImageUrl(customItem.backImageUrl)} 
                       alt="Back View" 
                       className="w-full h-20 sm:h-32 object-cover rounded-lg border border-gray-200 dark:border-gray-600"
-                      onError={(e) => {
-                        e.currentTarget.src = 'https://placehold.co/200x200/EFEFEF/AAAAAA?text=Back+View';
-                      }}
+                      onError={(e) => handleImageError(e, 'Back View')}
                     />
                     <p className="text-xs text-gray-500 text-center mt-1">Back</p>
                   </div>
@@ -173,7 +172,7 @@ const Cart = () => {
                     
                     {/* Price */}
                     <div className="text-lg font-bold text-gray-900 dark:text-white">
-                      ${(Number(customItem.price) || 0).toFixed(2)}
+                      {getCurrencySymbol()}{(convertPrice(Number(customItem.price) || 0) * (customItem.quantity || 1)).toFixed(2)}
                     </div>
                   </div>
                   
@@ -227,7 +226,7 @@ const Cart = () => {
             onCheckout={handleCheckout}
             checkoutText={t('cart.checkout') || 'Proceed to Checkout'}
             features={[
-              t('cart.freeShipping') || 'Free shipping on orders over €100',
+              `Free shipping on orders over ${getCurrencySymbol()}${convertPrice(100).toFixed(0)}`,
               t('cart.returnPolicy') || '30-day return policy',
               t('cart.securePayment') || 'Secure payment processing'
             ]}

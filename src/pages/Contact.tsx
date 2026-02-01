@@ -189,7 +189,7 @@ const Contact = () => {
                 <p className="text-sm sm:text-base text-muted-foreground">
                   Nord Flex Co.<br />
                   Yliopistonkatu 25<br />
-                  20100 Turku, Finland
+                  20100 , Finland
                 </p>
               </div>
               <div>
@@ -214,11 +214,11 @@ const Contact = () => {
               </div>
               <div>
                 <h3 className="font-semibold text-foreground mb-1 sm:mb-2">Email</h3>
-                <p className="text-sm sm:text-base text-muted-foreground">support@nordflex.shop</p>
+                <p className="text-sm sm:text-base text-muted-foreground">support@nordflex.store</p>
               </div>
               <div>
                 <h3 className="font-semibold text-foreground mb-1 sm:mb-2">Customer Service</h3>
-                <p className="text-sm sm:text-base text-muted-foreground">support@nordflex.shop</p>
+                <p className="text-sm sm:text-base text-muted-foreground">support@nordflex.store</p>
               </div>
             </CardContent>
           </Card>

@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 
 // Simple modal for media preview
 const MediaPreviewModal: React.FC<{
@@ -57,6 +57,7 @@ const ReviewList: React.FC<ReviewListProps> = ({
   onWriteReview,
   canUserWriteReview
 }) => {
+  const reviewsRef = useRef<HTMLDivElement>(null);
   const [previewMedia, setPreviewMedia] = useState<{ url: string; type: string } | null>(null);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const handleMediaClick = (media: { url: string; type: string }) => {
@@ -103,15 +104,25 @@ const ReviewList: React.FC<ReviewListProps> = ({
       setReviews(reviews);
       setProductInfo(product);
       setTotalPages(totalPages);
-    } catch (error) {
-      console.error('Error fetching reviews:', error);
-      toast({
+    } catch (error) {toast({
         title: 'Error',
         description: 'Failed to load reviews. Please try again.',
         variant: 'destructive'
       });
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const scrollToReviews = () => {
+    if (reviewsRef.current) {
+      reviewsRef.current.scrollIntoView({ 
+        behavior: 'smooth', 
+        block: 'start' 
+      });
+    } else {
+      // Fallback to scrolling to top
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
 
@@ -195,7 +206,7 @@ const ReviewList: React.FC<ReviewListProps> = ({
   }
 
   return (
-    <div className="space-y-2 px-2 sm:px-4 md:px-6 lg:px-8 max-w-7xl mx-auto w-full">
+    <div ref={reviewsRef} className="space-y-2 px-2 sm:px-4 md:px-6 lg:px-8 max-w-7xl mx-auto w-full">
       {productInfo && (
         <div className="text-center space-y-1 sm:space-y-4">
           <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 dark:text-white">
@@ -412,7 +423,14 @@ const ReviewList: React.FC<ReviewListProps> = ({
           <Button
             variant="outline"
             size="sm"
-            onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+            onClick={() => {
+              const newPage = Math.max(1, currentPage - 1);
+              setCurrentPage(newPage);
+              // Scroll to reviews section after a short delay
+              setTimeout(() => {
+                scrollToReviews();
+              }, 100);
+            }}
             disabled={currentPage === 1}
             className="w-full sm:w-auto"
           >
@@ -424,7 +442,14 @@ const ReviewList: React.FC<ReviewListProps> = ({
           <Button
             variant="outline"
             size="sm"
-            onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+            onClick={() => {
+              const newPage = Math.min(totalPages, currentPage + 1);
+              setCurrentPage(newPage);
+              // Scroll to reviews section after a short delay
+              setTimeout(() => {
+                scrollToReviews();
+              }, 100);
+            }}
             disabled={currentPage === totalPages}
             className="w-full sm:w-auto"
           >

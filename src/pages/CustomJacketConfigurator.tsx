@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import { useCart } from '@/contexts/CartContext';
+import { useCurrency } from '@/contexts/CurrencyContext';
 import html2canvas from 'html2canvas';
 // import { captureJacketDesign, generateJacketFilename } from '@/utils/jacketImageCapture';
 import { 
@@ -14,6 +15,7 @@ import JacketScene from '../components/3D/JacketScene';
 import { toast } from '@/components/ui/use-toast';
 
 const CustomConfigurator = () => {
+  const { currency, convertPrice, getCurrencySymbol } = useCurrency();
   const [selectedColor, setSelectedColor] = useState('#000000');
   const [logos, setLogos] = useState<Array<{
     id: string;
@@ -34,6 +36,7 @@ const CustomConfigurator = () => {
   const sizeChangeTimeoutRef = useRef<NodeJS.Timeout>();
   const logoContainerRef = useRef<HTMLDivElement>(null);
   const jacketSceneRef = useRef<HTMLDivElement>(null);
+  const [selectedSize, setSelectedSize] = useState('M');
   const [customDescription, setCustomDescription] = useState('');
   
   // Fixed logo size - no more adjustable sizing
@@ -80,13 +83,16 @@ const CustomConfigurator = () => {
     const logoCosts = calculateLogoCosts();
     const colorCost = calculateColorCost();
     
+    const totalInEUR = basePrice + logoCosts.totalLogoCost + colorCost.cost;
+    
     return {
-      basePrice,
-      logoCosts: logoCosts.totalLogoCost,
-      colorCost: colorCost.cost,
-      total: basePrice + logoCosts.totalLogoCost + colorCost.cost
+      basePrice: convertPrice(basePrice),
+      logoCosts: convertPrice(logoCosts.totalLogoCost),
+      colorCost: convertPrice(colorCost.cost),
+      total: convertPrice(totalInEUR),
+      totalInEUR // Keep EUR value for backend
     };
-  }, [basePrice, calculateLogoCosts, calculateColorCost]);
+  }, [basePrice, calculateLogoCosts, calculateColorCost, convertPrice]);
 
   // Custom slider styles
   const sliderStyles: React.CSSProperties = {
@@ -392,6 +398,7 @@ const CustomConfigurator = () => {
     setSelectedColor('#000000');
     setLogos([]);
     setSelectedLogoId(null);
+    setSelectedSize('M');
     setCustomDescription('');
   };
 
@@ -488,9 +495,9 @@ const CustomConfigurator = () => {
         type: 'custom_jacket' as const,
         name: 'Custom Leather Jacket',
         color: selectedColor,
-        size: 'M', // Default size, can be made selectable
+        size: selectedSize, // Use selected size instead of hardcoded 'M'
         quantity: 1,
-        price: calculateTotalCost().total,
+        price: calculateTotalCost().totalInEUR, // Send EUR price to backend
         frontImageUrl: frontImage, // Use actual captured front image
         backImageUrl: backImage,   // Use actual captured back image
         logos: logos.map(logo => ({
@@ -783,7 +790,7 @@ const CustomConfigurator = () => {
                   <div className="flex justify-between items-center mb-2">
                     <span className="text-foreground font-semibold">Price:</span>
                     <span className="text-2xl font-bold text-green-600">
-                      ${calculateTotalCost().total.toFixed(2)}
+                      {getCurrencySymbol()}{calculateTotalCost().total.toFixed(2)}
                     </span>
                   </div>
                   <p className="text-muted-foreground text-xs mb-5">All customization costs included</p>
@@ -792,7 +799,7 @@ const CustomConfigurator = () => {
               {/* Base Price */}
               <div className="flex justify-between items-center text-xs">
                 <span className="text-muted-foreground">Base Jacket</span>
-                <span className="font-medium">${basePrice}</span>
+                <span className="font-medium">{getCurrencySymbol()}{calculateTotalCost().basePrice.toFixed(2)}</span>
               </div>
               
               {/* Logo Costs */}
@@ -800,12 +807,12 @@ const CustomConfigurator = () => {
                 <div className="space-y-1 mt-1">
                   <div className="flex justify-between items-center text-xs">
                     <span className="text-muted-foreground">Logo Customization</span>
-                    <span className="font-medium">${calculateLogoCosts().totalLogoCost}</span>
+                    <span className="font-medium">{getCurrencySymbol()}{calculateTotalCost().logoCosts.toFixed(2)}</span>
                   </div>
                   {calculateLogoCosts().logoBreakdown.map((logo) => (
                     <div key={logo.id} className="flex justify-between items-center text-xs ml-2">
                       <span className="text-muted-foreground">{logo.reason}</span>
-                      <span className="font-medium">${logo.cost}</span>
+                      <span className="font-medium">{getCurrencySymbol()}{convertPrice(logo.cost).toFixed(2)}</span>
                     </div>
                   ))}
                 </div>
@@ -815,7 +822,7 @@ const CustomConfigurator = () => {
               {calculateColorCost().cost > 0 && (
                 <div className="flex justify-between items-center text-xs mt-1">
                   <span className="text-muted-foreground">Premium Color</span>
-                  <span className="font-medium">${calculateColorCost().cost}</span>
+                  <span className="font-medium">{getCurrencySymbol()}{calculateTotalCost().colorCost.toFixed(2)}</span>
                 </div>
               )}
                 </div>
@@ -824,7 +831,11 @@ const CustomConfigurator = () => {
               <div className="space-y-3">
                 <div>
                   <label className="text-muted-foreground text-sm mb-1 block">Size</label>
-                  <select className="w-full px-3 py-2 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-ring">
+                  <select 
+                    value={selectedSize}
+                    onChange={(e) => setSelectedSize(e.target.value)}
+                    className="w-full px-3 py-2 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-ring"
+                  >
                     <option value="S">Small (S)</option>
                     <option value="M">Medium (M)</option>
                     <option value="L">Large (L)</option>

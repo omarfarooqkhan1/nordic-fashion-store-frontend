@@ -19,12 +19,9 @@ export const chatbotApi = {
   // Send a message to the chatbot
   sendMessage: async (prompt: string): Promise<ChatResponse> => {
     try {
-      console.log('Sending chatbot request:', { prompt });
       const response = await api.post<ChatResponse>('/chatbot', { prompt });
-      console.log('Chatbot response:', response.data);
       return response.data;
     } catch (error: any) {
-      console.error('Chatbot API error:', error);
       // Check if it's a network error or CORS issue
       if (!error.response) {
         return {

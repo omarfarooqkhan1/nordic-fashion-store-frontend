@@ -20,7 +20,13 @@ export interface OrderData {
   billing_postal_code?: string;
   billing_country?: string;
   payment_method: 'credit_card' | 'paypal' | 'stripe';
+  currency?: string;
   notes?: string;
+  // Calculated totals from frontend (in user's selected currency)
+  calculated_subtotal?: number;
+  calculated_tax?: number;
+  calculated_shipping?: number;
+  calculated_total?: number;
 }
 
 export interface Order {
@@ -51,8 +57,9 @@ export interface Order {
   billing_postal_code?: string;
   billing_country?: string;
   payment_method?: string;
+  currency?: string;
   notes?: string;
-  shipping_service?: 'DHL' | 'FedEx' | 'UPS';
+  shipping_service?: string;
   created_at: string;
   updated_at: string;
   items: OrderItem[];
@@ -65,6 +72,11 @@ export interface OrderItem {
   price: number;
   quantity: number;
   subtotal: number;
+  // Currency converted fields from backend
+  converted_price?: number;
+  converted_subtotal?: number;
+  formatted_price?: string;
+  formatted_subtotal?: string;
   product_snapshot: any;
   variant?: {
     id: number;
@@ -190,7 +202,7 @@ export const fetchAllOrders = async (
 export interface OrderUpdateData {
   status?: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
   tracking_number?: string;
-  shipping_service?: 'DHL' | 'FedEx' | 'UPS';
+  shipping_service?: string; // Changed from specific union to string to allow custom values
   notes?: string;
 }
 

@@ -130,6 +130,23 @@
 
 /* Blog Content Styles */
 @layer components {
+  /* Background image positioning for mobile */
+  @media (max-width: 640px) {
+    .hero-bg-mobile {
+      background-position: center center !important;
+      background-size: cover !important;
+      background-repeat: no-repeat !important;
+    }
+  }
+
+  @media (min-width: 641px) {
+    .hero-bg-mobile {
+      background-position: center center !important;
+      background-size: cover !important;
+      background-repeat: no-repeat !important;
+    }
+  }
+
   .blog-content {
     @apply text-gray-800 leading-relaxed max-w-none;
   }

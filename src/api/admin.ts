@@ -365,6 +365,7 @@ export const getAllUsers = async (
         headers: buildApiHeaders(undefined, token),
       }
     );
+    
     return response.data;
   } catch (error: any) {
     throw new Error(error.response?.data?.message || 'Failed to fetch users');

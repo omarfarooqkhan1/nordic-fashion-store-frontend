@@ -1,5 +1,3 @@
-"use client"
-
 import type React from "react"
 import { useState, useMemo, useEffect } from "react"
 import { Link, useNavigate, useLocation } from "react-router-dom"
@@ -14,6 +12,7 @@ import {
   UserPlus,
   Shield,
   LayoutDashboard,
+  MapPin,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -43,19 +42,43 @@ const languages: { code: Language; name: string; flag: string; defaultCurrency: 
   { code: "is", name: "Íslenska", flag: "🇮🇸", defaultCurrency: "ISK" },
 ]
 
-const currencies: { code: Currency; name: string; symbol: string; flag: string }[] = [
-  { code: "EUR", name: "Euro", symbol: "€", flag: "🇪🇺" },
-  { code: "USD", name: "US Dollar", symbol: "$", flag: "🇺🇸" },
-  { code: "SEK", name: "Swedish Krona", symbol: "kr", flag: "🇸🇪" },
-  { code: "NOK", name: "Norwegian Krone", symbol: "kr", flag: "🇳🇴" },
-  { code: "DKK", name: "Danish Krone", symbol: "kr", flag: "🇩🇰" },
-  { code: "ISK", name: "Icelandic Krona", symbol: "kr", flag: "🇮🇸" },
+// Currency list for dropdown
+const currencies = [
+  { code: 'USD' as Currency, name: 'US Dollar', symbol: '$', flag: '🇺🇸' },
+  { code: 'EUR' as Currency, name: 'Euro', symbol: '€', flag: '🇪🇺' },
+  { code: 'GBP' as Currency, name: 'British Pound', symbol: '£', flag: '🇬🇧' },
+  { code: 'JPY' as Currency, name: 'Japanese Yen', symbol: '¥', flag: '🇯🇵' },
+  { code: 'SEK' as Currency, name: 'Swedish Krona', symbol: 'kr', flag: '🇸🇪' },
+  { code: 'NOK' as Currency, name: 'Norwegian Krone', symbol: 'kr', flag: '🇳🇴' },
+  { code: 'DKK' as Currency, name: 'Danish Krone', symbol: 'kr', flag: '🇩🇰' },
+  { code: 'ISK' as Currency, name: 'Icelandic Krona', symbol: 'kr', flag: '🇮🇸' },
+  { code: 'CAD' as Currency, name: 'Canadian Dollar', symbol: 'C$', flag: '🇨🇦' },
+  { code: 'AUD' as Currency, name: 'Australian Dollar', symbol: 'A$', flag: '🇦🇺' },
+  { code: 'CHF' as Currency, name: 'Swiss Franc', symbol: 'CHF', flag: '🇨🇭' },
+  { code: 'CNY' as Currency, name: 'Chinese Yuan', symbol: '¥', flag: '🇨🇳' },
+  { code: 'INR' as Currency, name: 'Indian Rupee', symbol: '₹', flag: '🇮🇳' },
+  { code: 'PKR' as Currency, name: 'Pakistani Rupee', symbol: '₨', flag: '🇵🇰' },
+  { code: 'BDT' as Currency, name: 'Bangladeshi Taka', symbol: '৳', flag: '🇧🇩' },
+  { code: 'LKR' as Currency, name: 'Sri Lankan Rupee', symbol: '₨', flag: '🇱🇰' },
+  { code: 'AED' as Currency, name: 'UAE Dirham', symbol: 'د.إ', flag: '🇦🇪' },
+  { code: 'SAR' as Currency, name: 'Saudi Riyal', symbol: '﷼', flag: '🇸🇦' },
+  { code: 'THB' as Currency, name: 'Thai Baht', symbol: '฿', flag: '🇹🇭' },
+  { code: 'MYR' as Currency, name: 'Malaysian Ringgit', symbol: 'RM', flag: '🇲🇾' },
+  { code: 'SGD' as Currency, name: 'Singapore Dollar', symbol: 'S$', flag: '🇸🇬' },
+  { code: 'HKD' as Currency, name: 'Hong Kong Dollar', symbol: 'HK$', flag: '🇭🇰' },
+  { code: 'KRW' as Currency, name: 'South Korean Won', symbol: '₩', flag: '🇰🇷' },
+  { code: 'TWD' as Currency, name: 'Taiwan Dollar', symbol: 'NT$', flag: '🇹🇼' },
+  { code: 'BRL' as Currency, name: 'Brazilian Real', symbol: 'R$', flag: '🇧🇷' },
+  { code: 'MXN' as Currency, name: 'Mexican Peso', symbol: '$', flag: '🇲🇽' },
+  { code: 'ZAR' as Currency, name: 'South African Rand', symbol: 'R', flag: '🇿🇦' },
+  { code: 'RUB' as Currency, name: 'Russian Ruble', symbol: '₽', flag: '🇷🇺' },
+  { code: 'TRY' as Currency, name: 'Turkish Lira', symbol: '₺', flag: '🇹🇷' },
 ]
 
 export const Header: React.FC = () => {
   const { theme, toggleTheme } = useTheme()
   const { language, setLanguage, t } = useLanguage()
-  const { currency, setCurrency } = useCurrency()
+  const { currency, setCurrency, detectedCountry } = useCurrency()
   const { items, customItems, getCartItemsCount } = useCart()
   const [searchQuery, setSearchQuery] = useState("")
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
@@ -328,23 +351,40 @@ export const Header: React.FC = () => {
                       e.target.style.border = "none"
                     }}
                   >
-                    <span className="text-xs xl:text-sm font-medium">{currentCurrency?.code}</span>
+                    <span className="text-xs xl:text-sm font-medium flex items-center gap-1">
+                      {currentCurrency?.code}
+                      {detectedCountry && (
+                        <span className="text-green-500 text-xs">({detectedCountry})</span>
+                      )}
+                    </span>
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="bg-popover border border-border w-48">
+                <DropdownMenuContent align="end" className="bg-popover border border-border w-64">
                   <div className="p-2">
-                    <div className="text-xs font-medium text-muted-foreground mb-2">Currency</div>
-                    {currencies.map((curr) => (
-                      <DropdownMenuItem
-                        key={curr.code}
-                        onClick={() => setCurrency(curr.code)}
-                        className="hover:bg-accent cursor-pointer"
-                      >
-                        <span className="mr-2">{curr.flag}</span>
-                        <span className="flex-1">{curr.name}</span>
-                        <span className="text-xs text-muted-foreground">{curr.symbol}</span>
-                      </DropdownMenuItem>
-                    ))}
+                    <div className="text-xs font-medium text-muted-foreground mb-2 flex items-center gap-2">
+                      Currency
+                      {detectedCountry && (
+                        <span className="text-green-600 text-xs">
+                          Auto-detected: {detectedCountry}
+                        </span>
+                      )}
+                    </div>
+                    <div className="max-h-64 overflow-y-auto">
+                      {currencies.map((curr) => (
+                        <DropdownMenuItem
+                          key={curr.code}
+                          onClick={() => {
+                            setCurrency(curr.code, true) // Mark as manual selection
+                            // Manual selection flag is now set in setCurrency
+                          }}
+                          className="hover:bg-accent cursor-pointer"
+                        >
+                          <span className="mr-2">{curr.flag}</span>
+                          <span className="flex-1">{curr.name}</span>
+                          <span className="text-xs text-muted-foreground">{curr.symbol}</span>
+                        </DropdownMenuItem>
+                      ))}
+                    </div>
                   </div>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -538,10 +578,17 @@ export const Header: React.FC = () => {
                       </Link>
                     </div>
 
-                    {/* Mobile Language & Theme Section */}
+                    {/* Mobile Language & Currency Section */}
                     <div className="mb-3 p-2 bg-muted rounded-lg">
-                      <div className="text-xs font-medium mb-2 text-muted-foreground">{t('nav.settings')}</div>
-                      <div className="flex items-center gap-2">
+                      <div className="text-xs font-medium mb-2 text-muted-foreground flex items-center gap-2">
+                        {t('nav.settings')}
+                        {detectedCountry && (
+                          <span className="text-green-600 text-xs">
+                            {detectedCountry}
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2 mb-2">
                         {/* Mobile Language Selector */}
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
@@ -556,8 +603,11 @@ export const Header: React.FC = () => {
                                 key={lang.code}
                                 onClick={() => {
                                   setLanguage(lang.code)
-                                  setCurrency(lang.defaultCurrency)
-                                  closeMobileMenu()
+                                  // Only change currency if user hasn't manually selected one
+                                  const hasManualSelection = localStorage.getItem('manual-currency-selection');
+                                  if (!hasManualSelection) {
+                                    setCurrency(lang.defaultCurrency) // Don't mark as manual since it's automatic based on language
+                                  }
                                 }}
                                 className="hover:bg-accent cursor-pointer"
                               >
@@ -576,6 +626,51 @@ export const Header: React.FC = () => {
                           <span className="text-sm">{theme === "light" ? "🌙" : "☀️"}</span>
                         </Button>
                       </div>
+                      
+                      {/* Mobile Currency Selector */}
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="outline" size="sm" className="w-full h-7" aria-label="Select Currency">
+                            <span className="mr-1 text-sm">{currentCurrency?.flag}</span>
+                            <span className="text-xs flex-1 text-left">{currentCurrency?.name}</span>
+                            <span className="text-xs text-muted-foreground">{currentCurrency?.symbol}</span>
+                            {detectedCountry && (
+                              <span className="text-green-500 text-xs ml-1">({detectedCountry})</span>
+                            )}
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="start" className="bg-popover border border-border w-64">
+                          <div className="p-2">
+                            <div className="text-xs font-medium text-muted-foreground mb-2 flex items-center gap-2">
+                              Currency
+                              {detectedCountry && (
+                                <span className="text-green-600 text-xs">
+                                  Auto: {detectedCountry}
+                                </span>
+                              )}
+                            </div>
+                            <div className="max-h-48 overflow-y-auto">
+                              {currencies.map((curr) => (
+                                <DropdownMenuItem
+                                  key={curr.code}
+                                  onClick={() => {
+                                    setCurrency(curr.code, true) // Mark as manual selection
+                                    // Manual selection flag is now set in setCurrency
+                                    closeMobileMenu()
+                                  }}
+                                  className={`hover:bg-accent cursor-pointer ${
+                                    curr.code === currency ? 'bg-accent' : ''
+                                  }`}
+                                >
+                                  <span className="mr-2">{curr.flag}</span>
+                                  <span className="flex-1 text-sm">{curr.name}</span>
+                                  <span className="text-xs text-muted-foreground">{curr.symbol}</span>
+                                </DropdownMenuItem>
+                              ))}
+                            </div>
+                          </div>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </div>
 
                     <Separator className="my-2" />

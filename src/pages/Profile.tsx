@@ -20,6 +20,7 @@ import api from "../api/axios"
 
 import { useAuth } from "../contexts/AuthContext"
 import { useLanguage } from "../contexts/LanguageContext"
+import { useCurrency } from "../contexts/CurrencyContext"
 import { 
   fetchUserAddresses, 
   createAddress, 
@@ -64,6 +65,7 @@ type AddressFormData = z.infer<typeof addressSchema>
 const Profile: React.FC = () => {
   const { user } = useAuth()
   const { t } = useLanguage()
+  const { detectedCountry } = useCurrency()
   const { toast } = useToast()
   const queryClient = useQueryClient()
   
@@ -199,7 +201,7 @@ const Profile: React.FC = () => {
     resolver: zodResolver(addressSchema),
     defaultValues: {
       type: "home",
-      country: "Finland",
+      country: detectedCountry || "FI",
     },
   })
 

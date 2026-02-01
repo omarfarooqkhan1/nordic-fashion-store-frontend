@@ -102,7 +102,6 @@ self.addEventListener('sync', (event) => {
   if (event.tag === 'background-sync') {
     event.waitUntil(
       // Handle offline actions when back online
-      console.log('Background sync triggered')
     );
   }
 });

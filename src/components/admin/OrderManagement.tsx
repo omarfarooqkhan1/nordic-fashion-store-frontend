@@ -10,6 +10,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { ConfirmationDialog } from '@/components/common/ConfirmationDialog';
+import { getFullImageUrl, handleImageError } from '@/utils/imageUtils';
 import { 
   Package, 
   Edit, 
@@ -37,6 +39,7 @@ const OrderManagement: React.FC = () => {
   const [imagePreview, setImagePreview] = useState<{ url: string; type: 'image' | 'video' } | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [ordersPerPage] = useState(10);
+  const [showConfirmation, setShowConfirmation] = useState(false);
 
 
 
@@ -156,7 +159,7 @@ const OrderManagement: React.FC = () => {
   };
 
   const handleSubmitUpdate = () => {
-    // Validate form before submission
+    // Validate form before showing confirmation
     if (!validateForm()) {
       return;
     }
@@ -186,8 +189,24 @@ const OrderManagement: React.FC = () => {
         }
       }
       
-      // If tracking number is set and status is not already 'shipped', force status to 'shipped'
-      if (updateData.tracking_number && updateData.tracking_number.trim() !== '' && updateData.status !== 'shipped') {
+      // Only force status to 'shipped' if tracking number is set AND status is not already 'shipped' or 'delivered'
+      if (updateData.tracking_number && updateData.tracking_number.trim() !== '' && 
+          updateData.status !== 'shipped' && updateData.status !== 'delivered') {
+        updateData.status = 'shipped';
+      }
+      
+      // Show confirmation dialog
+      setShowConfirmation(true);
+    }
+  };
+
+  const handleConfirmedUpdate = () => {
+    if (selectedOrder) {
+      let updateData = { ...updateForm };
+      
+      // Only force status to 'shipped' if tracking number is set AND status is not already 'shipped' or 'delivered'
+      if (updateData.tracking_number && updateData.tracking_number.trim() !== '' && 
+          updateData.status !== 'shipped' && updateData.status !== 'delivered') {
         updateData.status = 'shipped';
       }
       
@@ -195,7 +214,40 @@ const OrderManagement: React.FC = () => {
         orderId: selectedOrder.id,
         updateData,
       });
+      
+      setShowConfirmation(false);
     }
+  };
+
+  const getConfirmationMessage = () => {
+    if (!selectedOrder || !updateForm.status) return '';
+    
+    const orderNumber = selectedOrder.order_number;
+    const customerName = selectedOrder.shipping_name;
+    const newStatus = updateForm.status;
+    const currentStatus = selectedOrder.status;
+    
+    let message = `Are you sure you want to update order #${orderNumber} for ${customerName}?\n\n`;
+    message += `Status will change from "${currentStatus}" to "${newStatus}".`;
+    
+    if (newStatus === 'shipped' && updateForm.tracking_number) {
+      message += `\n\nTracking number: ${updateForm.tracking_number}`;
+      if (updateForm.shipping_service) {
+        message += `\nShipping service: ${updateForm.shipping_service}`;
+      }
+    }
+    
+    if (newStatus === 'cancelled') {
+      message += '\n\n⚠️ This will notify the customer that their order has been cancelled and inform them about the refund process.';
+    } else if (newStatus === 'shipped') {
+      message += '\n\n📦 This will send a shipping confirmation email with tracking information to the customer.';
+    } else if (newStatus === 'delivered') {
+      message += '\n\n🎉 This will send a delivery confirmation email to the customer.';
+    } else {
+      message += '\n\n📧 This will send a status update email to the customer.';
+    }
+    
+    return message;
   };
 
   const getStatusColor = (status: OrderType['status']) => {
@@ -207,6 +259,57 @@ const OrderManagement: React.FC = () => {
       case 'cancelled': return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200';
       default: return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200';
     }
+  };
+
+  const getPaymentMethodDisplay = (paymentMethod: string) => {
+    switch (paymentMethod) {
+      case 'credit_card':
+        return 'Credit Card';
+      case 'paypal':
+        return 'PayPal';
+      case 'stripe':
+        return 'Stripe';
+      default:
+        return paymentMethod || 'Unknown';
+    }
+  };
+
+  const getCurrencySymbol = (currency: string) => {
+    const symbols: Record<string, string> = {
+      'USD': '$',
+      'EUR': '€',
+      'GBP': '£',
+      'JPY': '¥',
+      'SEK': 'kr',
+      'NOK': 'kr',
+      'DKK': 'kr',
+      'PLN': 'zł',
+      'CZK': 'Kč',
+      'HUF': 'Ft',
+      'CAD': 'C$',
+      'AUD': 'A$',
+      'CHF': 'CHF',
+      'CNY': '¥',
+      'INR': '₹',
+      'KRW': '₩',
+      'BRL': 'R$',
+      'MXN': '$',
+      'ZAR': 'R',
+      'TRY': '₺',
+      'RUB': '₽',
+      'AED': 'د.إ',
+      'SAR': '﷼',
+      'THB': '฿',
+      'SGD': 'S$',
+      'HKD': 'HK$',
+      'NZD': 'NZ$',
+      'TWD': 'NT$',
+      'MYR': 'RM',
+      'PHP': '₱',
+      'IDR': 'Rp',
+      'VND': '₫',
+    };
+    return symbols[currency?.toUpperCase()] || currency || '€';
   };
 
   if (isLoading) {
@@ -273,6 +376,8 @@ const OrderManagement: React.FC = () => {
                     <th className="text-left p-4 font-medium">Customer</th>
                     <th className="text-left p-4 font-medium">Status</th>
                     <th className="text-left p-4 font-medium">Total</th>
+                    <th className="text-left p-4 font-medium">Payment</th>
+                    <th className="text-left p-4 font-medium">Currency</th>
                     <th className="text-left p-4 font-medium">Tracking</th>
                     <th className="text-left p-4 font-medium">Date</th>
                     <th className="text-left p-4 font-medium">Actions</th>
@@ -316,7 +421,17 @@ const OrderManagement: React.FC = () => {
                             {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
                           </Badge>
                         </td>
-                        <td className="p-4 font-medium">€{Number(order.total).toFixed(2)}</td>
+                        <td className="p-4 font-medium">{getCurrencySymbol(order.currency)}{Number(order.total).toFixed(2)}</td>
+                        <td className="p-4">
+                          <Badge variant="outline" className="text-xs">
+                            {getPaymentMethodDisplay(order.payment_method)}
+                          </Badge>
+                        </td>
+                        <td className="p-4">
+                          <span className="font-mono text-sm bg-muted px-2 py-1 rounded">
+                            {order.currency || 'EUR'}
+                          </span>
+                        </td>
                         <td className="p-4">
                           {order.tracking_number ? (
                             <div className="flex items-center gap-2">
@@ -377,10 +492,11 @@ const OrderManagement: React.FC = () => {
                                             {/* Front Image */}
                                             <div className="relative flex-1 group">
                                               <img
-                                                src={item.product_snapshot.custom_jacket.front_image_url}
+                                                src={getFullImageUrl(item.product_snapshot.custom_jacket.front_image_url)}
                                                 alt={`Custom ${item.product_name} - Front View`}
                                                 className="w-full h-full object-cover cursor-pointer rounded-l"
-                                                onClick={() => handleImagePreview(item.product_snapshot.custom_jacket.front_image_url)}
+                                                onClick={() => handleImagePreview(getFullImageUrl(item.product_snapshot.custom_jacket.front_image_url))}
+                                                onError={(e) => handleImageError(e, 'Front View')}
                                               />
                                               <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all duration-200 flex items-center justify-center pointer-events-none">
                                                 <Eye className="h-4 w-4 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
@@ -394,10 +510,11 @@ const OrderManagement: React.FC = () => {
                                             {item.product_snapshot.custom_jacket.back_image_url ? (
                                               <div className="relative flex-1 group">
                                                 <img
-                                                  src={item.product_snapshot.custom_jacket.back_image_url}
+                                                  src={getFullImageUrl(item.product_snapshot.custom_jacket.back_image_url)}
                                                   alt={`Custom ${item.product_name} - Back View`}
                                                   className="w-full h-full object-cover cursor-pointer rounded-r"
-                                                  onClick={() => handleImagePreview(item.product_snapshot.custom_jacket.back_image_url)}
+                                                  onClick={() => handleImagePreview(getFullImageUrl(item.product_snapshot.custom_jacket.back_image_url))}
+                                                  onError={(e) => handleImageError(e, 'Back View')}
                                                 />
                                                 <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all duration-200 flex items-center justify-center pointer-events-none">
                                                   <Eye className="h-4 w-4 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
@@ -454,9 +571,9 @@ const OrderManagement: React.FC = () => {
                                         <div className="flex items-center justify-between">
                                           <div className="flex items-center gap-4 text-sm">
                                             <span className="text-muted-foreground">Quantity: {item.quantity}</span>
-                                            <span className="text-muted-foreground">Price: €{Number(item.price).toFixed(2)}</span>
+                                            <span className="text-muted-foreground">Price: {getCurrencySymbol(order.currency)}{Number(item.converted_price || item.price).toFixed(2)}</span>
                                           </div>
-                                          <span className="font-semibold">€{Number(item.subtotal).toFixed(2)}</span>
+                                          <span className="font-semibold">{getCurrencySymbol(order.currency)}{Number(item.converted_subtotal || item.subtotal).toFixed(2)}</span>
                                         </div>
                                       </div>
                                     </div>
@@ -465,22 +582,27 @@ const OrderManagement: React.FC = () => {
                                 
                                 {/* Order Summary */}
                                 <div className="border-t pt-4">
-                                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                                  <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-sm">
                                     <div>
                                       <p className="text-muted-foreground">Subtotal</p>
-                                      <p className="font-medium">€{Number(order.subtotal).toFixed(2)}</p>
+                                      <p className="font-medium">{getCurrencySymbol(order.currency)}{Number(order.subtotal).toFixed(2)}</p>
                                     </div>
                                     <div>
                                       <p className="text-muted-foreground">Shipping</p>
-                                      <p className="font-medium">€{Number(order.shipping).toFixed(2)}</p>
+                                      <p className="font-medium">{getCurrencySymbol(order.currency)}{Number(order.shipping).toFixed(2)}</p>
                                     </div>
                                     <div>
                                       <p className="text-muted-foreground">Tax</p>
-                                      <p className="font-medium">€{Number(order.tax).toFixed(2)}</p>
+                                      <p className="font-medium">{getCurrencySymbol(order.currency)}{Number(order.tax).toFixed(2)}</p>
                                     </div>
                                     <div>
                                       <p className="text-muted-foreground">Total</p>
-                                      <p className="font-medium text-lg">€{Number(order.total).toFixed(2)}</p>
+                                      <p className="font-medium text-lg">{getCurrencySymbol(order.currency)}{Number(order.total).toFixed(2)}</p>
+                                    </div>
+                                    <div>
+                                      <p className="text-muted-foreground">Payment Method</p>
+                                      <p className="font-medium">{getPaymentMethodDisplay(order.payment_method)}</p>
+                                      <p className="text-xs text-muted-foreground">Currency: {order.currency || 'EUR'}</p>
                                     </div>
                                   </div>
                                 </div>
@@ -587,7 +709,7 @@ const OrderManagement: React.FC = () => {
 
       {/* Update Order Dialog */}
       <Dialog open={isUpdateDialogOpen} onOpenChange={setIsUpdateDialogOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Update Order #{selectedOrder?.order_number}</DialogTitle>
           </DialogHeader>
@@ -670,27 +792,45 @@ const OrderManagement: React.FC = () => {
 
             {/* Shipping Service */}
             <div className="space-y-2">
-              <Label>
+              <Label htmlFor="shipping_service">
                 Shipping Service
                 {updateForm.status === 'shipped' && <span className="text-red-500 ml-1">*</span>}
               </Label>
-              <div className="flex gap-3">
-                {['DHL', 'FedEx', 'UPS'].map((service) => (
-                  <Button
-                    key={service}
-                    type="button"
-                    variant={updateForm.shipping_service === service ? 'default' : 'outline'}
-                    onClick={() => {
-                      setUpdateForm(prev => ({ ...prev, shipping_service: service as 'DHL' | 'FedEx' | 'UPS' }));
-                      validateField('shipping_service', service);
+              <div className="space-y-3">
+                <div className="flex gap-3">
+                  {['DHL', 'FedEx', 'UPS'].map((service) => (
+                    <Button
+                      key={service}
+                      type="button"
+                      variant={updateForm.shipping_service === service ? 'default' : 'outline'}
+                      onClick={() => {
+                        setUpdateForm(prev => ({ ...prev, shipping_service: service }));
+                        validateField('shipping_service', service);
+                      }}
+                    >
+                      {service}
+                    </Button>
+                  ))}
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="custom_shipping_service" className="text-sm text-muted-foreground">
+                    Or enter custom shipping service:
+                  </Label>
+                  <Input
+                    id="custom_shipping_service"
+                    placeholder="Enter custom shipping service (e.g., PostNord, Posti, etc.)"
+                    value={!['DHL', 'FedEx', 'UPS'].includes(updateForm.shipping_service || '') ? updateForm.shipping_service || '' : ''}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      setUpdateForm(prev => ({ ...prev, shipping_service: value }));
+                      validateField('shipping_service', value);
                     }}
-                  >
-                    {service}
-                  </Button>
-                ))}
+                    className={validationErrors.shipping_service ? 'border-red-500' : ''}
+                  />
+                </div>
               </div>
               <p className="text-sm text-muted-foreground">
-                Select the shipping service used for this order. Only one can be selected.
+                Select a common shipping service or enter a custom one.
                 {updateForm.status === 'shipped' && (
                   <span className="text-red-500 font-medium"> Required when status is "Shipped"</span>
                 )}
@@ -726,7 +866,12 @@ const OrderManagement: React.FC = () => {
                   </div>
                   <div>
                     <p className="text-muted-foreground">Total</p>
-                    <p className="font-medium">€{Number(selectedOrder.total).toFixed(2)}</p>
+                    <p className="font-medium">{getCurrencySymbol(selectedOrder.currency)}{Number(selectedOrder.total).toFixed(2)}</p>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground">Payment</p>
+                    <p>{getPaymentMethodDisplay(selectedOrder.payment_method)}</p>
+                    <p className="text-xs text-muted-foreground">{selectedOrder.currency || 'EUR'}</p>
                   </div>
                   <div>
                     <p className="text-muted-foreground">Items</p>
@@ -756,23 +901,32 @@ const OrderManagement: React.FC = () => {
             >
               Cancel
             </Button>
-            <Button
-              onClick={handleSubmitUpdate}
-              disabled={
-                updateOrderMutation.isPending || 
-                (updateForm.status === 'shipped' && (!updateForm.tracking_number || !updateForm.shipping_service))
+            <ConfirmationDialog
+              trigger={
+                <Button
+                  disabled={
+                    updateOrderMutation.isPending || 
+                    (updateForm.status === 'shipped' && (!updateForm.tracking_number || !updateForm.shipping_service))
+                  }
+                  className={
+                    updateForm.status === 'shipped' && (!updateForm.tracking_number || !updateForm.shipping_service)
+                      ? 'opacity-50 cursor-not-allowed'
+                      : ''
+                  }
+                >
+                  {updateOrderMutation.isPending ? 'Updating...' : 'Update Order'}
+                  {updateForm.status === 'shipped' && (!updateForm.tracking_number || !updateForm.shipping_service) && (
+                    <span className="ml-2 text-xs">(Required fields missing)</span>
+                  )}
+                </Button>
               }
-              className={
-                updateForm.status === 'shipped' && (!updateForm.tracking_number || !updateForm.shipping_service)
-                  ? 'opacity-50 cursor-not-allowed'
-                  : ''
-              }
-            >
-              {updateOrderMutation.isPending ? 'Updating...' : 'Update Order'}
-              {updateForm.status === 'shipped' && (!updateForm.tracking_number || !updateForm.shipping_service) && (
-                <span className="ml-2 text-xs">(Required fields missing)</span>
-              )}
-            </Button>
+              title="Confirm Order Update"
+              description={getConfirmationMessage()}
+              confirmText="Yes, Update Order"
+              cancelText="Cancel"
+              onConfirm={handleConfirmedUpdate}
+              variant={updateForm.status === 'cancelled' ? 'destructive' : 'default'}
+            />
           </div>
         </DialogContent>
       </Dialog>

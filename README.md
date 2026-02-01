@@ -49,7 +49,7 @@ npm run lint         # Run ESLint
 
 ## 🔧 Configuration
 
-Backend API endpoint is configured to `https://backend.nordflex.shop` by default.
+Backend API endpoint is configured to `https://backend.nordflex.store` by default.
 Development server runs on port 3000.
 
 ## 📁 Project Structure
