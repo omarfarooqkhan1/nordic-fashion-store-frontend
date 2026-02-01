@@ -12,7 +12,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import LoginModal from '@/components/Auth/LoginModal';
 import BlogCard from './BlogCard';
-import { getImageUrl, getPlaceholderImageUrl } from '@/utils/imageUtils';
+import { getFullImageUrl, getPlaceholderImageUrl } from '@/utils/imageUtils';
 
 const BlogDetail: React.FC = () => {
   const { t } = useLanguage();
@@ -160,7 +160,7 @@ const BlogDetail: React.FC = () => {
         {blog.featured_image && (
           <div className="aspect-video overflow-hidden rounded-lg">
             <img
-              src={getImageUrl(blog.featured_image)}
+              src={getFullImageUrl(blog.featured_image)}
               alt={blog.title}
               className="w-full h-full object-cover"
               onError={(e) => {

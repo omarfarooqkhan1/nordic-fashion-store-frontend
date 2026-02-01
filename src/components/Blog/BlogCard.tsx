@@ -6,7 +6,7 @@ import { Heart, Eye, Clock, User } from 'lucide-react';
 import { Blog } from '@/types/Blog';
 import { Link } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { getImageUrl, getPlaceholderImageUrl } from '@/utils/imageUtils';
+import { getFullImageUrl, getPlaceholderImageUrl } from '@/utils/imageUtils';
 
 interface BlogCardProps {
   blog: Blog;
@@ -54,7 +54,7 @@ const BlogCard: React.FC<BlogCardProps> = ({
         {(blog.featured_image || (blog.images && blog.images.length > 0)) && (
           <div className="aspect-video overflow-hidden">
             <img
-              src={getImageUrl(blog.featured_image || blog.images[0]) || getPlaceholderImageUrl(blog.title)}
+              src={getFullImageUrl(blog.featured_image || blog.images[0]) || getPlaceholderImageUrl(blog.title)}
               alt={blog.title}
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
               onError={(e) => {
