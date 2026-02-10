@@ -12,6 +12,9 @@ import About from "./pages/About"
 import Contact from "./pages/Contact"
 import TermsAndConditions from "./pages/TermsAndConditions"
 import PrivacyPolicy from "./pages/PrivacyPolicy"
+import Delivery from "./pages/Delivery"
+import ReturnPolicy from "./pages/ReturnPolicy"
+import ProductCareGuide from "./pages/ProductCareGuide"
 import FAQ from "./pages/FAQ"
 import Products from "./pages/Products"
 import ProductDetail from "./pages/ProductDetail"
@@ -61,6 +64,9 @@ const App: React.FC = () => {
                               <Route path="/contact" element={<Contact />} />
                               <Route path="/terms" element={<TermsAndConditions />} />
                               <Route path="/privacy" element={<PrivacyPolicy />} />
+                              <Route path="/delivery" element={<Delivery />} />
+                              <Route path="/returns" element={<ReturnPolicy />} />
+                              <Route path="/care-guide" element={<ProductCareGuide />} />
                               <Route path="/faqs" element={<FAQ />} />
                               <Route path="/products" element={<Products />} />
                               <Route path="/product/:id" element={<ProductDetail />} />

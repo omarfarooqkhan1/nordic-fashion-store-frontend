@@ -147,16 +147,25 @@ export const Footer: React.FC = () => {
         </div>
 
         <div className="mt-8 pt-8 border-t border-border">
-          <div className="flex flex-col md:flex-row justify-between items-center">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <p className="text-sm text-muted-foreground">
               {t('footer.copyright')}
             </p>
-            <div className="flex flex-wrap gap-4 mt-4 md:mt-0 items-center">
+            <div className="flex flex-wrap gap-4 items-center justify-center">
               <Link to="/privacy" className="text-sm text-muted-foreground hover:text-gold-500 transition-colors" onClick={scrollToTop}>
                 {t('footer.privacy')}
               </Link>
               <Link to="/terms" className="text-sm text-muted-foreground hover:text-gold-500 transition-colors" onClick={scrollToTop}>
                 {t('footer.terms')}
+              </Link>
+              <Link to="/delivery" className="text-sm text-muted-foreground hover:text-gold-500 transition-colors" onClick={scrollToTop}>
+                Delivery
+              </Link>
+              <Link to="/returns" className="text-sm text-muted-foreground hover:text-gold-500 transition-colors" onClick={scrollToTop}>
+                Returns
+              </Link>
+              <Link to="/care-guide" className="text-sm text-muted-foreground hover:text-gold-500 transition-colors" onClick={scrollToTop}>
+                Care Guide
               </Link>
               <Link 
                 to="/newsletter" 
