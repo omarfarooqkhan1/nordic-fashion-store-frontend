@@ -3,12 +3,12 @@ import React, { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { ChevronDown, ChevronUp } from 'lucide-react';
-import { useFaqs } from '@/hooks/useFaqs';
+import { usePublicFaqs } from '@/hooks/usePublicFaqs';
 
 const FAQ = () => {
   const { t } = useLanguage();
   const [openItems, setOpenItems] = useState<number[]>([]);
-  const { faqs, isLoading, isError } = useFaqs();
+  const { faqs, isLoading, isError } = usePublicFaqs();
 
   // Scroll to top when component mounts
   React.useEffect(() => {

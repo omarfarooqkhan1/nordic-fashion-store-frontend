@@ -21,6 +21,7 @@ const CustomerSignup: React.FC = () => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { registerCustomer, loading } = useAuth();
   const { loginWithRedirect } = useAuth0();
   const navigate = useNavigate();
@@ -37,6 +38,8 @@ const CustomerSignup: React.FC = () => {
       setError("Passwords don't match");
       return;
     }
+    
+    setIsSubmitting(true);
     try {
       const response = await api.post("/customer/register", {
         name,
@@ -58,6 +61,8 @@ const CustomerSignup: React.FC = () => {
       } else {
         setError(err.message || t('toast.signupError'));
       }
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -107,7 +112,7 @@ const CustomerSignup: React.FC = () => {
           title={t('auth.createAccount')}
           description="Join Nord Flex today"
           submitText={t('auth.signup')}
-          isLoading={loading}
+          isLoading={isSubmitting}
           error={error}
           onSubmit={onSubmit}
         >

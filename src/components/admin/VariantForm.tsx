@@ -99,6 +99,33 @@ export const VariantForm: React.FC<VariantFormProps> = ({
     (e: React.ChangeEvent<HTMLInputElement>) => {
       if (e.target.files && e.target.files.length > 0) {
         const files = Array.from(e.target.files);
+        
+        // Special handling for video files
+        if (key === 'video') {
+          const videoFile = files[0];
+          if (!videoFile.type.startsWith('video/')) {
+            toast({
+              title: "Invalid file type",
+              description: "Please select a video file (MP4, WebM, or QuickTime).",
+              variant: "destructive",
+            });
+            return;
+          }
+          // Validate video file size (100MB limit)
+          if (videoFile.size > 100 * 1024 * 1024) {
+            toast({
+              title: "File too large",
+              description: "Video must be smaller than 100MB.",
+              variant: "destructive",
+            });
+            return;
+          }
+          setter(videoFile);
+          updatePreviewUrl(key, videoFile);
+          return;
+        }
+        
+        // Image file handling
         const validFiles = files.filter(file => file.type.startsWith('image/'));
         if (validFiles.length !== files.length) {
           toast({
@@ -295,22 +322,80 @@ export const VariantForm: React.FC<VariantFormProps> = ({
             title: "Uploading video...",
             description: "Please wait while we upload your video.",
           });
+          
+          console.log('Starting video upload:', {
+            productId,
+            color: variantData.color,
+            fileName: videoFile.name,
+            fileSize: videoFile.size,
+            fileType: videoFile.type
+          });
+          
           const formData = new FormData();
           formData.append('color', variantData.color);
           formData.append('video', videoFile);
+          
           try {
-            const res = await fetch(`/api/products/${productId}/variant-video`, {
+            const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || '/api';
+            const uploadUrl = `${apiBaseUrl}/products/${productId}/variant-video`;
+            
+            console.log('Upload URL:', uploadUrl);
+            console.log('Token present:', !!token);
+            
+            const res = await fetch(uploadUrl, {
               method: 'POST',
               body: formData,
-              headers: { Authorization: `Bearer ${token}` },
+              headers: { 
+                'Authorization': `Bearer ${token}`,
+                'Accept': 'application/json'
+              },
             });
-            if (!res.ok) throw new Error('Upload failed');
+            
+            console.log('Response status:', res.status);
+            console.log('Response ok:', res.ok);
+            
+            if (!res.ok) {
+              const errorText = await res.text();
+              console.error('Error response:', errorText);
+              
+              let errorData;
+              try {
+                errorData = JSON.parse(errorText);
+              } catch {
+                errorData = { message: errorText || 'Upload failed' };
+              }
+              
+              // Show detailed error message
+              let errorMessage = errorData.message || `Upload failed with status ${res.status}`;
+              
+              if (errorData.errors?.video) {
+                errorMessage += ': ' + errorData.errors.video.join(', ');
+              }
+              
+              if (errorData.php_limits) {
+                errorMessage += `\n\nPHP Limits:\n- Max upload: ${errorData.php_limits.upload_max_filesize}\n- Max post: ${errorData.php_limits.post_max_size}`;
+              }
+              
+              throw new Error(errorMessage);
+            }
+            
             const data = await res.json();
-            videoPath = data.video_url;
+            console.log('Upload response:', data);
+            
+            videoPath = data.video_path || data.video_url;
             setVideoFile(null);
-            toast({ title: "Video uploaded successfully" });
+            
+            toast({ 
+              title: "Video uploaded successfully",
+              description: `Video saved for ${variantData.color} variants`
+            });
           } catch (err: any) {
-            toast({ title: 'Video upload failed', description: err.message, variant: 'destructive' });
+            console.error('Video upload error:', err);
+            toast({ 
+              title: 'Video upload failed', 
+              description: err.message || 'Unknown error occurred', 
+              variant: 'destructive' 
+            });
           }
         }
 

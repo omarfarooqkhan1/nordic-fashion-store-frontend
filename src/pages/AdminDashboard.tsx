@@ -70,6 +70,7 @@ import {
 } from "@/api/admin"
 import OrderManagement from "@/components/admin/OrderManagement"
 import AdminFaqs from "@/components/admin/AdminFaqs"
+import AdminStaticPages from "@/components/admin/AdminStaticPages"
 import ContactForms from "@/components/admin/ContactForms"
 import UserManagement from "@/components/admin/UserManagement"
 import { ProductForm } from "@/components/admin/ProductForm"
@@ -697,6 +698,12 @@ const AdminDashboard: React.FC = () => {
         <TabsContent value="newsletter" className="space-y-6">
           <NewsletterManagement />
         </TabsContent>
+
+        {/* Static Pages Management Tab */}
+        <TabsContent value="static-pages" className="space-y-6">
+          <AdminStaticPages />
+        </TabsContent>
+
         <TabsContent value="overview" className="space-y-4 sm:space-y-6">
           {statsLoading ? (
             <LoadingState message="Loading dashboard statistics..." className="py-8" />

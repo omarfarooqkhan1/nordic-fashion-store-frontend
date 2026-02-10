@@ -132,15 +132,24 @@ const About = () => {
                   key={event.year}
                   className={`relative flex flex-col sm:flex-row items-center ${index % 2 === 0 ? 'sm:flex-row' : 'sm:flex-row-reverse'} group`}
                 >
-                  {/* Timeline Dot - Enhanced */}
+                  {/* Timeline Dot with Year Background - Enhanced */}
                   <div className="hidden sm:block absolute left-1/2 transform -translate-x-1/2 z-20">
-                    <div className={`w-16 h-16 bg-gradient-to-br ${event.color} rounded-full border-4 border-white dark:border-slate-800 shadow-xl flex items-center justify-center text-2xl group-hover:scale-110 transition-transform duration-300`}>
-                      {event.icon}
+                    <div className="relative">
+                      {/* Year Background */}
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <span className="text-8xl font-black text-slate-200/30 dark:text-slate-700/30 select-none pointer-events-none">
+                          {event.year}
+                        </span>
+                      </div>
+                      {/* Icon Circle */}
+                      <div className={`relative w-20 h-20 bg-gradient-to-br ${event.color} rounded-full border-4 border-white dark:border-slate-800 shadow-xl flex items-center justify-center text-3xl group-hover:scale-110 transition-transform duration-300`}>
+                        {event.icon}
+                      </div>
                     </div>
                   </div>
                   
                   {/* Content Card - Enhanced */}
-                  <div className={`w-full sm:w-5/12 ${index % 2 === 0 ? 'sm:pr-16' : 'sm:pl-16'} mb-6 sm:mb-0`}>
+                  <div className={`w-full sm:w-5/12 ${index % 2 === 0 ? 'sm:pr-24' : 'sm:pl-24'} mb-6 sm:mb-0`}>
                     <Card className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border-0 shadow-2xl hover:shadow-3xl transition-all duration-500 overflow-hidden group-hover:scale-105">
                       <div className="aspect-video relative overflow-hidden">
                         <div className={`absolute inset-0 bg-gradient-to-br ${event.color} opacity-20`} />
@@ -180,13 +189,6 @@ const About = () => {
                         </p>
                       </CardContent>
                     </Card>
-                  </div>
-                  
-                  {/* Year Badge - Enhanced */}
-                  <div className={`w-full sm:w-5/12 ${index % 2 === 0 ? 'sm:pl-16' : 'sm:pr-16'} flex ${index % 2 === 0 ? 'justify-start' : 'justify-end'} mb-4 sm:mb-0`}>
-                    <div className={`inline-flex items-center px-6 py-3 bg-gradient-to-r ${event.color} rounded-2xl shadow-lg text-white font-semibold group-hover:shadow-xl transition-all duration-300`}>
-                      <span className="text-sm">{t('about.timeline.established')} {event.year}</span>
-                    </div>
                   </div>
                 </div>
               ))}

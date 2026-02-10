@@ -8,7 +8,8 @@ import {
   Edit,
   Users,
   ShoppingCart,
-  Mail
+  Mail,
+  FileText
 } from 'lucide-react';
 
 interface AdminTabsNavigationProps {
@@ -132,6 +133,15 @@ export const AdminTabsNavigation: React.FC<AdminTabsNavigationProps> = ({
             <Mail className="w-4 h-4 mr-2" />
             <span className="hidden lg:inline">Newsletter</span>
             <span className="lg:hidden">News</span>
+          </TabsTrigger>
+          <TabsTrigger 
+            value="static-pages" 
+            onClick={() => navigate("/admin")} 
+            className="inline-flex items-center justify-center whitespace-nowrap rounded-lg px-3 py-2 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-white data-[state=active]:text-foreground data-[state=active]:shadow-md data-[state=active]:border data-[state=active]:border-slate-300 dark:data-[state=active]:bg-slate-700 dark:data-[state=active]:border-slate-600 hover:bg-white/50 dark:hover:bg-slate-700/50 mx-0.5"
+          >
+            <FileText className="w-4 h-4 mr-2" />
+            <span className="hidden lg:inline">Pages</span>
+            <span className="lg:hidden">Pgs</span>
           </TabsTrigger>
         </TabsList>
       </div>

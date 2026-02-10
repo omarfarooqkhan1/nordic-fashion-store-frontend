@@ -1,82 +1,26 @@
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
-import { useLanguage } from '@/contexts/LanguageContext';
+import useSWR from 'swr';
+import axios from 'axios';
+import { LoadingState, ErrorState } from '@/components/common';
 
 const PrivacyPolicy = () => {
-  const { t } = useLanguage();
-
-  // Scroll to top when component mounts
   React.useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
 
-  const sections = [
-    {
-      id: 'introduction',
-      title: t('privacy.section1.title'),
-      content: t('privacy.section1.content')
-    },
-    {
-      id: 'information-collection',
-      title: t('privacy.section2.title'),
-      content: t('privacy.section2.content')
-    },
-    {
-      id: 'use-of-information',
-      title: t('privacy.section3.title'),
-      content: t('privacy.section3.content')
-    },
-    {
-      id: 'information-sharing',
-      title: t('privacy.section4.title'),
-      content: t('privacy.section4.content')
-    },
-    {
-      id: 'data-security',
-      title: t('privacy.section5.title'),
-      content: t('privacy.section5.content')
-    },
-    {
-      id: 'cookies',
-      title: t('privacy.section6.title'),
-      content: t('privacy.section6.content')
-    },
-    {
-      id: 'third-party-websites',
-      title: t('privacy.section7.title'),
-      content: t('privacy.section7.content')
-    },
-    {
-      id: 'data-retention',
-      title: t('privacy.section8.title'),
-      content: t('privacy.section8.content')
-    },
-    {
-      id: 'your-rights',
-      title: t('privacy.section9.title'),
-      content: t('privacy.section9.content')
-    },
-    {
-      id: 'children-privacy',
-      title: t('privacy.section10.title'),
-      content: t('privacy.section10.content')
-    },
-    {
-      id: 'international-transfers',
-      title: t('privacy.section11.title'),
-      content: t('privacy.section11.content')
-    },
-    {
-      id: 'changes-to-policy',
-      title: t('privacy.section12.title'),
-      content: t('privacy.section12.content')
-    },
-    {
-      id: 'contact',
-      title: t('privacy.section13.title'),
-      content: t('privacy.section13.content')
-    }
-  ];
+  const { data, error, isLoading } = useSWR(
+    `${import.meta.env.VITE_BACKEND_URL}/api/static-pages/privacy-policy`,
+    (url) => axios.get(url).then((res) => res.data.data)
+  );
+
+  if (isLoading) {
+    return <LoadingState message="Loading privacy policy..." />;
+  }
+
+  if (error) {
+    return <ErrorState message="Failed to load privacy policy" />;
+  }
 
   return (
     <div className="container mx-auto px-2 sm:px-4 py-10 sm:py-16 space-y-8">
@@ -85,68 +29,35 @@ const PrivacyPolicy = () => {
         <div className="absolute inset-0 bg-gradient-to-br from-gold-50/30 to-leather-100/20 dark:from-gold-900/20 dark:to-leather-800/30"></div>
         <div className="relative z-10 text-center space-y-4 sm:space-y-6">
           <h1 className="text-2xl sm:text-4xl md:text-6xl font-bold text-leather-900 dark:text-leather-100">
-            {t('privacy.title')}
+            {data?.title || 'Privacy Policy'}
           </h1>
           <p className="text-base sm:text-xl text-leather-700 dark:text-leather-200 max-w-xl sm:max-w-2xl mx-auto">
-            {t('privacy.subtitle')}
+            Your privacy is important to us
           </p>
           <p className="text-sm text-leather-600 dark:text-leather-300">
-            {t('privacy.lastUpdated')}: {new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+            Last Updated: {new Date(data?.updated_at || Date.now()).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
           </p>
         </div>
       </section>
 
       {/* Privacy Policy Content */}
-      <div className="max-w-4xl mx-auto space-y-6">
-        {sections.map((section, index) => (
-          <Card key={section.id} className="bg-gradient-to-br from-card to-leather-100/50 dark:from-card dark:to-leather-800/30 border-border shadow-lg">
-            <CardContent className="p-6 sm:p-8">
-              <h2 className="text-lg sm:text-xl font-bold text-foreground mb-4 border-b border-border pb-2">
-                {section.title}
-              </h2>
-              <div className="prose prose-sm sm:prose-base max-w-none text-muted-foreground leading-relaxed">
-                <p className="whitespace-pre-line">{section.content}</p>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-
-        {/* Additional Information */}
-        <Card className="bg-gradient-to-br from-gold-50 to-gold-100 dark:from-gold-900/20 dark:to-gold-800/20 border-gold-200 dark:border-gold-700 shadow-lg">
-          <CardContent className="p-6 sm:p-8">
-            <h2 className="text-lg sm:text-xl font-bold text-foreground mb-4 flex items-center">
-              <span className="mr-2">🔒</span>
-              {t('privacy.privacyMatters')}
-            </h2>
-            <p className="text-muted-foreground leading-relaxed">
-              {t('privacy.privacyMattersText')}
-            </p>
+      <div className="max-w-4xl mx-auto">
+        <Card className="bg-gradient-to-br from-card to-leather-100/50 dark:from-card dark:to-leather-800/30 border-border shadow-lg">
+          <CardContent className="p-6 sm:p-8 prose prose-slate dark:prose-invert max-w-none">
+            <div dangerouslySetInnerHTML={{ __html: data?.content || '' }} />
           </CardContent>
         </Card>
 
-        {/* Contact Section */}
-        <Card className="bg-gradient-to-br from-card to-leather-100/50 dark:from-card dark:to-leather-800/30 border-border shadow-lg">
-          <CardContent className="p-6 sm:p-8 text-center">
-            <h2 className="text-lg sm:text-xl font-bold text-foreground mb-4">
-              {t('privacy.questionsTitle')}
+        {/* Additional Information */}
+        <Card className="bg-gradient-to-br from-gold-50 to-gold-100 dark:from-gold-900/20 dark:to-gold-800/20 border-gold-200 dark:border-gold-700 shadow-lg mt-6">
+          <CardContent className="p-6 sm:p-8">
+            <h2 className="text-lg sm:text-xl font-bold text-foreground mb-4 flex items-center">
+              <span className="mr-2">🔒</span>
+              Your Privacy Matters
             </h2>
-            <p className="text-foreground mb-6">
-              {t('privacy.questionsText')}
+            <p className="text-muted-foreground leading-relaxed">
+              We are committed to protecting your personal information and your right to privacy. If you have any questions or concerns about our policy or our practices with regards to your personal information, please contact us.
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <a 
-                href="mailto:support@nordflex.store"
-                className="inline-flex items-center px-6 py-3 bg-gold-500 hover:bg-gold-600 text-gold-950 dark:text-gold-50 font-semibold rounded-lg transition-colors duration-300"
-              >
-                📧 {t('contact.emailUs')}
-              </a>
-              <a 
-                href="tel:+358449782549"
-                className="inline-flex items-center px-6 py-3 bg-leather-600 hover:bg-leather-700 text-leather-50 dark:text-leather-100 font-semibold rounded-lg transition-colors duration-300"
-              >
-                📞 {t('contact.callUs')}
-              </a>
-            </div>
           </CardContent>
         </Card>
       </div>

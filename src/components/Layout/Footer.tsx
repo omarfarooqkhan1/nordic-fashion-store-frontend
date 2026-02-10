@@ -24,7 +24,7 @@ export const Footer: React.FC = () => {
   return (
     <footer className="border-t border-border bg-background mt-12">
       <div className="container py-12">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-x-16 gap-y-8">
           {/* Brand */}
           <div className="space-y-4">
             <div className="flex items-center space-x-3">
@@ -41,9 +41,20 @@ export const Footer: React.FC = () => {
             <p className="text-sm text-muted-foreground">
               {t('footer.brand.desc')}
             </p>
+            
+            {/* Newsletter Button */}
+            <Link 
+              to="/newsletter" 
+              className="group relative inline-flex items-center gap-2 text-sm font-medium text-gold-600 hover:text-gold-500 transition-all duration-300 px-4 py-2 rounded-full border-2 border-gold-300 hover:border-gold-400 hover:bg-gold-50 dark:border-gold-700 dark:hover:border-gold-600 dark:hover:bg-gold-950/30 hover:shadow-md hover:scale-105" 
+              onClick={scrollToTop}
+            >
+              <span className="text-base">📧</span>
+              <span className="relative z-10 font-semibold text-xs">Subscribe to Newsletter</span>
+              <div className="absolute inset-0 rounded-full bg-gradient-to-r from-gold-100 to-gold-200 dark:from-gold-900/20 dark:to-gold-800/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+            </Link>
           </div>
 
-          {/* Social Media */}
+          {/* Follow Us / Social Media */}
           <div className="space-y-4">
             <h3 className="text-base font-semibold text-foreground">{t('footer.social')}</h3>
             <p className="text-sm text-muted-foreground mb-4">{t('footer.social.desc')}</p>
@@ -52,43 +63,6 @@ export const Footer: React.FC = () => {
               iconSize={28}
               showLabels={false}
             />
-          </div>
-
-          {/* Quick Links */}
-          <div className="space-y-4">
-            <h3 className="text-base font-semibold text-foreground">{t('footer.quicklinks')}</h3>
-            <ul className="space-y-2 text-sm">
-              <li>
-                <Link to="/" className="text-muted-foreground hover:text-gold-500 transition-colors" onClick={scrollToTop}>
-                  {t('nav.home')}
-                </Link>
-              </li>
-              <li>
-                <Link to="/products" className="text-muted-foreground hover:text-gold-500 transition-colors" onClick={scrollToTop}>
-                  {t('nav.products')}
-                </Link>
-              </li>
-              <li>
-                <Link to="/about" className="text-muted-foreground hover:text-gold-500 transition-colors" onClick={scrollToTop}>
-                  {t('nav.about')}
-                </Link>
-              </li>
-              <li>
-                <Link to="/contact" className="text-muted-foreground hover:text-gold-500 transition-colors" onClick={scrollToTop}>
-                  {t('nav.contact')}
-                </Link>
-              </li>
-              <li>
-                <Link to="/blogs" className="text-muted-foreground hover:text-gold-500 transition-colors" onClick={scrollToTop}>
-                  Blogs
-                </Link>
-              </li>
-              <li>
-                <Link to="/faqs" className="text-muted-foreground hover:text-gold-500 transition-colors" onClick={scrollToTop}>
-                  {t('nav.faq')}
-                </Link>
-              </li>
-            </ul>
           </div>
 
           {/* Categories */}
@@ -135,47 +109,81 @@ export const Footer: React.FC = () => {
             </ul>
           </div>
 
-          {/* Contact Info */}
+          {/* Quick Links */}
           <div className="space-y-4">
-            <h3 className="text-base font-semibold text-foreground">{t('footer.contact')}</h3>
-            <div className="space-y-2 text-sm text-muted-foreground">
-              <p>{t('footer.company')}</p>
-              <p>{t('footer.location')}</p>
-              <p>+358 44 9782549</p>
-            </div>
+            <h3 className="text-base font-semibold text-foreground">{t('footer.quicklinks')}</h3>
+            <ul className="space-y-2 text-sm">
+              <li>
+                <Link to="/" className="text-muted-foreground hover:text-gold-500 transition-colors" onClick={scrollToTop}>
+                  {t('nav.home')}
+                </Link>
+              </li>
+              <li>
+                <Link to="/products" className="text-muted-foreground hover:text-gold-500 transition-colors" onClick={scrollToTop}>
+                  {t('nav.products')}
+                </Link>
+              </li>
+              <li>
+                <Link to="/about" className="text-muted-foreground hover:text-gold-500 transition-colors" onClick={scrollToTop}>
+                  {t('nav.about')}
+                </Link>
+              </li>
+              <li>
+                <Link to="/contact" className="text-muted-foreground hover:text-gold-500 transition-colors" onClick={scrollToTop}>
+                  {t('nav.contact')}
+                </Link>
+              </li>
+              <li>
+                <Link to="/blogs" className="text-muted-foreground hover:text-gold-500 transition-colors" onClick={scrollToTop}>
+                  Blogs
+                </Link>
+              </li>
+              <li>
+                <Link to="/faqs" className="text-muted-foreground hover:text-gold-500 transition-colors" onClick={scrollToTop}>
+                  {t('nav.faq')}
+                </Link>
+              </li>
+            </ul>
+          </div>
+
+          {/* Information/Legal */}
+          <div className="space-y-4">
+            <h3 className="text-base font-semibold text-foreground">Information</h3>
+            <ul className="space-y-2 text-sm">
+              <li>
+                <Link to="/privacy" className="text-muted-foreground hover:text-gold-500 transition-colors" onClick={scrollToTop}>
+                  {t('footer.privacy')}
+                </Link>
+              </li>
+              <li>
+                <Link to="/terms" className="text-muted-foreground hover:text-gold-500 transition-colors" onClick={scrollToTop}>
+                  {t('footer.terms')}
+                </Link>
+              </li>
+              <li>
+                <Link to="/delivery" className="text-muted-foreground hover:text-gold-500 transition-colors" onClick={scrollToTop}>
+                  Delivery
+                </Link>
+              </li>
+              <li>
+                <Link to="/returns" className="text-muted-foreground hover:text-gold-500 transition-colors" onClick={scrollToTop}>
+                  Returns
+                </Link>
+              </li>
+              <li>
+                <Link to="/care-guide" className="text-muted-foreground hover:text-gold-500 transition-colors" onClick={scrollToTop}>
+                  Care Guide
+                </Link>
+              </li>
+            </ul>
           </div>
         </div>
 
         <div className="mt-8 pt-8 border-t border-border">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+          <div className="text-center">
             <p className="text-sm text-muted-foreground">
               {t('footer.copyright')}
             </p>
-            <div className="flex flex-wrap gap-4 items-center justify-center">
-              <Link to="/privacy" className="text-sm text-muted-foreground hover:text-gold-500 transition-colors" onClick={scrollToTop}>
-                {t('footer.privacy')}
-              </Link>
-              <Link to="/terms" className="text-sm text-muted-foreground hover:text-gold-500 transition-colors" onClick={scrollToTop}>
-                {t('footer.terms')}
-              </Link>
-              <Link to="/delivery" className="text-sm text-muted-foreground hover:text-gold-500 transition-colors" onClick={scrollToTop}>
-                Delivery
-              </Link>
-              <Link to="/returns" className="text-sm text-muted-foreground hover:text-gold-500 transition-colors" onClick={scrollToTop}>
-                Returns
-              </Link>
-              <Link to="/care-guide" className="text-sm text-muted-foreground hover:text-gold-500 transition-colors" onClick={scrollToTop}>
-                Care Guide
-              </Link>
-              <Link 
-                to="/newsletter" 
-                className="group relative text-sm font-medium text-gold-600 hover:text-gold-500 transition-all duration-300 animate-bounce hover:animate-none px-3 py-1.5 rounded-full border border-gold-200 hover:border-gold-400 hover:bg-gold-50 dark:border-gold-800 dark:hover:border-gold-600 dark:hover:bg-gold-950/20" 
-                onClick={scrollToTop}
-              >
-                <span className="relative z-10">📧 Subscribe to Newsletter</span>
-                <div className="absolute inset-0 rounded-full bg-gradient-to-r from-gold-100 to-gold-200 dark:from-gold-900/20 dark:to-gold-800/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-              </Link>
-            </div>
           </div>
         </div>
       </div>

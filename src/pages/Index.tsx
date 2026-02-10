@@ -19,7 +19,7 @@ const Index = () => {
   const { getQueryOptions, optimizeImageLoading } = usePerformanceOptimization()
 
   // Fetch hero images from API
-  const { data: heroImages = [] } = useQuery({
+  const { data: heroImages = [], isLoading: heroImagesLoading } = useQuery({
     queryKey: ["hero-images"],
     queryFn: async () => {
       try {
@@ -41,7 +41,10 @@ const Index = () => {
     "https://images.unsplash.com/photo-1506629905814-b9daf261d74f?w=1200&h=800&fit=crop",
   ]
 
-  const displayHeroImages = (Array.isArray(heroImages) && heroImages.length > 0) ? heroImages : fallbackHeroImages
+  // Only use fallback images if loading is complete and no images were fetched
+  const displayHeroImages = !heroImagesLoading && (Array.isArray(heroImages) && heroImages.length > 0) 
+    ? heroImages 
+    : (heroImagesLoading ? [] : fallbackHeroImages)
 
   // Scroll to top when component mounts
   useEffect(() => {
