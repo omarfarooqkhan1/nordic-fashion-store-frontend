@@ -88,7 +88,13 @@ const ProductDetail = () => {
 
   // Initialize with first variant when product loads
   useEffect(() => {
-    // Do not select any color or size by default on initial load
+    if (product && product.variants && product.variants.length > 0) {
+      const firstVariant = product.variants[0];
+      if (firstVariant) {
+        setSelectedSize(firstVariant.size || '');
+        setSelectedColor(firstVariant.color || '');
+      }
+    }
   }, [product]); // Only depend on product changes
 
   // Get selected variant
@@ -431,8 +437,34 @@ const ProductDetail = () => {
                   <ProductImage
                     src={displayImages[currentImageIndex]?.url}
                     alt={displayImages[currentImageIndex]?.alt_text || `${product?.name || 'Product'} image ${currentImageIndex + 1}`}
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-cover transition-transform duration-500 hover:scale-110"
                   />
+                  
+                  {/* Left/Right Navigation Buttons */}
+                  {displayImages.length > 1 && (
+                    <>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setCurrentImageIndex(prev => prev === 0 ? displayImages.length - 1 : prev - 1);
+                        }}
+                        className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 p-2 sm:p-3 rounded-full bg-white/90 dark:bg-slate-800/90 hover:bg-white dark:hover:bg-slate-700 shadow-lg hover:shadow-xl transition-all duration-200 z-10 group"
+                        aria-label="Previous image"
+                      >
+                        <ArrowLeft className="h-5 w-5 sm:h-6 sm:w-6 text-gray-700 dark:text-white group-hover:scale-110 transition-transform" />
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setCurrentImageIndex(prev => prev === displayImages.length - 1 ? 0 : prev + 1);
+                        }}
+                        className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 p-2 sm:p-3 rounded-full bg-white/90 dark:bg-slate-800/90 hover:bg-white dark:hover:bg-slate-700 shadow-lg hover:shadow-xl transition-all duration-200 z-10 group"
+                        aria-label="Next image"
+                      >
+                        <ArrowRight className="h-5 w-5 sm:h-6 sm:w-6 text-gray-700 dark:text-white group-hover:scale-110 transition-transform" />
+                      </button>
+                    </>
+                  )}
                 </div>
                 {/* Modal for main image full view */}
                 {showMediaModal && displayImages[currentImageIndex] && (
@@ -488,12 +520,23 @@ const ProductDetail = () => {
             <p className="text-gray-600 dark:text-slate-300 capitalize text-sm sm:text-base md:text-lg font-medium">
               {product.category?.name || ''}
             </p>
-            {/* Product Rating Display - Responsive */}
-            <div className="flex items-center gap-2 sm:gap-3 mt-2 sm:mt-3">
+            {/* Product Rating Display - Responsive - Clickable */}
+            <div 
+              className="flex items-center gap-2 sm:gap-3 mt-2 sm:mt-3 cursor-pointer hover:opacity-80 transition-opacity"
+              onClick={() => {
+                const reviewsSection = document.getElementById('reviews-section');
+                if (reviewsSection) {
+                  reviewsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+              }}
+              role="button"
+              tabIndex={0}
+              aria-label="Scroll to reviews"
+            >
               {reviewSummary && reviewSummary.review_count > 0 ? (
                 <>
                   <StarRating rating={reviewSummary.average_rating} size="sm" />
-                  <span className="text-xs sm:text-sm text-gray-600 dark:text-slate-300">
+                  <span className="text-xs sm:text-sm text-gray-600 dark:text-slate-300 underline">
                     {reviewSummary.average_rating.toFixed(1)} ({reviewSummary.review_count})
                   </span>
                 </>
@@ -845,8 +888,8 @@ const ProductDetail = () => {
                         className="w-full h-full object-cover"
                       />
                     )}
-                    {/* Overlay for info */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent opacity-0 hover:opacity-100 transition-opacity duration-300 pointer-events-none">
+                    {/* Overlay for info - Hidden on hover */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent opacity-100 hover:opacity-0 transition-opacity duration-300 pointer-events-none">
                       <div className="absolute bottom-3 sm:bottom-4 left-3 sm:left-4 right-3 sm:right-4 text-white">
                         <p className="text-xs sm:text-sm font-medium mb-1">
                           {stylingMedia[stylingIndex].type === 'video' ? 'Product Video' : (stylingMedia[stylingIndex].alt_text || t('product.stylingInspiration'))}
@@ -909,8 +952,8 @@ const ProductDetail = () => {
                           {t('product.videoNotSupported')}
                         </video>
                       </div>
-                      {/* Overlay for video info */}
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                      {/* Overlay for video info - Hidden on hover */}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent opacity-100 group-hover:opacity-0 transition-opacity duration-300">
                         <div className="absolute bottom-3 sm:bottom-4 left-3 sm:left-4 right-3 sm:right-4 text-white">
                           <p className="text-xs sm:text-sm font-medium mb-1">
                             Product Video
@@ -932,8 +975,8 @@ const ProductDetail = () => {
                           className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                         />
                       </div>
-                      {/* Overlay with styling info */}
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                      {/* Overlay with styling info - Hidden on hover */}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent opacity-100 group-hover:opacity-0 transition-opacity duration-300">
                         <div className="absolute bottom-3 sm:bottom-4 left-3 sm:left-4 right-3 sm:right-4 text-white">
                           <p className="text-xs sm:text-sm font-medium mb-1">
                             {image.alt_text || t('product.stylingInspiration')}
@@ -952,8 +995,15 @@ const ProductDetail = () => {
         </div>
       ) : null}
 
+      {/* Similar Products Section */}
+      {product?.similar_products && product.similar_products.length > 0 && (
+        <div className="w-full mt-4 sm:mt-8 md:mt-12">
+          <SimilarProducts products={product.similar_products} />
+        </div>
+      )}
+
       {/* Customer Reviews Section - Full Width */}
-      <div className="w-full py-5 sm:py-12 lg:py-16 mt-4 sm:mt-8 md:mt-12">
+      <div id="reviews-section" className="w-full py-5 sm:py-12 lg:py-16 mt-4 sm:mt-8 md:mt-12">
         <div className="w-full px-0">
           <div className="space-y-5 sm:space-y-12">
             <ProductReviews
@@ -963,13 +1013,6 @@ const ProductDetail = () => {
           </div>
         </div>
       </div>
-
-      {/* Similar Products Section */}
-      {product?.similar_products && product.similar_products.length > 0 && (
-        <div className="w-full mt-4 sm:mt-8 md:mt-12">
-          <SimilarProducts products={product.similar_products} />
-        </div>
-      )}
     </div>
   );
 };

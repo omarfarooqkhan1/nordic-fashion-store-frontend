@@ -63,6 +63,27 @@ api.interceptors.response.use(
       // CSRF token mismatch, try to get a new one
       window.location.reload();
     }
+    
+    // Handle 401 Unauthorized or 403 Forbidden for admin
+    if (error.response?.status === 401 || error.response?.status === 403) {
+      const user = localStorage.getItem('user');
+      if (user) {
+        try {
+          const userData = JSON.parse(user);
+          // Only auto-logout for admin users
+          if (userData.role === 'admin') {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            window.location.href = '/admin/login';
+          }
+        } catch (e) {
+          // Invalid user data, clear storage
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+        }
+      }
+    }
+    
     return Promise.reject(error);
   }
 );
