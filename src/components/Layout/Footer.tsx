@@ -148,7 +148,7 @@ export const Footer: React.FC = () => {
 
           {/* Information/Legal */}
           <div className="space-y-4">
-            <h3 className="text-base font-semibold text-foreground">Information</h3>
+            <h3 className="text-base font-semibold text-foreground">{t('footer.information')}</h3>
             <ul className="space-y-2 text-sm">
               <li>
                 <Link to="/privacy" className="text-muted-foreground hover:text-gold-500 transition-colors" onClick={scrollToTop}>

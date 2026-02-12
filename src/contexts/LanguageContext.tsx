@@ -568,6 +568,7 @@ const translations = {
     'product.customerReviews': 'Customer Reviews',
     
     // Footer links
+    'footer.information': 'Information',
     'footer.delivery': 'Delivery',
     'footer.returns': 'Returns',
     'footer.careGuide': 'Care Guide',
@@ -662,6 +663,7 @@ const translations = {
   'product.customerReviews': 'Kundrecensioner',
   
   // Footer links
+  'footer.information': 'Information',
   'footer.delivery': 'Leverans',
   'footer.returns': 'Returer',
   'footer.careGuide': 'Vårdguide',
@@ -1256,6 +1258,7 @@ const translations = {
   'product.customerReviews': 'Kundeanmeldelser',
   
   // Footer links
+  'footer.information': 'Informasjon',
   'footer.delivery': 'Levering',
   'footer.returns': 'Returer',
   'footer.careGuide': 'Pleieguide',
@@ -1842,6 +1845,7 @@ const translations = {
   'product.customerReviews': 'Kundeanmeldelser',
   
   // Footer links
+  'footer.information': 'Information',
   'footer.delivery': 'Levering',
   'footer.returns': 'Returneringer',
   'footer.careGuide': 'Plejeguide',
@@ -2402,6 +2406,7 @@ const translations = {
   'product.customerReviews': 'Asiakasarvostelut',
   
   // Footer links
+  'footer.information': 'Tiedot',
   'footer.delivery': 'Toimitus',
   'footer.returns': 'Palautukset',
   'footer.careGuide': 'Hoito-ohje',
@@ -2969,6 +2974,7 @@ const translations = {
   'product.customerReviews': 'Umsagnir viðskiptavina',
   
   // Footer links
+  'footer.information': 'Upplýsingar',
   'footer.delivery': 'Afhending',
   'footer.returns': 'Skil',
   'footer.careGuide': 'Umönnunarleiðbeiningar',
