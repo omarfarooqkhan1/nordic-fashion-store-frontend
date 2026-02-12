@@ -162,17 +162,17 @@ export const Footer: React.FC = () => {
               </li>
               <li>
                 <Link to="/delivery" className="text-muted-foreground hover:text-gold-500 transition-colors" onClick={scrollToTop}>
-                  Delivery
+                  {t('footer.delivery')}
                 </Link>
               </li>
               <li>
                 <Link to="/returns" className="text-muted-foreground hover:text-gold-500 transition-colors" onClick={scrollToTop}>
-                  Returns
+                  {t('footer.returns')}
                 </Link>
               </li>
               <li>
                 <Link to="/care-guide" className="text-muted-foreground hover:text-gold-500 transition-colors" onClick={scrollToTop}>
-                  Care Guide
+                  {t('footer.careGuide')}
                 </Link>
               </li>
             </ul>

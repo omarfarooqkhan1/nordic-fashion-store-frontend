@@ -29,6 +29,8 @@ const ProductDetail = () => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [reviewSummary, setReviewSummary] = useState<{ average_rating: number; review_count: number } | null>(null);
   const [isMobile, setIsMobile] = useState(false);
+  const [zoomPosition, setZoomPosition] = useState({ x: 0, y: 0 });
+  const [isZooming, setIsZooming] = useState(false);
   
   // Then all context hooks
   const { id } = useParams();
@@ -327,6 +329,27 @@ const ProductDetail = () => {
     }
   }, [displayImages.length, currentImageIndex]);
 
+  // Handle zoom on mouse move
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (isMobile) return;
+    
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = ((e.clientX - rect.left) / rect.width) * 100;
+    const y = ((e.clientY - rect.top) / rect.height) * 100;
+    
+    setZoomPosition({ x, y });
+  };
+
+  const handleMouseEnter = () => {
+    if (!isMobile) {
+      setIsZooming(true);
+    }
+  };
+
+  const handleMouseLeave = () => {
+    setIsZooming(false);
+  };
+
   if (isLoading) {
     return <LoadingState message={t('common.loading')} />;
   }
@@ -428,17 +451,44 @@ const ProductDetail = () => {
                     </div>
                   </div>
                 )}
-                <div className="h-[60vh] sm:h-[70vh] md:h-[80vh] rounded-xl overflow-hidden relative bg-white flex items-center justify-center border border-gray-200 dark:border-slate-600 cursor-pointer max-w-full"
+                <div 
+                  className="h-[60vh] sm:h-[70vh] md:h-[80vh] rounded-xl overflow-hidden relative bg-white flex items-center justify-center border border-gray-200 dark:border-slate-600 max-w-full group"
+                  style={{ cursor: 'zoom-in' }}
                   onClick={() => setShowMediaModal(true)}
+                  onMouseMove={handleMouseMove}
+                  onMouseEnter={handleMouseEnter}
+                  onMouseLeave={handleMouseLeave}
                   role="button"
                   tabIndex={0}
                   aria-label="Open image in full view"
                 >
-                  <ProductImage
-                    src={displayImages[currentImageIndex]?.url}
-                    alt={displayImages[currentImageIndex]?.alt_text || `${product?.name || 'Product'} image ${currentImageIndex + 1}`}
-                    className="w-full h-full object-cover transition-transform duration-500 hover:scale-110"
-                  />
+                  <div 
+                    className="w-full h-full relative"
+                    style={{
+                      backgroundImage: isZooming && displayImages[currentImageIndex]?.url ? `url(${displayImages[currentImageIndex].url})` : 'none',
+                      backgroundPosition: `${zoomPosition.x}% ${zoomPosition.y}%`,
+                      backgroundSize: '250%',
+                      backgroundRepeat: 'no-repeat',
+                      transition: 'background-position 0.1s ease-out',
+                    }}
+                  >
+                    <ProductImage
+                      src={displayImages[currentImageIndex]?.url}
+                      alt={displayImages[currentImageIndex]?.alt_text || `${product?.name || 'Product'} image ${currentImageIndex + 1}`}
+                      className="w-full h-full object-cover"
+                      style={{
+                        opacity: isZooming ? 0 : 1,
+                        transition: 'opacity 0.2s ease-in-out',
+                      }}
+                    />
+                  </div>
+                  
+                  {/* Click to Enlarge overlay */}
+                  {!isZooming && (
+                    <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-black/60 text-white px-4 py-2 rounded-full text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none z-10">
+                      Click to Enlarge
+                    </div>
+                  )}
                   
                   {/* Left/Right Navigation Buttons */}
                   {displayImages.length > 1 && (
@@ -448,6 +498,7 @@ const ProductDetail = () => {
                           e.stopPropagation();
                           setCurrentImageIndex(prev => prev === 0 ? displayImages.length - 1 : prev - 1);
                         }}
+                        onMouseEnter={() => setIsZooming(false)}
                         className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 p-2 sm:p-3 rounded-full bg-white/90 dark:bg-slate-800/90 hover:bg-white dark:hover:bg-slate-700 shadow-lg hover:shadow-xl transition-all duration-200 z-10 group"
                         aria-label="Previous image"
                       >
@@ -458,6 +509,7 @@ const ProductDetail = () => {
                           e.stopPropagation();
                           setCurrentImageIndex(prev => prev === displayImages.length - 1 ? 0 : prev + 1);
                         }}
+                        onMouseEnter={() => setIsZooming(false)}
                         className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 p-2 sm:p-3 rounded-full bg-white/90 dark:bg-slate-800/90 hover:bg-white dark:hover:bg-slate-700 shadow-lg hover:shadow-xl transition-all duration-200 z-10 group"
                         aria-label="Next image"
                       >
@@ -475,6 +527,9 @@ const ProductDetail = () => {
                       url: displayImages[currentImageIndex].url,
                       type: 'image',
                     }}
+                    allMedia={displayImages.map(img => ({ url: img.url, type: 'image' as const }))}
+                    currentIndex={currentImageIndex}
+                    onNavigate={(index) => setCurrentImageIndex(index)}
                   />
                 )}
                 {/* Thumbnails - Responsive grid for different screen sizes */}
@@ -882,25 +937,23 @@ const ProductDetail = () => {
                         {t('product.videoNotSupported')}
                       </video>
                     ) : (
-                      <ProductImage
-                        src={stylingMedia[stylingIndex].url}
-                        alt={stylingMedia[stylingIndex].alt_text || `${product?.name || 'Product'} - Styling inspiration`}
-                        className="w-full h-full object-cover"
-                      />
-                    )}
-                    {/* Overlay for info - Hidden on hover */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent opacity-100 hover:opacity-0 transition-opacity duration-300 pointer-events-none">
-                      <div className="absolute bottom-3 sm:bottom-4 left-3 sm:left-4 right-3 sm:right-4 text-white">
-                        <p className="text-xs sm:text-sm font-medium mb-1">
-                          {stylingMedia[stylingIndex].type === 'video' ? 'Product Video' : (stylingMedia[stylingIndex].alt_text || t('product.stylingInspiration'))}
-                        </p>
-                        {stylingMedia[stylingIndex].type !== 'video' && (
-                          <p className="text-xs opacity-90">
-                            {t('product.look')} {videoUrl ? stylingIndex : stylingIndex + 1}
-                          </p>
-                        )}
+                      <div 
+                        className="w-full h-full transition-all duration-700"
+                        style={{ filter: 'grayscale(60%)' }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.filter = 'grayscale(0)';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.filter = 'grayscale(60%)';
+                        }}
+                      >
+                        <ProductImage
+                          src={stylingMedia[stylingIndex].url}
+                          alt={stylingMedia[stylingIndex].alt_text || `${product?.name || 'Product'} - Styling inspiration`}
+                          className="w-full h-full object-cover"
+                        />
                       </div>
-                    </div>
+                    )}
                   </div>
                   {/* Arrow Controls */}
                   <div className="flex flex-row items-center justify-center gap-6 mt-4">
@@ -952,14 +1005,6 @@ const ProductDetail = () => {
                           {t('product.videoNotSupported')}
                         </video>
                       </div>
-                      {/* Overlay for video info - Hidden on hover */}
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent opacity-100 group-hover:opacity-0 transition-opacity duration-300">
-                        <div className="absolute bottom-3 sm:bottom-4 left-3 sm:left-4 right-3 sm:right-4 text-white">
-                          <p className="text-xs sm:text-sm font-medium mb-1">
-                            Product Video
-                          </p>
-                        </div>
-                      </div>
                     </div>
                   )}
                   {/* Up to 3 styling images */}
@@ -968,23 +1013,21 @@ const ProductDetail = () => {
                       key={`styling-${image.id}`}
                       className="min-w-[88vw] max-w-[340px] sm:min-w-[260px] sm:max-w-[340px] sm:w-[32vw] w-full flex-shrink-0 group relative overflow-hidden rounded-2xl bg-white shadow-xl hover:shadow-2xl transition-all duration-500 snap-center"
                     >
-                      <div className="aspect-[4/5] overflow-hidden">
+                      <div 
+                        className="aspect-[4/5] overflow-hidden transition-all duration-700"
+                        style={{ filter: 'grayscale(60%)' }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.filter = 'grayscale(0)';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.filter = 'grayscale(60%)';
+                        }}
+                      >
                         <ProductImage
                           src={image.url}
                           alt={image.alt_text || `${product?.name || 'Product'} - Styling inspiration ${index + 1}`}
-                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                          className="w-full h-full object-cover"
                         />
-                      </div>
-                      {/* Overlay with styling info - Hidden on hover */}
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent opacity-100 group-hover:opacity-0 transition-opacity duration-300">
-                        <div className="absolute bottom-3 sm:bottom-4 left-3 sm:left-4 right-3 sm:right-4 text-white">
-                          <p className="text-xs sm:text-sm font-medium mb-1">
-                            {image.alt_text || t('product.stylingInspiration')}
-                          </p>
-                          <p className="text-xs opacity-90">
-                            {t('product.look')} {index + 1}
-                          </p>
-                        </div>
                       </div>
                     </div>
                   ))}

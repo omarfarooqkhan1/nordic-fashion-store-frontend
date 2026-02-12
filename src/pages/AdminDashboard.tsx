@@ -198,7 +198,8 @@ const AdminDashboard: React.FC = () => {
     queryFn: async () => {
       const response = await fetchProducts({ per_page: 100 })
       // Cast to admin Product type for compatibility
-      return response.data as unknown as Product[]
+      const products = response.data as unknown as Product[]
+      return products
     },
     enabled: isAuthenticated,
   })
@@ -972,8 +973,22 @@ const AdminDashboard: React.FC = () => {
                 <Card key={product.id} className="transition-all duration-200 hover:shadow-md">
                   <CardContent className="p-4 sm:p-6">
                     <div className="flex flex-col sm:flex-row gap-4">
-                      <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gray-200 rounded-lg flex-shrink-0 flex items-center justify-center mx-auto sm:mx-0">
-                        <Package className="h-6 w-6 sm:h-8 sm:w-8 text-gray-400" />
+                      <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gray-200 rounded-lg flex-shrink-0 overflow-hidden mx-auto sm:mx-0">
+                        {product.allImages?.[0]?.url ? (
+                          <img
+                            src={
+                              product.allImages[0].url.startsWith('http')
+                                ? product.allImages[0].url
+                                : `${import.meta.env.VITE_BACKEND_URL}${product.allImages[0].url.startsWith('/') ? product.allImages[0].url : `/${product.allImages[0].url}`}`
+                            }
+                            alt={product.name}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center">
+                            <Package className="h-6 w-6 sm:h-8 sm:w-8 text-gray-400" />
+                          </div>
+                        )}
                       </div>
                       <div className="flex-1 space-y-2 min-w-0">
                         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2">

@@ -567,6 +567,19 @@ const translations = {
     // Review section
     'product.customerReviews': 'Customer Reviews',
     
+    // Footer links
+    'footer.delivery': 'Delivery',
+    'footer.returns': 'Returns',
+    'footer.careGuide': 'Care Guide',
+    'footer.productCareGuide': 'Product Care Guide',
+    
+    // Terms and Privacy
+    'footer.terms': 'Terms',
+    'footer.termsAndConditions': 'Terms and Conditions',
+    'terms.readCarefully': 'Please read these terms carefully before using our services',
+    'footer.privacyPolicy': 'Privacy Policy',
+    'privacy.important': 'Your privacy is important to us',
+    
     // Validation messages
     'validation.nameMinLength': 'Name must be at least 2 characters',
     'validation.emailInvalid': 'Please enter a valid email address',
@@ -647,6 +660,20 @@ const translations = {
   'product.noReviews': 'Inga recensioner än',
   'product.wishlistComingSoon': 'Önskelista kommer snart',
   'product.customerReviews': 'Kundrecensioner',
+  
+  // Footer links
+  'footer.delivery': 'Leverans',
+  'footer.returns': 'Returer',
+  'footer.careGuide': 'Vårdguide',
+  'footer.productCareGuide': 'Produktvårdguide',
+  
+  // Terms and Privacy
+  'footer.terms': 'Villkor',
+  'footer.termsAndConditions': 'Villkor och Bestämmelser',
+  'terms.readCarefully': 'Vänligen läs dessa villkor noggrant innan du använder våra tjänster',
+  'footer.privacyPolicy': 'Integritetspolicy',
+  'privacy.important': 'Din integritet är viktig för oss',
+  
     'nav.home': 'Hem',
     'nav.products': 'Produkter',
     'nav.about': 'Om oss',
@@ -1226,6 +1253,21 @@ const translations = {
   'product.freeShipping': 'Gratis frakt på bestillinger over €100',
   'product.noReviews': 'Ingen anmeldelser ennå',
   'product.wishlistComingSoon': 'Ønskelistefunksjon kommer snart',
+  'product.customerReviews': 'Kundeanmeldelser',
+  
+  // Footer links
+  'footer.delivery': 'Levering',
+  'footer.returns': 'Returer',
+  'footer.careGuide': 'Pleieguide',
+  'footer.productCareGuide': 'Produktpleieguide',
+  
+  // Terms and Privacy
+  'footer.terms': 'Vilkår',
+  'footer.termsAndConditions': 'Vilkår og Betingelser',
+  'terms.readCarefully': 'Vennligst les disse vilkårene nøye før du bruker våre tjenester',
+  'footer.privacyPolicy': 'Personvernregler',
+  'privacy.important': 'Ditt personvern er viktig for oss',
+  
     'nav.home': 'Hjem',
     'nav.products': 'Produkter',
     'nav.about': 'Om oss',
@@ -1797,6 +1839,21 @@ const translations = {
   'product.freeShipping': 'Gratis forsendelse på ordrer over €100',
   'product.noReviews': 'Ingen anmeldelser endnu',
   'product.wishlistComingSoon': 'Ønskelistefunktion kommer snart',
+  'product.customerReviews': 'Kundeanmeldelser',
+  
+  // Footer links
+  'footer.delivery': 'Levering',
+  'footer.returns': 'Returneringer',
+  'footer.careGuide': 'Plejeguide',
+  'footer.productCareGuide': 'Produktplejeguide',
+  
+  // Terms and Privacy
+  'footer.terms': 'Vilkår',
+  'footer.termsAndConditions': 'Vilkår og Betingelser',
+  'terms.readCarefully': 'Læs venligst disse vilkår omhyggeligt, før du bruger vores tjenester',
+  'footer.privacyPolicy': 'Privatlivspolitik',
+  'privacy.important': 'Dit privatliv er vigtigt for os',
+  
     'nav.home': 'Hjem',
     'nav.products': 'Produkter',
     'nav.about': 'Om os',
@@ -2342,6 +2399,21 @@ const translations = {
   'product.freeShipping': 'Ilmainen toimitus yli 100 € tilauksille',
   'product.noReviews': 'Ei arvosteluja vielä',
   'product.wishlistComingSoon': 'Toivelista tulossa pian',
+  'product.customerReviews': 'Asiakasarvostelut',
+  
+  // Footer links
+  'footer.delivery': 'Toimitus',
+  'footer.returns': 'Palautukset',
+  'footer.careGuide': 'Hoito-ohje',
+  'footer.productCareGuide': 'Tuotteen hoito-ohje',
+  
+  // Terms and Privacy
+  'footer.terms': 'Ehdot',
+  'footer.termsAndConditions': 'Käyttöehdot',
+  'terms.readCarefully': 'Lue nämä ehdot huolellisesti ennen palveluidemme käyttöä',
+  'footer.privacyPolicy': 'Tietosuojakäytäntö',
+  'privacy.important': 'Yksityisyytesi on meille tärkeää',
+  
     'nav.home': 'Koti',
     'nav.products': 'Tuotteet',
     'nav.about': 'Meistä',
@@ -2894,6 +2966,21 @@ const translations = {
   'product.freeShipping': 'Ókeypis sending fyrir pantanir yfir €100',
   'product.noReviews': 'Engar umsagnir enn',
   'product.wishlistComingSoon': 'Óskalisti kemur fljótlega',
+  'product.customerReviews': 'Umsagnir viðskiptavina',
+  
+  // Footer links
+  'footer.delivery': 'Afhending',
+  'footer.returns': 'Skil',
+  'footer.careGuide': 'Umönnunarleiðbeiningar',
+  'footer.productCareGuide': 'Vöruumönnunarleiðbeiningar',
+  
+  // Terms and Privacy
+  'footer.terms': 'Skilmálar',
+  'footer.termsAndConditions': 'Skilmálar og Ákvæði',
+  'terms.readCarefully': 'Vinsamlegast lestu þessa skilmála vandlega áður en þú notar þjónustu okkar',
+  'footer.privacyPolicy': 'Persónuverndarstefna',
+  'privacy.important': 'Persónuvernd þín er mikilvæg fyrir okkur',
+  
     'nav.home': 'Heim',
     'nav.products': 'Vörur',
     'nav.about': 'Um okkur',

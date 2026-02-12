@@ -28,6 +28,9 @@ export const fetchProducts = async (filters?: ProductFilters): Promise<ProductsR
   try {
     const params = new URLSearchParams();
     
+    // Always include allImages relationship
+    params.append('include', 'allImages,category,variants');
+    
     if (filters) {
       Object.entries(filters).forEach(([key, value]) => {
         if (value !== undefined && value !== null && value !== '') {
