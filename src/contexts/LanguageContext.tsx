@@ -581,6 +581,16 @@ const translations = {
     'footer.privacyPolicy': 'Privacy Policy',
     'privacy.important': 'Your privacy is important to us',
     
+    // Terms and Privacy page specific
+    'terms.loading': 'Loading terms and conditions...',
+    'terms.loadError': 'Failed to load terms and conditions',
+    'terms.lastUpdated': 'Last Updated:',
+    'privacy.loading': 'Loading privacy policy...',
+    'privacy.loadError': 'Failed to load privacy policy',
+    'privacy.lastUpdated': 'Last Updated:',
+    'privacy.matters': 'Your Privacy Matters',
+    'privacy.commitment': 'We are committed to protecting your personal information and your right to privacy. If you have any questions or concerns about our policy or our practices with regards to your personal information, please contact us.',
+    
     // Validation messages
     'validation.nameMinLength': 'Name must be at least 2 characters',
     'validation.emailInvalid': 'Please enter a valid email address',
@@ -675,6 +685,16 @@ const translations = {
   'terms.readCarefully': 'Vänligen läs dessa villkor noggrant innan du använder våra tjänster',
   'footer.privacyPolicy': 'Integritetspolicy',
   'privacy.important': 'Din integritet är viktig för oss',
+  
+  // Terms and Privacy page specific
+  'terms.loading': 'Laddar villkor...',
+  'terms.loadError': 'Kunde inte ladda villkor',
+  'terms.lastUpdated': 'Senast uppdaterad:',
+  'privacy.loading': 'Laddar integritetspolicy...',
+  'privacy.loadError': 'Kunde inte ladda integritetspolicy',
+  'privacy.lastUpdated': 'Senast uppdaterad:',
+  'privacy.matters': 'Din integritet är viktig',
+  'privacy.commitment': 'Vi är engagerade i att skydda din personliga information och din rätt till integritet. Om du har några frågor eller funderingar om vår policy eller våra metoder när det gäller din personliga information, vänligen kontakta oss.',
   
     'nav.home': 'Hem',
     'nav.products': 'Produkter',
@@ -1271,6 +1291,16 @@ const translations = {
   'footer.privacyPolicy': 'Personvernregler',
   'privacy.important': 'Ditt personvern er viktig for oss',
   
+  // Terms and Privacy page specific
+  'terms.loading': 'Laster vilkår...',
+  'terms.loadError': 'Kunne ikke laste vilkår',
+  'terms.lastUpdated': 'Sist oppdatert:',
+  'privacy.loading': 'Laster personvernregler...',
+  'privacy.loadError': 'Kunne ikke laste personvernregler',
+  'privacy.lastUpdated': 'Sist oppdatert:',
+  'privacy.matters': 'Ditt personvern er viktig',
+  'privacy.commitment': 'Vi er forpliktet til å beskytte din personlige informasjon og din rett til personvern. Hvis du har spørsmål eller bekymringer om vår policy eller våre praksiser når det gjelder din personlige informasjon, vennligst kontakt oss.',
+  
     'nav.home': 'Hjem',
     'nav.products': 'Produkter',
     'nav.about': 'Om oss',
@@ -1858,6 +1888,16 @@ const translations = {
   'footer.privacyPolicy': 'Privatlivspolitik',
   'privacy.important': 'Dit privatliv er vigtigt for os',
   
+  // Terms and Privacy page specific
+  'terms.loading': 'Indlæser vilkår...',
+  'terms.loadError': 'Kunne ikke indlæse vilkår',
+  'terms.lastUpdated': 'Sidst opdateret:',
+  'privacy.loading': 'Indlæser privatlivspolitik...',
+  'privacy.loadError': 'Kunne ikke indlæse privatlivspolitik',
+  'privacy.lastUpdated': 'Sidst opdateret:',
+  'privacy.matters': 'Dit privatliv betyder noget',
+  'privacy.commitment': 'Vi er forpligtet til at beskytte dine personlige oplysninger og din ret til privatliv. Hvis du har spørgsmål eller bekymringer om vores politik eller vores praksis med hensyn til dine personlige oplysninger, bedes du kontakte os.',
+  
     'nav.home': 'Hjem',
     'nav.products': 'Produkter',
     'nav.about': 'Om os',
@@ -2418,6 +2458,16 @@ const translations = {
   'terms.readCarefully': 'Lue nämä ehdot huolellisesti ennen palveluidemme käyttöä',
   'footer.privacyPolicy': 'Tietosuojakäytäntö',
   'privacy.important': 'Yksityisyytesi on meille tärkeää',
+  
+  // Terms and Privacy page specific
+  'terms.loading': 'Ladataan ehtoja...',
+  'terms.loadError': 'Ehtojen lataaminen epäonnistui',
+  'terms.lastUpdated': 'Viimeksi päivitetty:',
+  'privacy.loading': 'Ladataan tietosuojakäytäntöä...',
+  'privacy.loadError': 'Tietosuojakäytännön lataaminen epäonnistui',
+  'privacy.lastUpdated': 'Viimeksi päivitetty:',
+  'privacy.matters': 'Yksityisyytesi on tärkeää',
+  'privacy.commitment': 'Olemme sitoutuneet suojelemaan henkilökohtaisia tietojasi ja yksityisyyttäsi. Jos sinulla on kysymyksiä tai huolenaiheita käytännöstämme tai menettelytavoistamme henkilökohtaisten tietojesi suhteen, ota meihin yhteyttä.',
   
     'nav.home': 'Koti',
     'nav.products': 'Tuotteet',
@@ -2986,6 +3036,16 @@ const translations = {
   'terms.readCarefully': 'Vinsamlegast lestu þessa skilmála vandlega áður en þú notar þjónustu okkar',
   'footer.privacyPolicy': 'Persónuverndarstefna',
   'privacy.important': 'Persónuvernd þín er mikilvæg fyrir okkur',
+  
+  // Terms and Privacy page specific
+  'terms.loading': 'Hleð skilmálum...',
+  'terms.loadError': 'Mistókst að hlaða skilmálum',
+  'terms.lastUpdated': 'Síðast uppfært:',
+  'privacy.loading': 'Hleð persónuverndarstefnu...',
+  'privacy.loadError': 'Mistókst að hlaða persónuverndarstefnu',
+  'privacy.lastUpdated': 'Síðast uppfært:',
+  'privacy.matters': 'Persónuvernd þín skiptir máli',
+  'privacy.commitment': 'Við erum skuldbundin til að vernda persónuupplýsingar þínar og rétt þinn til friðhelgi einkalífs. Ef þú hefur spurningar eða áhyggjur af stefnu okkar eða starfsháttum okkar varðandi persónuupplýsingar þínar, vinsamlegast hafðu samband við okkur.',
   
     'nav.home': 'Heim',
     'nav.products': 'Vörur',

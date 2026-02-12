@@ -3,8 +3,11 @@ import { Card, CardContent } from '@/components/ui/card';
 import useSWR from 'swr';
 import axios from 'axios';
 import { LoadingState, ErrorState } from '@/components/common';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 const PrivacyPolicy = () => {
+  const { t } = useLanguage();
+  
   React.useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
@@ -15,11 +18,11 @@ const PrivacyPolicy = () => {
   );
 
   if (isLoading) {
-    return <LoadingState message="Loading privacy policy..." />;
+    return <LoadingState message={t('privacy.loading')} />;
   }
 
   if (error) {
-    return <ErrorState message="Failed to load privacy policy" />;
+    return <ErrorState message={t('privacy.loadError')} />;
   }
 
   return (
@@ -29,13 +32,13 @@ const PrivacyPolicy = () => {
         <div className="absolute inset-0 bg-gradient-to-br from-gold-50/30 to-leather-100/20 dark:from-gold-900/20 dark:to-leather-800/30"></div>
         <div className="relative z-10 text-center space-y-4 sm:space-y-6">
           <h1 className="text-2xl sm:text-4xl md:text-6xl font-bold text-leather-900 dark:text-leather-100">
-            {data?.title || 'Privacy Policy'}
+            {data?.title || t('footer.privacyPolicy')}
           </h1>
           <p className="text-base sm:text-xl text-leather-700 dark:text-leather-200 max-w-xl sm:max-w-2xl mx-auto">
-            Your privacy is important to us
+            {t('privacy.important')}
           </p>
           <p className="text-sm text-leather-600 dark:text-leather-300">
-            Last Updated: {new Date(data?.updated_at || Date.now()).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+            {t('privacy.lastUpdated')} {new Date(data?.updated_at || Date.now()).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
           </p>
         </div>
       </section>
@@ -53,10 +56,10 @@ const PrivacyPolicy = () => {
           <CardContent className="p-6 sm:p-8">
             <h2 className="text-lg sm:text-xl font-bold text-foreground mb-4 flex items-center">
               <span className="mr-2">🔒</span>
-              Your Privacy Matters
+              {t('privacy.matters')}
             </h2>
             <p className="text-muted-foreground leading-relaxed">
-              We are committed to protecting your personal information and your right to privacy. If you have any questions or concerns about our policy or our practices with regards to your personal information, please contact us.
+              {t('privacy.commitment')}
             </p>
           </CardContent>
         </Card>

@@ -3,8 +3,11 @@ import { Card, CardContent } from '@/components/ui/card';
 import useSWR from 'swr';
 import axios from 'axios';
 import { LoadingState, ErrorState } from '@/components/common';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 const TermsAndConditions = () => {
+  const { t } = useLanguage();
+  
   React.useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
@@ -15,11 +18,11 @@ const TermsAndConditions = () => {
   );
 
   if (isLoading) {
-    return <LoadingState message="Loading terms and conditions..." />;
+    return <LoadingState message={t('terms.loading')} />;
   }
 
   if (error) {
-    return <ErrorState message="Failed to load terms and conditions" />;
+    return <ErrorState message={t('terms.loadError')} />;
   }
 
   return (
@@ -29,13 +32,13 @@ const TermsAndConditions = () => {
         <div className="absolute inset-0 bg-gradient-to-br from-gold-50/30 to-leather-100/20 dark:from-gold-900/20 dark:to-leather-800/30"></div>
         <div className="relative z-10 text-center space-y-4 sm:space-y-6">
           <h1 className="text-2xl sm:text-4xl md:text-6xl font-bold text-leather-900 dark:text-leather-100">
-            {data?.title || 'Terms and Conditions'}
+            {data?.title || t('footer.termsAndConditions')}
           </h1>
           <p className="text-base sm:text-xl text-leather-700 dark:text-leather-200 max-w-xl sm:max-w-2xl mx-auto">
-            Please read these terms carefully before using our services
+            {t('terms.readCarefully')}
           </p>
           <p className="text-sm text-leather-600 dark:text-leather-300">
-            Last Updated: {new Date(data?.updated_at || Date.now()).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+            {t('terms.lastUpdated')} {new Date(data?.updated_at || Date.now()).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
           </p>
         </div>
       </section>
