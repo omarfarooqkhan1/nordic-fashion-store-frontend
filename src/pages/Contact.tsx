@@ -38,8 +38,8 @@ const Contact = () => {
     
     if (!formData.firstName.trim() || !formData.lastName.trim() || !formData.email.trim() || !formData.subject.trim() || !formData.message.trim()) {
       toast({
-        title: 'Please fill all fields',
-        description: 'All fields are required',
+        title: t('contact.form.fillAll'),
+        description: t('contact.form.allRequired'),
         variant: 'destructive'
       });
       return;
@@ -52,8 +52,8 @@ const Contact = () => {
       
       if (response.data.success) {
         toast({
-          title: 'Message sent successfully!',
-          description: response.data.message || 'Thank you for your message! We will get back to you soon.',
+          title: t('contact.form.success'),
+          description: response.data.message || t('contact.form.successDesc'),
           className: 'bg-green-500 text-white'
         });
         
@@ -70,10 +70,10 @@ const Contact = () => {
       }
       
     } catch (error: any) {
-      const errorMessage = error.response?.data?.message || error.message || 'Failed to send message. Please try again later.';
+      const errorMessage = error.response?.data?.message || error.message || t('contact.form.errorDesc');
       
       toast({
-        title: 'Failed to send message',
+        title: t('contact.form.error'),
         description: errorMessage,
         variant: 'destructive'
       });
@@ -101,13 +101,13 @@ const Contact = () => {
         {/* Contact Form */}
         <Card className="bg-gradient-to-br from-card to-leather-100/50 dark:from-card dark:to-leather-800/30 border-border shadow-lg">
           <CardHeader>
-            <CardTitle className="text-lg sm:text-2xl text-foreground">Send us a message</CardTitle>
+            <CardTitle className="text-lg sm:text-2xl text-foreground">{t('contact.form.sendMessage')}</CardTitle>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="firstName">First Name</Label>
+                  <Label htmlFor="firstName">{t('contact.form.firstName')}</Label>
                   <Input 
                     id="firstName" 
                     name="firstName"
@@ -117,7 +117,7 @@ const Contact = () => {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="lastName">Last Name</Label>
+                  <Label htmlFor="lastName">{t('contact.form.lastName')}</Label>
                   <Input 
                     id="lastName" 
                     name="lastName"
@@ -128,7 +128,7 @@ const Contact = () => {
                 </div>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email">{t('contact.form.email')}</Label>
                 <Input 
                   id="email" 
                   type="email" 
@@ -139,7 +139,7 @@ const Contact = () => {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="subject">Subject</Label>
+                <Label htmlFor="subject">{t('contact.form.subject')}</Label>
                 <Input 
                   id="subject" 
                   name="subject"
@@ -149,7 +149,7 @@ const Contact = () => {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="message">Message</Label>
+                <Label htmlFor="message">{t('contact.form.message')}</Label>
                 <Textarea 
                   id="message" 
                   rows={6} 
@@ -167,7 +167,7 @@ const Contact = () => {
                 {isSubmitting ? (
                   <>
                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                    Sending...
+                    {t('contact.form.sending')}
                   </>
                 ) : (
                   t('contact.form.send')
@@ -181,11 +181,11 @@ const Contact = () => {
         <div className="space-y-8">
           <Card className="bg-gradient-to-br from-card to-leather-100/50 dark:from-card dark:to-leather-800/30 border-border shadow-lg">
             <CardHeader>
-              <CardTitle className="text-lg sm:text-2xl text-foreground">Visit Our Store</CardTitle>
+              <CardTitle className="text-lg sm:text-2xl text-foreground">{t('contact.visitStore')}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2 sm:space-y-4">
               <div>
-                <h3 className="font-semibold text-foreground mb-1 sm:mb-2">Address</h3>
+                <h3 className="font-semibold text-foreground mb-1 sm:mb-2">{t('contact.address')}</h3>
                 <p className="text-sm sm:text-base text-muted-foreground">
                   Nord Flex Co.<br />
                   Yliopistonkatu 25<br />
@@ -193,11 +193,11 @@ const Contact = () => {
                 </p>
               </div>
               <div>
-                <h3 className="font-semibold text-foreground mb-1 sm:mb-2">Hours</h3>
+                <h3 className="font-semibold text-foreground mb-1 sm:mb-2">{t('contact.hours')}</h3>
                 <p className="text-sm sm:text-base text-muted-foreground">
-                  Monday - Friday: 10:00 - 19:00<br />
-                  Saturday: 10:00 - 17:00<br />
-                  Sunday: 12:00 - 16:00
+                  {t('contact.hours.weekdays')}<br />
+                  {t('contact.hours.saturday')}<br />
+                  {t('contact.hours.sunday')}
                 </p>
               </div>
             </CardContent>
@@ -205,19 +205,19 @@ const Contact = () => {
 
           <Card className="bg-gradient-to-br from-card to-leather-100/50 dark:from-card dark:to-leather-800/30 border-border shadow-lg">
             <CardHeader>
-              <CardTitle className="text-lg sm:text-2xl text-foreground">Get in Touch</CardTitle>
+              <CardTitle className="text-lg sm:text-2xl text-foreground">{t('contact.getInTouch')}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2 sm:space-y-4">
               <div>
-                <h3 className="font-semibold text-foreground mb-1 sm:mb-2">Phone</h3>
+                <h3 className="font-semibold text-foreground mb-1 sm:mb-2">{t('contact.phone')}</h3>
                 <p className="text-sm sm:text-base text-muted-foreground">+358 2 123 456 789</p>
               </div>
               <div>
-                <h3 className="font-semibold text-foreground mb-1 sm:mb-2">Email</h3>
+                <h3 className="font-semibold text-foreground mb-1 sm:mb-2">{t('contact.email')}</h3>
                 <p className="text-sm sm:text-base text-muted-foreground">support@nordflex.store</p>
               </div>
               <div>
-                <h3 className="font-semibold text-foreground mb-1 sm:mb-2">Customer Service</h3>
+                <h3 className="font-semibold text-foreground mb-1 sm:mb-2">{t('contact.customerService')}</h3>
                 <p className="text-sm sm:text-base text-muted-foreground">support@nordflex.store</p>
               </div>
             </CardContent>
