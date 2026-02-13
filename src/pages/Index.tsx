@@ -235,19 +235,6 @@ const Index = () => {
                 <ProductCardWithTranslation key={product.id} product={product} />
               ))}
             </div>
-                        variant="outline"
-                        asChild
-                        className="w-full border-primary text-primary hover:bg-primary hover:text-primary-foreground transition-all duration-300 font-semibold shadow-md hover:shadow-lg hover:border-primary/40"
-                      >
-                        <Link to={`/product/${product.id}`}>
-                          {t('common.buyNow')}
-                        </Link>
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
           )}
         </div>
       </section>
