@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { useCart } from '@/contexts/CartContext';
+import { useProductTranslation } from '@/hooks/useProductTranslation';
 import { Trash2 } from 'lucide-react';
 import { 
   Container, 
