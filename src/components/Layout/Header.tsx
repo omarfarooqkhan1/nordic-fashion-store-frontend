@@ -216,12 +216,12 @@ export const Header: React.FC = () => {
                   {/* Shop Men with Dropdown */}
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Link
-                        to="/products?gender=male"
-                        className="text-sm xl:text-base font-medium text-foreground hover:text-primary transition-colors whitespace-nowrap px-3 py-2 rounded-md hover:bg-accent/50"
+                      <button
+                        onClick={() => navigate('/products?gender=male')}
+                        className="text-sm xl:text-base font-medium text-foreground hover:text-primary transition-colors whitespace-nowrap px-3 py-2 rounded-md hover:bg-accent/50 cursor-pointer"
                       >
                         {t('nav.shopMen')}
-                      </Link>
+                      </button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="start" className="bg-popover border border-border w-56">
                       <div className="p-2">
@@ -243,12 +243,12 @@ export const Header: React.FC = () => {
                   {/* Shop Women with Dropdown */}
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Link
-                        to="/products?gender=female"
-                        className="text-sm xl:text-base font-medium text-foreground hover:text-primary transition-colors whitespace-nowrap px-3 py-2 rounded-md hover:bg-accent/50"
+                      <button
+                        onClick={() => navigate('/products?gender=female')}
+                        className="text-sm xl:text-base font-medium text-foreground hover:text-primary transition-colors whitespace-nowrap px-3 py-2 rounded-md hover:bg-accent/50 cursor-pointer"
                       >
                         {t('nav.shopWomen')}
-                      </Link>
+                      </button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="start" className="bg-popover border border-border w-56">
                       <div className="p-2">
