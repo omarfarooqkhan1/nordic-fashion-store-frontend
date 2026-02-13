@@ -213,18 +213,60 @@ export const Header: React.FC = () => {
               {/* Desktop Layout */}
               <div className="hidden lg:flex items-center gap-4 xl:gap-6">
                 <div className="flex items-center ml-8 xl:ml-12">
-                  <Link
-                    to="/products?gender=male"
-                    className="text-sm xl:text-base font-medium text-foreground hover:text-primary transition-colors whitespace-nowrap px-3 py-2 rounded-md hover:bg-accent/50"
-                  >
-                    {t('nav.shopMen')}
-                  </Link>
-                  <Link
-                    to="/products?gender=female"
-                    className="text-sm xl:text-base font-medium text-foreground hover:text-primary transition-colors whitespace-nowrap px-3 py-2 rounded-md hover:bg-accent/50"
-                  >
-                    {t('nav.shopWomen')}
-                  </Link>
+                  {/* Shop Men with Dropdown */}
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Link
+                        to="/products?gender=male"
+                        className="text-sm xl:text-base font-medium text-foreground hover:text-primary transition-colors whitespace-nowrap px-3 py-2 rounded-md hover:bg-accent/50"
+                      >
+                        {t('nav.shopMen')}
+                      </Link>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="start" className="bg-popover border border-border w-56">
+                      <div className="p-2">
+                        <div className="text-xs font-medium text-muted-foreground mb-2">{t('nav.categories')}</div>
+                        {categories.map((category) => (
+                          <DropdownMenuItem key={category.name} asChild>
+                            <Link
+                              to={`${category.path}&gender=male`}
+                              className="hover:bg-accent cursor-pointer w-full"
+                            >
+                              {category.name}
+                            </Link>
+                          </DropdownMenuItem>
+                        ))}
+                      </div>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+
+                  {/* Shop Women with Dropdown */}
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Link
+                        to="/products?gender=female"
+                        className="text-sm xl:text-base font-medium text-foreground hover:text-primary transition-colors whitespace-nowrap px-3 py-2 rounded-md hover:bg-accent/50"
+                      >
+                        {t('nav.shopWomen')}
+                      </Link>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="start" className="bg-popover border border-border w-56">
+                      <div className="p-2">
+                        <div className="text-xs font-medium text-muted-foreground mb-2">{t('nav.categories')}</div>
+                        {categories.map((category) => (
+                          <DropdownMenuItem key={category.name} asChild>
+                            <Link
+                              to={`${category.path}&gender=female`}
+                              className="hover:bg-accent cursor-pointer w-full"
+                            >
+                              {category.name}
+                            </Link>
+                          </DropdownMenuItem>
+                        ))}
+                      </div>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+
                   <Link
                     to="/about"
                     className="text-sm xl:text-base font-medium text-foreground hover:text-primary transition-colors whitespace-nowrap px-3 py-2 rounded-md hover:bg-accent/50"
