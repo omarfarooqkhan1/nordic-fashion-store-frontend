@@ -32,6 +32,8 @@ import { useCart } from "@/contexts/CartContext"
 import { useAuth } from "@/contexts/AuthContext"
 import { useCurrency, type Currency } from "@/contexts/CurrencyContext"
 import { useAuth0 } from "@auth0/auth0-react"
+import { fetchCategories, type Category } from "@/api/categories"
+import { useCategoryTranslation } from "@/hooks/useCategoryTranslation"
 
 const languages: { code: Language; name: string; flag: string; defaultCurrency: Currency }[] = [
   { code: "en", name: "English", flag: "🇬🇧", defaultCurrency: "EUR" },
@@ -75,6 +77,37 @@ const currencies = [
   { code: 'TRY' as Currency, name: 'Turkish Lira', symbol: '₺', flag: '🇹🇷' },
 ]
 
+// Category menu item component with translation
+const CategoryMenuItem: React.FC<{ category: Category; gender: string }> = ({ category, gender }) => {
+  const translatedName = useCategoryTranslation(category.name);
+  
+  return (
+    <DropdownMenuItem asChild>
+      <Link
+        to={`/products?category=${category.slug}&gender=${gender}`}
+        className="hover:bg-accent cursor-pointer w-full"
+      >
+        {translatedName}
+      </Link>
+    </DropdownMenuItem>
+  );
+};
+
+// Mobile category item component with translation
+const MobileCategoryItem: React.FC<{ category: Category; onClick: () => void }> = ({ category, onClick }) => {
+  const translatedName = useCategoryTranslation(category.name);
+  
+  return (
+    <Link
+      to={`/products?category=${category.slug}`}
+      onClick={onClick}
+      className="block rounded-md px-2 py-2 text-xs font-medium text-muted-foreground hover:bg-accent transition-colors duration-200"
+    >
+      {translatedName}
+    </Link>
+  );
+};
+
 export const Header: React.FC = () => {
   const { theme, toggleTheme } = useTheme()
   const { language, setLanguage, t } = useLanguage()
@@ -83,6 +116,8 @@ export const Header: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState("")
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [searchModalOpen, setSearchModalOpen] = useState(false)
+  const [categories, setCategories] = useState<Category[]>([])
+  const [categoriesLoading, setCategoriesLoading] = useState(true)
   const navigate = useNavigate()
   const location = useLocation()
 
@@ -94,6 +129,17 @@ export const Header: React.FC = () => {
 
   const currentLanguage = languages.find((lang) => lang.code === language)
   const currentCurrency = currencies.find((curr) => curr.code === currency)
+
+  // Fetch categories on mount
+  useEffect(() => {
+    const loadCategories = async () => {
+      setCategoriesLoading(true)
+      const fetchedCategories = await fetchCategories()
+      setCategories(fetchedCategories)
+      setCategoriesLoading(false)
+    }
+    loadCategories()
+  }, [])
 
   // Compute cart count that will automatically update when cart data changes
   const cartCount = useMemo(() => {
@@ -109,14 +155,6 @@ export const Header: React.FC = () => {
     }
     return totalCount;
   }, [items, customItems]);
-
-  const categories = [
-    { name: t("categories.bags"), path: "/products?category=bags" },
-    { name: t("categories.wallets"), path: "/products?category=wallets" },
-    { name: t("categories.belts"), path: "/products?category=belts" },
-    { name: t("categories.jackets"), path: "/products?category=jackets" },
-    { name: t("categories.accessories"), path: "/products?category=accessories" },
-  ]
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
@@ -226,16 +264,15 @@ export const Header: React.FC = () => {
                     <DropdownMenuContent align="start" className="bg-popover border border-border w-56">
                       <div className="p-2">
                         <div className="text-xs font-medium text-muted-foreground mb-2">{t('nav.categories')}</div>
-                        {categories.map((category) => (
-                          <DropdownMenuItem key={category.name} asChild>
-                            <Link
-                              to={`${category.path}&gender=male`}
-                              className="hover:bg-accent cursor-pointer w-full"
-                            >
-                              {category.name}
-                            </Link>
-                          </DropdownMenuItem>
-                        ))}
+                        {categoriesLoading ? (
+                          <div className="text-xs text-muted-foreground py-2">Loading...</div>
+                        ) : categories.length > 0 ? (
+                          categories.map((category) => (
+                            <CategoryMenuItem key={category.id} category={category} gender="male" />
+                          ))
+                        ) : (
+                          <div className="text-xs text-muted-foreground py-2">No categories available</div>
+                        )}
                       </div>
                     </DropdownMenuContent>
                   </DropdownMenu>
@@ -253,16 +290,15 @@ export const Header: React.FC = () => {
                     <DropdownMenuContent align="start" className="bg-popover border border-border w-56">
                       <div className="p-2">
                         <div className="text-xs font-medium text-muted-foreground mb-2">{t('nav.categories')}</div>
-                        {categories.map((category) => (
-                          <DropdownMenuItem key={category.name} asChild>
-                            <Link
-                              to={`${category.path}&gender=female`}
-                              className="hover:bg-accent cursor-pointer w-full"
-                            >
-                              {category.name}
-                            </Link>
-                          </DropdownMenuItem>
-                        ))}
+                        {categoriesLoading ? (
+                          <div className="text-xs text-muted-foreground py-2">Loading...</div>
+                        ) : categories.length > 0 ? (
+                          categories.map((category) => (
+                            <CategoryMenuItem key={category.id} category={category} gender="female" />
+                          ))
+                        ) : (
+                          <div className="text-xs text-muted-foreground py-2">No categories available</div>
+                        )}
                       </div>
                     </DropdownMenuContent>
                   </DropdownMenu>
@@ -779,16 +815,15 @@ export const Header: React.FC = () => {
 
                     {/* Navigation Categories */}
                     <nav className="flex flex-col gap-0">
-                      {categories.map((category) => (
-                        <Link
-                          key={category.name}
-                          to={category.path}
-                          onClick={closeMobileMenu}
-                          className="block rounded-md px-2 py-2 text-xs font-medium text-muted-foreground hover:bg-accent transition-colors duration-200"
-                        >
-                          {category.name}
-                        </Link>
-                      ))}
+                      {categoriesLoading ? (
+                        <div className="text-xs text-muted-foreground py-2 px-2">Loading categories...</div>
+                      ) : categories.length > 0 ? (
+                        categories.map((category) => (
+                          <MobileCategoryItem key={category.id} category={category} onClick={closeMobileMenu} />
+                        ))
+                      ) : (
+                        <div className="text-xs text-muted-foreground py-2 px-2">No categories available</div>
+                      )}
                     </nav>
 
                     {/* Mobile Contact Link */}
