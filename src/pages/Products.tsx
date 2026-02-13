@@ -121,7 +121,7 @@ const Products = () => {
     const sortOrderParam = searchParams.get('sort_order');
 
     if (categoryParam) {
-      setSelectedCategory(categoryParam);
+      setSelectedCategory(categoryParam.toLowerCase());
     }
     if (genderParam && genders.includes(genderParam)) {
       setSelectedGender(genderParam);
