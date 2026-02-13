@@ -7,6 +7,7 @@ import { useCart } from '../contexts/CartContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useCurrency } from '../contexts/CurrencyContext';
 import { useProductTranslation } from '@/hooks/useProductTranslation';
+import { useCategoryTranslation } from '@/hooks/useCategoryTranslation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
@@ -91,6 +92,9 @@ const ProductDetail = () => {
 
   // Translate product name and description
   const { name: translatedName, description: translatedDescription } = useProductTranslation(product);
+  
+  // Translate category name
+  const translatedCategory = useCategoryTranslation(product?.category?.name);
 
   // Initialize with first variant when product loads
   useEffect(() => {
@@ -577,7 +581,7 @@ const ProductDetail = () => {
               {translatedName}
             </h1>
             <p className="text-gray-600 dark:text-slate-300 capitalize text-sm sm:text-base md:text-lg font-medium">
-              {product.category?.name || ''}
+              {translatedCategory}
             </p>
             {/* Product Rating Display - Responsive - Clickable */}
             <div 

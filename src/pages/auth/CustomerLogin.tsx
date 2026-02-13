@@ -83,7 +83,7 @@ const CustomerLogin: React.FC = () => {
         </div>
         <AuthForm
           title={t('auth.loginCustomer')}
-          description="Enter your credentials to access your account"
+          description={t('auth.loginDescription')}
           submitText={t('auth.login')}
           isLoading={loading}
           error={error}

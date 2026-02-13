@@ -307,10 +307,10 @@ const Products = () => {
     <div className="grid grid-cols-1 gap-4">
       {/* Search Filter */}
       <div>
-        <Label className="text-sm font-medium mb-2 block">Search</Label>
+        <Label className="text-sm font-medium mb-2 block">{t('products.filterSearch')}</Label>
         <Input
           type="text"
-          placeholder="Search products..."
+          placeholder={t('products.searchPlaceholder')}
           value={searchQuery}
           onChange={(e) => {
             setSearchQuery(e.target.value);
@@ -322,7 +322,7 @@ const Products = () => {
 
       {/* Category Filter */}
       <div>
-        <Label className="text-sm font-medium mb-2 block">Category</Label>
+        <Label className="text-sm font-medium mb-2 block">{t('products.filterCategory')}</Label>
         <Select 
           value={selectedCategory} 
           onValueChange={(value) => {
@@ -332,10 +332,10 @@ const Products = () => {
           }}
         >
           <SelectTrigger>
-            <SelectValue placeholder="Select category" />
+            <SelectValue placeholder={t('products.selectCategory')} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Categories</SelectItem>
+            <SelectItem value="all">{t('products.allCategories')}</SelectItem>
             {categories.map((cat: Category) => (
               <SelectItem key={cat.id} value={cat.name.toLowerCase()}>
                 {cat.name}
@@ -347,7 +347,7 @@ const Products = () => {
 
       {/* Gender Filter */}
       <div>
-        <Label className="text-sm font-medium mb-2 block">Gender</Label>
+        <Label className="text-sm font-medium mb-2 block">{t('products.filterGender')}</Label>
         <Select 
           value={selectedGender} 
           onValueChange={(value) => {
@@ -357,13 +357,13 @@ const Products = () => {
           }}
         >
           <SelectTrigger>
-            <SelectValue placeholder="Select gender" />
+            <SelectValue placeholder={t('products.selectGender')} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Genders</SelectItem>
-            <SelectItem value="male">Male</SelectItem>
-            <SelectItem value="female">Female</SelectItem>
-            <SelectItem value="unisex">Unisex</SelectItem>
+            <SelectItem value="all">{t('products.allGenders')}</SelectItem>
+            <SelectItem value="male">{t('products.male')}</SelectItem>
+            <SelectItem value="female">{t('products.female')}</SelectItem>
+            <SelectItem value="unisex">{t('products.unisex')}</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -372,7 +372,7 @@ const Products = () => {
       <div className="grid grid-cols-2 gap-2">
         {/* Min Price Filter */}
         <div>
-          <Label className="text-sm font-medium mb-2 block">Min Price ({getCurrencySymbol()})</Label>
+          <Label className="text-sm font-medium mb-2 block">{t('products.filterMinPrice')} ({getCurrencySymbol()})</Label>
           <Input
             type="number"
             placeholder={`${Math.round(convertPrice(50))}`}
@@ -390,7 +390,7 @@ const Products = () => {
 
         {/* Max Price Filter */}
         <div>
-          <Label className="text-sm font-medium mb-2 block">Max Price ({getCurrencySymbol()})</Label>
+          <Label className="text-sm font-medium mb-2 block">{t('products.filterMaxPrice')} ({getCurrencySymbol()})</Label>
           <Input
             type="number"
             placeholder={`${Math.round(convertPrice(500))}`}
@@ -409,7 +409,7 @@ const Products = () => {
 
       {/* Sort Filter */}
       <div>
-        <Label className="text-sm font-medium mb-2 block">Sort By</Label>
+        <Label className="text-sm font-medium mb-2 block">{t('products.filterSortBy')}</Label>
         <Select 
           value={`${sortBy}-${sortOrder}`} 
           onValueChange={(value) => {
@@ -421,15 +421,15 @@ const Products = () => {
           }}
         >
           <SelectTrigger>
-            <SelectValue placeholder="Sort by" />
+            <SelectValue placeholder={t('products.filterSortBy')} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="name-asc">Name (A-Z)</SelectItem>
-            <SelectItem value="name-desc">Name (Z-A)</SelectItem>
-            <SelectItem value="price-asc">Price (Low to High)</SelectItem>
-            <SelectItem value="price-desc">Price (High to Low)</SelectItem>
-            <SelectItem value="created_at-desc">Newest First</SelectItem>
-            <SelectItem value="created_at-asc">Oldest First</SelectItem>
+            <SelectItem value="name-asc">{t('products.sortNameAsc')}</SelectItem>
+            <SelectItem value="name-desc">{t('products.sortNameDesc')}</SelectItem>
+            <SelectItem value="price-asc">{t('products.sortPriceAsc')}</SelectItem>
+            <SelectItem value="price-desc">{t('products.sortPriceDesc')}</SelectItem>
+            <SelectItem value="created_at-desc">{t('products.sortNewest')}</SelectItem>
+            <SelectItem value="created_at-asc">{t('products.sortOldest')}</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -444,7 +444,7 @@ const Products = () => {
         className="w-full"
       >
         <X className="w-4 h-4 mr-2" />
-        Clear All Filters
+        {t('products.clearFilters')}
       </Button>
     </div>
   );
@@ -454,11 +454,13 @@ const Products = () => {
       {/* Header */}
       <section className="text-center space-y-4 sm:space-y-6">
         <h1 className="text-2xl sm:text-4xl md:text-6xl font-bold text-leather-900 dark:text-leather-100">
-          {searchQuery ? `Search Results for "${searchQuery}"` : t('products.title') || 'Our Products'}
+          {searchQuery ? t('products.searchResults').replace('{query}', searchQuery) : t('products.title') || 'Our Products'}
         </h1>
         <p className="text-base sm:text-xl text-leather-700 dark:text-leather-200 max-w-xl sm:max-w-2xl mx-auto">
           {searchQuery
-            ? `Found ${pagination?.total || 0} product${(pagination?.total || 0) !== 1 ? 's' : ''}`
+            ? ((pagination?.total || 0) === 1 
+                ? t('products.foundProducts').replace('{count}', String(pagination?.total || 0))
+                : t('products.foundProductsPlural').replace('{count}', String(pagination?.total || 0)))
             : t('common.discover') || 'Discover our premium collection'}
         </p>
       </section>
@@ -469,10 +471,10 @@ const Products = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
           {/* Search Filter */}
           <div>
-            <Label className="text-sm font-medium mb-2 block">Search</Label>
+            <Label className="text-sm font-medium mb-2 block">{t('products.filterSearch')}</Label>
             <Input
               type="text"
-              placeholder="Search products..."
+              placeholder={t('products.searchPlaceholder')}
               value={searchQuery}
               onChange={(e) => {
                 setSearchQuery(e.target.value);
@@ -484,7 +486,7 @@ const Products = () => {
 
           {/* Category Filter */}
           <div>
-            <Label className="text-sm font-medium mb-2 block">Category</Label>
+            <Label className="text-sm font-medium mb-2 block">{t('products.filterCategory')}</Label>
             <Select 
               value={selectedCategory} 
               onValueChange={(value) => {
@@ -494,10 +496,10 @@ const Products = () => {
               }}
             >
               <SelectTrigger>
-                <SelectValue placeholder="Select category" />
+                <SelectValue placeholder={t('products.selectCategory')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Categories</SelectItem>
+                <SelectItem value="all">{t('products.allCategories')}</SelectItem>
                 {categories.map((cat: Category) => (
                   <SelectItem key={cat.id} value={cat.name.toLowerCase()}>
                     {cat.name}
@@ -509,7 +511,7 @@ const Products = () => {
 
           {/* Gender Filter */}
           <div>
-            <Label className="text-sm font-medium mb-2 block">Gender</Label>
+            <Label className="text-sm font-medium mb-2 block">{t('products.filterGender')}</Label>
             <Select 
               value={selectedGender} 
               onValueChange={(value) => {
@@ -519,20 +521,20 @@ const Products = () => {
               }}
             >
               <SelectTrigger>
-                <SelectValue placeholder="Select gender" />
+                <SelectValue placeholder={t('products.selectGender')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Genders</SelectItem>
-                <SelectItem value="male">Male</SelectItem>
-                <SelectItem value="female">Female</SelectItem>
-                <SelectItem value="unisex">Unisex</SelectItem>
+                <SelectItem value="all">{t('products.allGenders')}</SelectItem>
+                <SelectItem value="male">{t('products.male')}</SelectItem>
+                <SelectItem value="female">{t('products.female')}</SelectItem>
+                <SelectItem value="unisex">{t('products.unisex')}</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
           {/* Min Price Filter */}
           <div>
-            <Label className="text-sm font-medium mb-2 block">Min Price ({getCurrencySymbol()})</Label>
+            <Label className="text-sm font-medium mb-2 block">{t('products.filterMinPrice')} ({getCurrencySymbol()})</Label>
             <Input
               type="number"
               placeholder={`${Math.round(convertPrice(50))}`}
@@ -550,7 +552,7 @@ const Products = () => {
 
           {/* Max Price Filter */}
           <div>
-            <Label className="text-sm font-medium mb-2 block">Max Price ({getCurrencySymbol()})</Label>
+            <Label className="text-sm font-medium mb-2 block">{t('products.filterMaxPrice')} ({getCurrencySymbol()})</Label>
             <Input
               type="number"
               placeholder={`${Math.round(convertPrice(500))}`}
@@ -568,7 +570,7 @@ const Products = () => {
 
           {/* Sort Filter */}
           <div>
-            <Label className="text-sm font-medium mb-2 block">Sort By</Label>
+            <Label className="text-sm font-medium mb-2 block">{t('products.filterSortBy')}</Label>
             <Select 
               value={`${sortBy}-${sortOrder}`} 
               onValueChange={(value) => {
@@ -580,15 +582,15 @@ const Products = () => {
               }}
             >
               <SelectTrigger>
-                <SelectValue placeholder="Sort by" />
+                <SelectValue placeholder={t('products.filterSortBy')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="name-asc">Name (A-Z)</SelectItem>
-                <SelectItem value="name-desc">Name (Z-A)</SelectItem>
-                <SelectItem value="price-asc">Price (Low to High)</SelectItem>
-                <SelectItem value="price-desc">Price (High to Low)</SelectItem>
-                <SelectItem value="created_at-desc">Newest First</SelectItem>
-                <SelectItem value="created_at-asc">Oldest First</SelectItem>
+                <SelectItem value="name-asc">{t('products.sortNameAsc')}</SelectItem>
+                <SelectItem value="name-desc">{t('products.sortNameDesc')}</SelectItem>
+                <SelectItem value="price-asc">{t('products.sortPriceAsc')}</SelectItem>
+                <SelectItem value="price-desc">{t('products.sortPriceDesc')}</SelectItem>
+                <SelectItem value="created_at-desc">{t('products.sortNewest')}</SelectItem>
+                <SelectItem value="created_at-asc">{t('products.sortOldest')}</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -603,7 +605,7 @@ const Products = () => {
               size="sm"
             >
               <X className="w-4 h-4 mr-2" />
-              Clear All Filters
+              {t('products.clearFilters')}
             </Button>
           </div>
         )}
@@ -615,7 +617,7 @@ const Products = () => {
           <SheetTrigger asChild>
             <Button variant="outline" className="flex items-center gap-2">
               <Filter className="w-4 h-4" />
-              Filters
+              {t('products.filterSearch')}
               {(searchQuery || selectedCategory !== 'all' || selectedGender !== 'all' || minPrice || maxPrice || sortBy !== 'name') && (
                 <Badge variant="secondary" className="ml-1 px-1.5 py-0.5 text-xs">
                   Active

@@ -8,7 +8,25 @@ const scrollToTop = () => {
   window.scrollTo({ top: 0, behavior: 'smooth' });
 };
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useCategoryTranslation } from '@/hooks/useCategoryTranslation';
 import { SocialMediaIcons } from '@/components/common/SocialMediaIcons';
+
+// Category Link Component with Translation
+const CategoryLink: React.FC<{ category: { id: number; name: string } }> = ({ category }) => {
+  const translatedName = useCategoryTranslation(category.name);
+  
+  return (
+    <li key={category.id}>
+      <Link 
+        to={`/products?category=${category.name.toLowerCase()}`} 
+        className="text-muted-foreground hover:text-gold-500 transition-colors" 
+        onClick={scrollToTop}
+      >
+        {translatedName}
+      </Link>
+    </li>
+  );
+};
 
 export const Footer: React.FC = () => {
   const { t } = useLanguage();
@@ -49,7 +67,7 @@ export const Footer: React.FC = () => {
               onClick={scrollToTop}
             >
               <span className="text-base">📧</span>
-              <span className="relative z-10 font-semibold text-xs">Subscribe to Newsletter</span>
+              <span className="relative z-10 font-semibold text-xs">{t('footer.newsletter')}</span>
               <div className="absolute inset-0 rounded-full bg-gradient-to-r from-gold-100 to-gold-200 dark:from-gold-900/20 dark:to-gold-800/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
             </Link>
           </div>
@@ -71,15 +89,7 @@ export const Footer: React.FC = () => {
             <ul className="space-y-2 text-sm">
               {categories.length > 0 ? (
                 categories.slice(0, 6).map((category) => (
-                  <li key={category.id}>
-                    <Link 
-                      to={`/products?category=${category.name.toLowerCase()}`} 
-                      className="text-muted-foreground hover:text-gold-500 transition-colors" 
-                      onClick={scrollToTop}
-                    >
-                      {category.name}
-                    </Link>
-                  </li>
+                  <CategoryLink key={category.id} category={category} />
                 ))
               ) : (
                 // Fallback to static categories if API fails

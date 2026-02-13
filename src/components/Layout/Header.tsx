@@ -238,7 +238,7 @@ export const Header: React.FC = () => {
                     size="lg"
                     className="font-semibold bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 text-black dark:text-white shadow-lg hover:shadow-xl transition-all duration-300 border-2 border-yellow-300 hover:border-yellow-500 whitespace-nowrap px-5 xl:px-6 py-2.5 xl:py-3 text-sm xl:text-base hover:scale-105 rounded-full"
                   >
-                    Customize your Jacket
+                    {t('nav.customizeJacket')}
                   </Button>
                 </Link>
               </div>
@@ -251,7 +251,7 @@ export const Header: React.FC = () => {
                     size="lg"
                     className="font-semibold bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 text-black dark:text-white shadow-lg hover:shadow-xl transition-all duration-300 border-2 border-yellow-300 hover:border-yellow-500 whitespace-nowrap px-3 md:px-4 py-2 md:py-2.5 text-xs md:text-sm hover:scale-105 rounded-full"
                   >
-                    Customize your Jacket
+                    {t('nav.customizeJacket')}
                   </Button>
                 </Link>
               </div>
@@ -264,7 +264,7 @@ export const Header: React.FC = () => {
                     size="sm"
                     className="font-semibold bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 text-black dark:text-white shadow-md hover:shadow-lg transition-all duration-300 border-2 border-yellow-300 hover:border-yellow-500 rounded-full text-xs px-2 xs:px-3 py-1 xs:py-1.5"
                   >
-                    Customize your Jacket
+                    {t('nav.customizeJacket')}
                   </Button>
                 </Link>
               </div>
@@ -533,7 +533,7 @@ export const Header: React.FC = () => {
                     size="sm"
                     className="h-8 sm:h-10 px-2 sm:px-3 hidden sm:flex rounded-full hover:bg-muted/50 transition-colors"
                   >
-                    <span className="text-xs sm:text-sm font-medium">Login</span>
+                    <span className="text-xs sm:text-sm font-medium">{t('auth.login')}</span>
                   </Button>
                 </Link>
               )}

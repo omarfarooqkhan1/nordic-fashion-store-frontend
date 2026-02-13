@@ -8,6 +8,7 @@ export interface ProductReview {
   title?: string;
   review_text?: string;
   is_verified_purchase: boolean;
+  country?: string;
   created_at: string;
   updated_at: string;
   user: {

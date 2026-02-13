@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 const authSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
@@ -39,6 +40,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({
   showPasswordToggle = true
 }) => {
   const [showPassword, setShowPassword] = useState(false);
+  const { t } = useLanguage();
 
   const {
     register,
@@ -67,13 +69,13 @@ export const AuthForm: React.FC<AuthFormProps> = ({
           {/* Custom fields before email/password */}
           {renderChildren && Array.isArray(renderChildren) && renderChildren[0]}
           <div className="space-y-2">
-            <Label htmlFor="email" className="text-sm sm:text-base font-medium text-foreground dark:text-slate-200">Email</Label>
+            <Label htmlFor="email" className="text-sm sm:text-base font-medium text-foreground dark:text-slate-200">{t('auth.email')}</Label>
             <div className="relative">
               <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400 dark:text-slate-400" />
               <Input
                 id="email"
                 type="email"
-                placeholder="Enter your email"
+                placeholder={t('checkout.emailPlaceholder')}
                 className={`pl-10 h-10 sm:h-11 text-sm sm:text-base dark:bg-slate-700 dark:border-slate-600 dark:text-white dark:placeholder-slate-400 ${
                   errors.email ? 'border-red-500 dark:border-red-400 focus-visible:ring-red-500 dark:focus-visible:ring-red-400' : ''
                 }`}
@@ -85,13 +87,13 @@ export const AuthForm: React.FC<AuthFormProps> = ({
             )}
           </div>
           <div className="space-y-2">
-            <Label htmlFor="password" className="text-sm sm:text-base font-medium text-foreground dark:text-slate-200">Password</Label>
+            <Label htmlFor="password" className="text-sm sm:text-base font-medium text-foreground dark:text-slate-200">{t('auth.password')}</Label>
             <div className="relative">
               <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400 dark:text-slate-400" />
               <Input
                 id="password"
                 type={showPassword ? "text" : "password"}
-                placeholder="Enter your password"
+                placeholder={t('auth.password')}
                 className={`pl-10 pr-10 h-10 sm:h-11 text-sm sm:text-base dark:bg-slate-700 dark:border-slate-600 dark:text-white dark:placeholder-slate-400 ${
                   errors.password ? 'border-red-500 dark:border-red-400 focus-visible:ring-red-500 dark:focus-visible:ring-red-400' : ''
                 }`}

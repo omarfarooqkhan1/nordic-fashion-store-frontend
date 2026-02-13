@@ -35,7 +35,7 @@ const CustomerSignup: React.FC = () => {
       return;
     }
     if (data.password !== confirmPassword) {
-      setError("Passwords don't match");
+      setError(t('auth.passwordsDontMatch'));
       return;
     }
     
@@ -110,7 +110,7 @@ const CustomerSignup: React.FC = () => {
         </div>
         <AuthForm
           title={t('auth.createAccount')}
-          description="Join Nord Flex today"
+          description={t('auth.signupDescription')}
           submitText={t('auth.signup')}
           isLoading={isSubmitting}
           error={error}
