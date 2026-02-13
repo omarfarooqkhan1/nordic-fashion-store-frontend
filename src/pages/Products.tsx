@@ -21,6 +21,7 @@ import {
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { useProductTranslation } from '@/hooks/useProductTranslation';
+import { useCategoryTranslation } from '@/hooks/useCategoryTranslation';
 import { fetchProducts, type ProductFilters } from '@/api/products';
 import { fetchCategories } from '@/api/admin';
 import { LoadingState } from '@/components/common/LoadingState';
@@ -763,6 +764,7 @@ const Products = () => {
 // Product Card Component with Translation
 const ProductCardWithTranslation = ({ product }: { product: any }) => {
   const { name, description } = useProductTranslation(product);
+  const translatedCategory = useCategoryTranslation(product?.category?.name);
   const { convertPrice, getCurrencySymbol } = useCurrency();
   const { t } = useLanguage();
 
@@ -810,7 +812,7 @@ const ProductCardWithTranslation = ({ product }: { product: any }) => {
             <h3 className="font-semibold text-foreground hover:text-cognac-500 transition-colors">
               {name}
             </h3>
-            <p className="text-sm text-muted-foreground capitalize">{product.category?.name}</p>
+            <p className="text-sm text-muted-foreground capitalize">{translatedCategory}</p>
           </div>
         </Link>
         <p className="text-sm text-muted-foreground line-clamp-2">{description}</p>

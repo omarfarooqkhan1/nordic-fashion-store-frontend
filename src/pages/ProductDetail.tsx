@@ -914,7 +914,7 @@ const ProductDetail = () => {
                   {t('product.stylingTitle')}
                 </h2>
                 <p className="text-base sm:text-lg md:text-xl text-gray-600 dark:text-slate-300 max-w-2xl sm:max-w-3xl mx-auto leading-relaxed">
-                  {t('product.stylingDescription').replace('{name}', product?.name || '')}
+                  {t('product.stylingDescription').replace('{name}', translatedName || '')}
                 </p>
               </div>
               {/* Mobile: Single item with arrows. Desktop: Horizontal scroll carousel. */}

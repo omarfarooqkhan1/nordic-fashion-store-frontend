@@ -135,6 +135,28 @@ export async function translateProduct(
 }
 
 /**
+ * Translate category name
+ * @param categoryName - Category name to translate
+ * @param targetLang - Target language code
+ * @returns Translated category name
+ */
+export async function translateCategory(
+  categoryName: string,
+  targetLang: SupportedLanguage
+): Promise<string> {
+  if (targetLang === 'en' || !categoryName) {
+    return categoryName;
+  }
+
+  try {
+    return await translateText(categoryName, targetLang);
+  } catch (error) {
+    console.warn('Category translation failed:', error);
+    return categoryName;
+  }
+}
+
+/**
  * Clear translation cache (useful for testing or memory management)
  */
 export function clearTranslationCache(): void {

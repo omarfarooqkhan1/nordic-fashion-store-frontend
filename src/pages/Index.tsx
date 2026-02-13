@@ -11,6 +11,7 @@ import { fetchProducts } from "@/api/products"
 import { LoadingState } from "@/components/common/LoadingState"
 import { usePerformanceOptimization } from "@/hooks/usePerformanceOptimization"
 import { useProductTranslation } from "@/hooks/useProductTranslation"
+import { useCategoryTranslation } from "@/hooks/useCategoryTranslation"
 import api from "@/api/axios"
 
 const Index = () => {
@@ -245,6 +246,7 @@ const Index = () => {
 // Product Card Component with Translation
 const ProductCardWithTranslation = ({ product }: { product: any }) => {
   const { name, description } = useProductTranslation(product);
+  const translatedCategory = useCategoryTranslation(product?.category?.name);
   const { convertPrice, getCurrencySymbol } = useCurrency();
   const { t } = useLanguage();
 
@@ -279,7 +281,7 @@ const ProductCardWithTranslation = ({ product }: { product: any }) => {
               {name || "Unnamed Product"}
             </h3>
             <p className="text-sm text-muted-foreground capitalize">
-              {product?.category?.name || "Uncategorized"}
+              {translatedCategory}
             </p>
           </div>
         </Link>
