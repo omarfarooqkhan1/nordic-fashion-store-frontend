@@ -30,12 +30,12 @@ const VerifyEmail: React.FC = () => {
   
   useEffect(() => {
     if (!finalUserId) {
-      setError("User ID is required for email verification");
+      setError(t('auth.userIdRequired'));
     } else {
       // Initialize timer to 60 seconds when component loads
       setTimer(60);
     }
-  }, [finalUserId]);
+  }, [finalUserId, t]);
 
   // Timer for resend button
   useEffect(() => {
@@ -77,10 +77,10 @@ const VerifyEmail: React.FC = () => {
         user_id: finalUserId 
       });
       
-      setResendSuccess("A new verification code has been sent to your email.");
+      setResendSuccess(t('auth.newCodeSent'));
       setTimer(60); // 60 second cooldown
     } catch (err: any) {
-      setError(err.response?.data?.message || "Failed to resend verification code");
+      setError(err.response?.data?.message || t('auth.failedToResendCode'));
     } finally {
       setResendLoading(false);
     }
@@ -131,7 +131,7 @@ const VerifyEmail: React.FC = () => {
                   disabled={timer > 0 || resendLoading}
                   className="flex-1 mr-2"
                 >
-                  {resendLoading ? "Sending..." : timer > 0 ? `Resend (${timer}s)` : "Resend Code"}
+                  {resendLoading ? t('auth.sending') : timer > 0 ? t('auth.resendTimer').replace('{timer}', String(timer)) : t('auth.resendCode')}
                 </Button>
                 <Button 
                   type="submit" 
