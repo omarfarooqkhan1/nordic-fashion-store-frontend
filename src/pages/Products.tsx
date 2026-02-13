@@ -692,9 +692,6 @@ const Products = () => {
                 <ProductCardWithTranslation key={product.id} product={product} />
               ))}
             </div>
-                </Card>
-              ))}
-            </div>
           ) : (
             <div className="text-center py-12">
               <p className="text-muted-foreground">{t('products.noProductsFound') || 'No products found'}</p>
