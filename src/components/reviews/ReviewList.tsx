@@ -44,8 +44,6 @@ import { Edit, Trash2, MessageSquare, CheckCircle } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { getProductReviews, deleteReview, type ProductReview, type ReviewsListResponse } from '@/api/reviews';
-import { formatDistanceToNow } from 'date-fns';
-import { enUS, sv, nb, da, fi, is } from 'date-fns/locale';
 
 interface ReviewListProps {
   productId: number;
