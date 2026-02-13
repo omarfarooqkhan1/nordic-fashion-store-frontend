@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { getCountryFlag, isEnglishSpeakingCountry, getCountryName } from '@/utils/countryUtils';
+import { isEnglishSpeakingCountry } from '@/utils/countryUtils';
 
 // Simple modal for media preview
 const MediaPreviewModal: React.FC<{
@@ -260,16 +260,6 @@ const ReviewList: React.FC<ReviewListProps> = ({
                     <div>
                       <div className="font-medium flex items-center gap-2">
                         {isOwnReview ? 'Your review' : (review.user && review.user.name ? review.user.name : 'Unknown')}
-                        {review.country && (
-                          <span 
-                            className="text-lg" 
-                            title={getCountryName(review.country)}
-                            role="img"
-                            aria-label={`From ${getCountryName(review.country)}`}
-                          >
-                            {getCountryFlag(review.country)}
-                          </span>
-                        )}
                         {review.is_verified_purchase && (
                           <span className="inline-flex items-center rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800 dark:bg-green-900 dark:text-green-100">
                             <svg className="mr-1 h-3 w-3" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
