@@ -692,32 +692,6 @@ const Products = () => {
                 <ProductCardWithTranslation key={product.id} product={product} />
               ))}
             </div>
-                            if (discount > 0) {
-                              return (
-                                <>
-                                  <span className="text-lg font-bold text-cognac-500">
-                                    {getCurrencySymbol()}{Math.round(Number(convertPrice(discountedPrice)))}
-                                  </span>
-                                  <span className="text-sm text-muted-foreground line-through">{getCurrencySymbol()}{convertPrice(basePrice).toFixed(2)}</span>
-                                </>
-                              );
-                            } else {
-                              return <span className="text-lg font-bold text-cognac-500">{getCurrencySymbol()}{convertPrice(basePrice).toFixed(2)}</span>;
-                            }
-                          })()}
-                        </div>
-                      </div>
-                      <Button
-                        variant="outline"
-                        asChild
-                        className="w-full border-primary text-primary hover:bg-primary hover:text-primary-foreground transition-all duration-300 font-semibold shadow-md hover:shadow-lg hover:border-primary/40"
-                      >
-                        <Link to={`/product/${product.id}`}>
-                          {t('common.buyNow') || 'Buy Now'}
-                        </Link>
-                      </Button>
-                    </div>
-                  </CardContent>
                 </Card>
               ))}
             </div>
