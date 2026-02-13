@@ -82,14 +82,12 @@ const CategoryMenuItem: React.FC<{ category: Category; gender: string }> = ({ ca
   const translatedName = useCategoryTranslation(category.name);
   
   return (
-    <DropdownMenuItem asChild>
-      <Link
-        to={`/products?category=${category.slug}&gender=${gender}`}
-        className="hover:bg-accent cursor-pointer w-full"
-      >
-        {translatedName}
-      </Link>
-    </DropdownMenuItem>
+    <Link
+      to={`/products?category=${category.slug}&gender=${gender}`}
+      className="block px-2 py-1.5 text-sm rounded-md hover:bg-accent transition-colors cursor-pointer"
+    >
+      {translatedName}
+    </Link>
   );
 };
 
@@ -252,17 +250,16 @@ export const Header: React.FC = () => {
               <div className="hidden lg:flex items-center gap-4 xl:gap-6">
                 <div className="flex items-center ml-8 xl:ml-12">
                   {/* Shop Men with Dropdown */}
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <button
-                        onClick={() => navigate('/products?gender=male')}
-                        className="text-sm xl:text-base font-medium text-foreground hover:text-primary transition-colors whitespace-nowrap px-3 py-2 rounded-md hover:bg-accent/50 cursor-pointer"
-                      >
-                        {t('nav.shopMen')}
-                      </button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="start" className="bg-popover border border-border w-56">
-                      <div className="p-2">
+                  <div className="relative group">
+                    <Link
+                      to="/products?gender=male"
+                      className="text-sm xl:text-base font-medium text-foreground hover:text-primary transition-colors whitespace-nowrap px-3 py-2 rounded-md hover:bg-accent/50 cursor-pointer inline-block"
+                    >
+                      {t('nav.shopMen')}
+                    </Link>
+                    {/* Dropdown on hover */}
+                    <div className="absolute left-0 top-full mt-1 hidden group-hover:block z-50">
+                      <div className="bg-popover border border-border rounded-md shadow-lg w-56 p-2">
                         <div className="text-xs font-medium text-muted-foreground mb-2">{t('nav.categories')}</div>
                         {categoriesLoading ? (
                           <div className="text-xs text-muted-foreground py-2">Loading...</div>
@@ -274,21 +271,20 @@ export const Header: React.FC = () => {
                           <div className="text-xs text-muted-foreground py-2">No categories available</div>
                         )}
                       </div>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                    </div>
+                  </div>
 
                   {/* Shop Women with Dropdown */}
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <button
-                        onClick={() => navigate('/products?gender=female')}
-                        className="text-sm xl:text-base font-medium text-foreground hover:text-primary transition-colors whitespace-nowrap px-3 py-2 rounded-md hover:bg-accent/50 cursor-pointer"
-                      >
-                        {t('nav.shopWomen')}
-                      </button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="start" className="bg-popover border border-border w-56">
-                      <div className="p-2">
+                  <div className="relative group">
+                    <Link
+                      to="/products?gender=female"
+                      className="text-sm xl:text-base font-medium text-foreground hover:text-primary transition-colors whitespace-nowrap px-3 py-2 rounded-md hover:bg-accent/50 cursor-pointer inline-block"
+                    >
+                      {t('nav.shopWomen')}
+                    </Link>
+                    {/* Dropdown on hover */}
+                    <div className="absolute left-0 top-full mt-1 hidden group-hover:block z-50">
+                      <div className="bg-popover border border-border rounded-md shadow-lg w-56 p-2">
                         <div className="text-xs font-medium text-muted-foreground mb-2">{t('nav.categories')}</div>
                         {categoriesLoading ? (
                           <div className="text-xs text-muted-foreground py-2">Loading...</div>
@@ -300,8 +296,8 @@ export const Header: React.FC = () => {
                           <div className="text-xs text-muted-foreground py-2">No categories available</div>
                         )}
                       </div>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                    </div>
+                  </div>
 
                   <Link
                     to="/about"
