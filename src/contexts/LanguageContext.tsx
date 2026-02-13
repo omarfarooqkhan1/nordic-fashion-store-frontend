@@ -616,6 +616,10 @@ const translations = {
     
     // Review section
     'product.customerReviews': 'Customer Reviews',
+    'product.basedOnVerifiedPurchases': 'Based on verified purchases',
+    'product.review': 'review',
+    'product.reviews': 'reviews',
+    'product.autoTranslated': 'Auto-translated to English',
     
     // Footer links
     'footer.information': 'Information',
@@ -721,6 +725,10 @@ const translations = {
   'product.noReviews': 'Inga recensioner än',
   'product.wishlistComingSoon': 'Önskelista kommer snart',
   'product.customerReviews': 'Kundrecensioner',
+  'product.basedOnVerifiedPurchases': 'Baserat på verifierade köp',
+  'product.review': 'recension',
+  'product.reviews': 'recensioner',
+  'product.autoTranslated': 'Automatiskt översatt till engelska',
   
   // Footer links
   'footer.information': 'Information',
@@ -1375,6 +1383,10 @@ const translations = {
   'product.noReviews': 'Ingen anmeldelser ennå',
   'product.wishlistComingSoon': 'Ønskelistefunksjon kommer snart',
   'product.customerReviews': 'Kundeanmeldelser',
+  'product.basedOnVerifiedPurchases': 'Basert på verifiserte kjøp',
+  'product.review': 'anmeldelse',
+  'product.reviews': 'anmeldelser',
+  'product.autoTranslated': 'Automatisk oversatt til engelsk',
   
   // Footer links
   'footer.information': 'Informasjon',
@@ -2021,6 +2033,10 @@ const translations = {
   'product.noReviews': 'Ingen anmeldelser endnu',
   'product.wishlistComingSoon': 'Ønskelistefunktion kommer snart',
   'product.customerReviews': 'Kundeanmeldelser',
+  'product.basedOnVerifiedPurchases': 'Baseret på verificerede køb',
+  'product.review': 'anmeldelse',
+  'product.reviews': 'anmeldelser',
+  'product.autoTranslated': 'Automatisk oversat til engelsk',
   
   // Footer links
   'footer.information': 'Information',
@@ -2641,6 +2657,10 @@ const translations = {
   'product.noReviews': 'Ei arvosteluja vielä',
   'product.wishlistComingSoon': 'Toivelista tulossa pian',
   'product.customerReviews': 'Asiakasarvostelut',
+  'product.basedOnVerifiedPurchases': 'Perustuu vahvistettuihin ostoihin',
+  'product.review': 'arvostelu',
+  'product.reviews': 'arvostelut',
+  'product.autoTranslated': 'Automaattisesti käännetty englanniksi',
   
   // Footer links
   'footer.information': 'Tiedot',
@@ -3268,6 +3288,10 @@ const translations = {
   'product.noReviews': 'Engar umsagnir enn',
   'product.wishlistComingSoon': 'Óskalisti kemur fljótlega',
   'product.customerReviews': 'Umsagnir viðskiptavina',
+  'product.basedOnVerifiedPurchases': 'Byggt á staðfestum kaupum',
+  'product.review': 'umsögn',
+  'product.reviews': 'umsagnir',
+  'product.autoTranslated': 'Sjálfkrafa þýtt á ensku',
   
   // Footer links
   'footer.information': 'Upplýsingar',

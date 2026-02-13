@@ -1,6 +1,9 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { getCountryFlag, isEnglishSpeakingCountry, getCountryName } from '@/utils/countryUtils';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { formatDistanceToNow } from 'date-fns';
+import { enUS, sv, nb, da, fi, is } from 'date-fns/locale';
 
 // Simple modal for media preview
 const MediaPreviewModal: React.FC<{
@@ -42,6 +45,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { getProductReviews, deleteReview, type ProductReview, type ReviewsListResponse } from '@/api/reviews';
 import { formatDistanceToNow } from 'date-fns';
+import { enUS, sv, nb, da, fi, is } from 'date-fns/locale';
 
 interface ReviewListProps {
   productId: number;
@@ -58,12 +62,26 @@ const ReviewList: React.FC<ReviewListProps> = ({
   onWriteReview,
   canUserWriteReview
 }) => {
+  const { t, language } = useLanguage();
   const reviewsRef = useRef<HTMLDivElement>(null);
   const [previewMedia, setPreviewMedia] = useState<{ url: string; type: string } | null>(null);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const handleMediaClick = (media: { url: string; type: string }) => {
     setPreviewMedia(media);
     setIsPreviewOpen(true);
+  };
+  
+  // Get date-fns locale based on current language
+  const getDateLocale = () => {
+    const locales: Record<string, Locale> = {
+      en: enUS,
+      sv: sv,
+      no: nb,
+      da: da,
+      fi: fi,
+      is: is,
+    };
+    return locales[language] || enUS;
   };
   const { user, isAdmin, token } = useAuth();
   const { toast } = useToast();
@@ -211,10 +229,10 @@ const ReviewList: React.FC<ReviewListProps> = ({
       {productInfo && (
         <div className="text-center space-y-1 sm:space-y-4">
           <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 dark:text-white">
-            Customer Reviews
+            {t('product.customerReviews')}
           </h2>
           <p className="text-base sm:text-lg md:text-xl text-gray-600 dark:text-slate-300 max-w-2xl sm:max-w-3xl mx-auto">
-            Based on verified purchases
+            {t('product.basedOnVerifiedPurchases')}
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-6 sm:gap-8 mt-4 sm:mt-6">
             <div className="text-center">
@@ -223,7 +241,7 @@ const ReviewList: React.FC<ReviewListProps> = ({
               </div>
               <StarRating rating={productInfo.average_rating} size="sm" />
               <div className="text-sm text-muted-foreground">
-                {productInfo.review_count} review{productInfo.review_count !== 1 ? 's' : ''}
+                {productInfo.review_count} {productInfo.review_count !== 1 ? t('product.reviews') : t('product.review')}
               </div>
             </div>
             {/* Only show the button if user can write a review */}
@@ -282,7 +300,7 @@ const ReviewList: React.FC<ReviewListProps> = ({
                         {isAdmin && review.status === 'pending' && review.user?.email ? ` (${review.user.email})` : ''}
                       </div>
                       <div className="text-sm text-muted-foreground">
-                        {formatDistanceToNow(new Date(review.created_at), { addSuffix: true })}
+                        {formatDistanceToNow(new Date(review.created_at), { addSuffix: true, locale: getDateLocale() })}
                       </div>
                     </div>
                   </div>
@@ -388,7 +406,7 @@ const ReviewList: React.FC<ReviewListProps> = ({
                     </p>
                     {review.country && !isEnglishSpeakingCountry(review.country) && (
                       <p className="text-xs text-muted-foreground mt-2 italic">
-                        <span className="font-bold">Auto-translated to English</span>
+                        <span className="font-bold">{t('product.autoTranslated')}</span>
                       </p>
                     )}
                   </>
