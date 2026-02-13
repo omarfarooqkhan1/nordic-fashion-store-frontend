@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery } from '@tantml:query';
 import { fetchProductById } from '../api/products';
 import { useAuth } from '../contexts/AuthContext';
 import { useCart } from '../contexts/CartContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useCurrency } from '../contexts/CurrencyContext';
+import { useProductTranslation } from '@/hooks/useProductTranslation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
@@ -87,6 +88,9 @@ const ProductDetail = () => {
     staleTime: 5 * 60 * 1000, // 5 minutes
     refetchOnWindowFocus: false,
   });
+
+  // Translate product name and description
+  const { name: translatedName, description: translatedDescription } = useProductTranslation(product);
 
   // Initialize with first variant when product loads
   useEffect(() => {
@@ -419,7 +423,7 @@ const ProductDetail = () => {
     try {
       // Pass variant.id and quantity (1) directly to addToCart
       await addToCart(variant.id, 1);
-      toast({ title: t('toast.addedToCart'), description: `${product.name} (${variant.size}, ${variant.color})`, className: "bg-green-500 text-white" });
+      toast({ title: t('toast.addedToCart'), description: `${translatedName} (${variant.size}, ${variant.color})`, className: "bg-green-500 text-white" });
     } catch (error) {
       toast({ title: t('toast.error'), description: t('toast.cartError'), variant: 'destructive' });
     }
@@ -570,7 +574,7 @@ const ProductDetail = () => {
         <div className="space-y-5 sm:space-y-6 md:space-y-8">
           <div className="space-y-3">
             <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold break-words text-gray-900 dark:text-white leading-tight">
-              {product.name}
+              {translatedName}
             </h1>
             <p className="text-gray-600 dark:text-slate-300 capitalize text-sm sm:text-base md:text-lg font-medium">
               {product.category?.name || ''}
@@ -616,7 +620,7 @@ const ProductDetail = () => {
               {t('product.description')}
             </h2>
             <p className="text-gray-600 dark:text-slate-300 text-sm sm:text-base leading-relaxed">
-              {product?.description || ''}
+              {translatedDescription || ''}
             </p>
           </div>
 
@@ -631,7 +635,7 @@ const ProductDetail = () => {
                 {product?.size_guide_image && (
                   <SizeGuideModal 
                     sizeGuideImage={product.size_guide_image}
-                    productName={product.name}
+                    productName={translatedName}
                   />
                 )}
               </div>

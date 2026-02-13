@@ -20,6 +20,7 @@ import {
 } from '@/components/ui/pagination';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
+import { useProductTranslation } from '@/hooks/useProductTranslation';
 import { fetchProducts, type ProductFilters } from '@/api/products';
 import { fetchCategories } from '@/api/admin';
 import { LoadingState } from '@/components/common/LoadingState';
@@ -688,65 +689,9 @@ const Products = () => {
           {products.length > 0 ? (
             <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-6 lg:gap-8 max-w-7xl mx-auto px-2 sm:px-4 mb-12">
               {products.map((product: any) => (
-                <Card
-                  key={product.id}
-                  className="bg-gradient-to-br from-card to-leather-100/50 dark:from-card dark:to-leather-800/30 border-border overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 group rounded-xl md:rounded-2xl"
-                >
-                  <Link to={`/product/${product.id}`}>
-                    <div className="aspect-square bg-gradient-to-br from-leather-200 to-leather-300 dark:from-leather-800 dark:to-leather-900 relative overflow-hidden">
-                      {product.discount > 0 && (
-                        <Badge className="absolute top-2 right-2 bg-red-500 text-white z-10">
-                          -{product.discount}%
-                        </Badge>
-                      )}
-                      {product.images && product.images.length > 0 ? (
-                        <img
-                          src={product.images[0].url}
-                          alt={product.images[0].alt_text || product.name}
-                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                          onError={(e) => {
-                            e.currentTarget.src = '/placeholder.svg';
-                          }}
-                        />
-                      ) : product.variants && product.variants.length > 0 && product.variants[0].main_images && product.variants[0].main_images.length > 0 ? (
-                        <img
-                          src={product.variants[0].main_images[0].url}
-                          alt={product.variants[0].main_images[0].alt_text || product.name}
-                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                          onError={(e) => {
-                            e.currentTarget.src = '/placeholder.svg';
-                          }}
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center">
-                          <img 
-                            src="/placeholder.svg" 
-                            alt="No image available" 
-                            className="w-full h-full object-cover opacity-50"
-                          />
-                        </div>
-                      )}
-                    </div>
-                  </Link>
-                  <CardContent className="p-4 md:p-6 space-y-3">
-                    <Link to={`/product/${product.id}`}>
-                      <div>
-                        <h3 className="font-semibold text-foreground hover:text-cognac-500 transition-colors">
-                          {product.name}
-                        </h3>
-                        <p className="text-sm text-muted-foreground capitalize">{product.category?.name}</p>
-                      </div>
-                    </Link>
-                    <p className="text-sm text-muted-foreground line-clamp-2">{product.description}</p>
-                    <div className="flex flex-col gap-3 pt-2">
-                      <div className="flex items-center justify-center">
-                        <div className="flex items-center gap-2">
-                          {(() => {
-                            const firstVariant = product.variants && product.variants.length > 0 ? product.variants[0] : null;
-                            if (!firstVariant) return <span className="text-lg font-bold text-cognac-500">N/A</span>;
-                            const basePrice = firstVariant.price;
-                            const discount = product.discount || 0;
-                            const discountedPrice = basePrice * (1 - discount / 100);
+                <ProductCardWithTranslation key={product.id} product={product} />
+              ))}
+            </div>
                             if (discount > 0) {
                               return (
                                 <>
@@ -841,6 +786,97 @@ const Products = () => {
         </>
       )}
     </div>
+  );
+};
+
+// Product Card Component with Translation
+const ProductCardWithTranslation = ({ product }: { product: any }) => {
+  const { name, description } = useProductTranslation(product);
+  const { convertPrice, getCurrencySymbol } = useCurrency();
+  const { t } = useLanguage();
+
+  return (
+    <Card className="bg-gradient-to-br from-card to-leather-100/50 dark:from-card dark:to-leather-800/30 border-border overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 group rounded-xl md:rounded-2xl">
+      <Link to={`/product/${product.id}`}>
+        <div className="aspect-square bg-gradient-to-br from-leather-200 to-leather-300 dark:from-leather-800 dark:to-leather-900 relative overflow-hidden">
+          {product.discount > 0 && (
+            <Badge className="absolute top-2 right-2 bg-red-500 text-white z-10">
+              -{product.discount}%
+            </Badge>
+          )}
+          {product.images && product.images.length > 0 ? (
+            <img
+              src={product.images[0].url}
+              alt={product.images[0].alt_text || name}
+              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+              onError={(e) => {
+                e.currentTarget.src = '/placeholder.svg';
+              }}
+            />
+          ) : product.variants && product.variants.length > 0 && product.variants[0].main_images && product.variants[0].main_images.length > 0 ? (
+            <img
+              src={product.variants[0].main_images[0].url}
+              alt={product.variants[0].main_images[0].alt_text || name}
+              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+              onError={(e) => {
+                e.currentTarget.src = '/placeholder.svg';
+              }}
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center">
+              <img 
+                src="/placeholder.svg" 
+                alt="No image available" 
+                className="w-full h-full object-cover opacity-50"
+              />
+            </div>
+          )}
+        </div>
+      </Link>
+      <CardContent className="p-4 md:p-6 space-y-3">
+        <Link to={`/product/${product.id}`}>
+          <div>
+            <h3 className="font-semibold text-foreground hover:text-cognac-500 transition-colors">
+              {name}
+            </h3>
+            <p className="text-sm text-muted-foreground capitalize">{product.category?.name}</p>
+          </div>
+        </Link>
+        <p className="text-sm text-muted-foreground line-clamp-2">{description}</p>
+        <div className="flex flex-col gap-3 pt-2">
+          <div className="flex items-center justify-center">
+            <div className="flex items-center gap-2">
+              {(() => {
+                const firstVariant = product.variants && product.variants.length > 0 ? product.variants[0] : null;
+                if (!firstVariant) return <span className="text-lg font-bold text-cognac-500">N/A</span>;
+                const basePrice = firstVariant.price;
+                const discount = product.discount || 0;
+                const discountedPrice = basePrice * (1 - discount / 100);
+
+                return (
+                  <>
+                    {discount > 0 && (
+                      <span className="text-sm text-muted-foreground line-through">
+                        {getCurrencySymbol()}{convertPrice(basePrice).toFixed(2)}
+                      </span>
+                    )}
+                    <span className="text-lg font-bold text-cognac-500">
+                      {getCurrencySymbol()}{convertPrice(discountedPrice).toFixed(2)}
+                    </span>
+                  </>
+                );
+              })()}
+            </div>
+          </div>
+          <Button
+            asChild
+            className="w-full bg-gradient-to-r from-cognac-500 to-cognac-600 hover:from-cognac-400 hover:to-cognac-500 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 border border-cognac-400 hover:border-cognac-300"
+          >
+            <Link to={`/product/${product.id}`}>{t("common.buyNow")}</Link>
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
   );
 };
 
