@@ -83,7 +83,7 @@ const CategoryMenuItem: React.FC<{ category: Category; gender: string }> = ({ ca
   
   return (
     <Link
-      to={`/products?category=${category.slug}&gender=${gender}`}
+      to={`/products?category=${encodeURIComponent(category.name)}&gender=${gender}`}
       className="block px-2 py-1.5 text-sm rounded-md hover:bg-accent transition-colors cursor-pointer"
     >
       {translatedName}
@@ -97,7 +97,7 @@ const MobileCategoryItem: React.FC<{ category: Category; onClick: () => void }> 
   
   return (
     <Link
-      to={`/products?category=${category.slug}`}
+      to={`/products?category=${encodeURIComponent(category.name)}`}
       onClick={onClick}
       className="block rounded-md px-2 py-2 text-xs font-medium text-muted-foreground hover:bg-accent transition-colors duration-200"
     >
