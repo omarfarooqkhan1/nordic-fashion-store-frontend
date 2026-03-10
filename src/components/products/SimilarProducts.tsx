@@ -1,6 +1,7 @@
 import React from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
+import { useProductsTranslation } from '@/hooks/useProductTranslation';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
@@ -15,6 +16,11 @@ export const SimilarProducts: React.FC<SimilarProductsProps> = ({ products }) =>
   const { t } = useLanguage();
   const { convertPrice, getCurrencySymbol } = useCurrency();
   const currencySymbol = getCurrencySymbol();
+  const { translatedProducts, isTranslating } = useProductsTranslation(products);
+
+  const handleProductClick = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   if (!products || products.length === 0) {
     return null;
@@ -34,7 +40,7 @@ export const SimilarProducts: React.FC<SimilarProductsProps> = ({ products }) =>
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-6 lg:gap-8 max-w-7xl mx-auto px-2 sm:px-4">
-            {products.map((product) => {
+            {products.map((product, index) => {
               // Get first variant price or 0 if no variants
               const price = product.variants && product.variants.length > 0
                 ? Number(product.variants[0].price)
@@ -45,17 +51,24 @@ export const SimilarProducts: React.FC<SimilarProductsProps> = ({ products }) =>
                 ? product.images[0]
                 : null;
 
+              // Get translated product data
+              const translatedProduct = translatedProducts[index] || {
+                name: product.name,
+                description: product.description,
+                isTranslating: false,
+              };
+
               return (
                 <Card
                   key={product.id}
                   className="bg-gradient-to-br from-card to-leather-100/50 dark:from-card dark:to-leather-800/30 border-border overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 group rounded-xl md:rounded-2xl"
                 >
-                  <Link to={`/product/${product.id}`}>
+                  <Link to={`/product/${product.id}`} onClick={handleProductClick}>
                     <div className="aspect-square bg-gradient-to-br from-leather-200 to-leather-300 dark:from-leather-800 dark:to-leather-900 relative overflow-hidden">
                       {image ? (
                         <img
                           src={image.url}
-                          alt={image.alt_text || product.name}
+                          alt={image.alt_text || translatedProduct.name}
                           className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                           onError={(e) => {
                             e.currentTarget.src = '/placeholder.svg';
@@ -73,14 +86,24 @@ export const SimilarProducts: React.FC<SimilarProductsProps> = ({ products }) =>
                     </div>
                   </Link>
                   <CardContent className="p-4 md:p-6 space-y-3">
-                    <Link to={`/product/${product.id}`}>
+                    <Link to={`/product/${product.id}`} onClick={handleProductClick}>
                       <div>
                         <h3 className="font-semibold text-foreground hover:text-cognac-500 transition-colors">
-                          {product?.name || "Unnamed Product"}
+                          {translatedProduct.isTranslating ? (
+                            <span className="opacity-70">{product.name}</span>
+                          ) : (
+                            translatedProduct.name || "Unnamed Product"
+                          )}
                         </h3>
                       </div>
                     </Link>
-                    <p className="text-sm text-muted-foreground line-clamp-2">{product.description}</p>
+                    <p className="text-sm text-muted-foreground line-clamp-2">
+                      {translatedProduct.isTranslating ? (
+                        <span className="opacity-70">{product.description}</span>
+                      ) : (
+                        translatedProduct.description
+                      )}
+                    </p>
                     <div className="flex flex-col gap-3 pt-2">
                       <div className="flex items-center justify-center">
                         <div className="flex items-center gap-2">
@@ -94,7 +117,7 @@ export const SimilarProducts: React.FC<SimilarProductsProps> = ({ products }) =>
                         asChild
                         className="w-full border-primary text-primary hover:bg-primary hover:text-primary-foreground transition-all duration-300 font-semibold shadow-md hover:shadow-lg hover:border-primary/40"
                       >
-                        <Link to={`/product/${product.id}`}>
+                        <Link to={`/product/${product.id}`} onClick={handleProductClick}>
                           {t('common.buyNow')}
                         </Link>
                       </Button>

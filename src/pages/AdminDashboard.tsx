@@ -120,8 +120,9 @@ const AdminDashboard: React.FC = () => {
           data,
           variants: variants || []
         })
-      } else if (images) {
-        await createProductMutation.mutateAsync({ data, images, variants })
+      } else {
+        // For new products, always create with variants (even if empty)
+        await createProductMutation.mutateAsync({ data, images: images || [], variants: variants || [] })
       }
     } catch (error: any) {
       toast({
@@ -150,6 +151,9 @@ const AdminDashboard: React.FC = () => {
     progress: 0,
     total: 0,
   })
+
+  // Product filter state
+  const [productStatusFilter, setProductStatusFilter] = useState<'all' | 'active' | 'inactive'>('all')
 
   // Pending Reviews State
   const [pendingReviews, setPendingReviews] = useState<ProductReview[]>([])
@@ -194,9 +198,20 @@ const AdminDashboard: React.FC = () => {
     isLoading: productsLoading,
     error: productsError,
   } = useQuery({
-    queryKey: ["admin-products"],
+    queryKey: ["admin-products", productStatusFilter],
     queryFn: async () => {
-      const response = await fetchProducts({ per_page: 100 })
+      const params: any = { per_page: 100 }
+      
+      // Add filter parameters based on status
+      if (productStatusFilter === 'all') {
+        params.show_all = 'true'
+      } else if (productStatusFilter === 'active') {
+        params.is_active = 'true'
+      } else if (productStatusFilter === 'inactive') {
+        params.is_active = 'false'
+      }
+      
+      const response = await fetchProducts(params)
       // Cast to admin Product type for compatibility
       const products = response.data as unknown as Product[]
       return products
@@ -240,8 +255,17 @@ const AdminDashboard: React.FC = () => {
     mutationFn: async ({ data, images, variants }: { data: ProductFormData; images?: File[]; variants?: any[] }) => {
       setIsCreatingProduct(true)
 
-      // Calculate total steps
-      const totalSteps = 1 + (variants?.length || 0) + (images?.length || 0)
+      // Calculate total steps (product + variants + product images + variant images)
+      const variantImageCount = variants?.reduce((sum, v) => {
+        return sum + 
+          (v.main_image_files?.length || 0) + 
+          (v.styling_image_files?.length || 0) + 
+          (v.detailed_image_files?.length || 0) + 
+          (v.mobile_image_files?.length || 0) +
+          (v.video_file ? 1 : 0)
+      }, 0) || 0
+      
+      const totalSteps = 1 + (variants?.length || 0) + (images?.length || 0) + variantImageCount
       let currentStep = 0
 
       // Step 1: Create product
@@ -253,7 +277,8 @@ const AdminDashboard: React.FC = () => {
         throw new Error("Product creation failed - no product ID returned")
       }
 
-      // Step 2: Create variants
+      // Step 2: Create variants and upload their images
+      const createdVariants: any[] = []
       if (variants && variants.length > 0) {
         try {
           for (let i = 0; i < variants.length; i++) {
@@ -269,17 +294,110 @@ const AdminDashboard: React.FC = () => {
               color: variant.color,
               sku: "", // Let backend generate SKU
               price: variant.price,
-              stock: variant.stock,
+              stock: variant.stock || 0,
             }
-            await createProductVariant(newProduct.id, variantData, token!)
+            const createdVariant = await createProductVariant(newProduct.id, variantData, token!)
+            createdVariants.push(createdVariant)
             currentStep++
+
+            // Upload variant images
+            if (createdVariant?.variant?.id) {
+              const variantId = createdVariant.variant.id
+
+              // Upload main images
+              if (variant.main_image_files && variant.main_image_files.length > 0) {
+                for (const file of variant.main_image_files) {
+                  setCreationProgress({
+                    step: `Uploading variant ${i + 1} main image...`,
+                    progress: currentStep,
+                    total: totalSteps,
+                  })
+                  await uploadProductImage(newProduct.id, file, token!, 'main', variantId)
+                  currentStep++
+                }
+              }
+
+              // Upload styling images
+              if (variant.styling_image_files && variant.styling_image_files.length > 0) {
+                for (const file of variant.styling_image_files) {
+                  setCreationProgress({
+                    step: `Uploading variant ${i + 1} styling image...`,
+                    progress: currentStep,
+                    total: totalSteps,
+                  })
+                  await uploadProductImage(newProduct.id, file, token!, 'styling', variantId)
+                  currentStep++
+                }
+              }
+
+              // Upload detailed images
+              if (variant.detailed_image_files && variant.detailed_image_files.length > 0) {
+                for (const file of variant.detailed_image_files) {
+                  setCreationProgress({
+                    step: `Uploading variant ${i + 1} detailed image...`,
+                    progress: currentStep,
+                    total: totalSteps,
+                  })
+                  await uploadProductImage(newProduct.id, file, token!, 'detailed', variantId)
+                  currentStep++
+                }
+              }
+
+              // Upload mobile images
+              if (variant.mobile_image_files && variant.mobile_image_files.length > 0) {
+                for (const file of variant.mobile_image_files) {
+                  setCreationProgress({
+                    step: `Uploading variant ${i + 1} mobile image...`,
+                    progress: currentStep,
+                    total: totalSteps,
+                  })
+                  await uploadProductImage(newProduct.id, file, token!, 'mobile', variantId)
+                  currentStep++
+                }
+              }
+
+              // Upload video
+              if (variant.video_file) {
+                setCreationProgress({
+                  step: `Uploading variant ${i + 1} video...`,
+                  progress: currentStep,
+                  total: totalSteps,
+                })
+                
+                const formData = new FormData()
+                formData.append('color', variant.color)
+                formData.append('video', variant.video_file)
+                
+                try {
+                  const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || '/api'
+                  const uploadUrl = `${apiBaseUrl}/products/${newProduct.id}/variant-video`
+                  
+                  const res = await fetch(uploadUrl, {
+                    method: 'POST',
+                    body: formData,
+                    headers: { 
+                      'Authorization': `Bearer ${token}`,
+                      'Accept': 'application/json'
+                    },
+                  })
+                  
+                  if (!res.ok) {
+                    console.error('Video upload failed:', await res.text())
+                  }
+                } catch (err: any) {
+                  console.error('Video upload error:', err)
+                }
+                
+                currentStep++
+              }
+            }
           }
         } catch (error: any) {
           throw new Error(`Product created but variant creation failed: ${error.message}`)
         }
       }
 
-      // Step 3: Upload images (batch)
+      // Step 3: Upload product images (batch)
       const imageUploadResults = { success: 0, failed: 0, errors: [] as string[] }
       if (images && images.length > 0) {
         setCreationProgress({ step: `Uploading ${images.length} images...`, progress: currentStep, total: totalSteps })
@@ -449,6 +567,8 @@ const AdminDashboard: React.FC = () => {
             const variantKey = `${variant.size}-${variant.color}`;
             const existingVariant = existingVariantMap.get(variantKey);
             
+            let variantId: number;
+            
             if (existingVariant?.id) {
               // Update existing variant
               await api.put(
@@ -462,14 +582,15 @@ const AdminDashboard: React.FC = () => {
                 },
                 { 
                   headers: buildApiHeaders(undefined, token!),
-                  validateStatus: (status) => status < 500 // Don't throw on 4xx errors
+                  validateStatus: (status) => status < 500
                 }
               ).catch(error => {
                 throw error;
               });
+              variantId = existingVariant.id;
             } else {
               // Create new variant
-              await api.post(
+              const createResponse = await api.post(
                 `/products/${id}/variants`,
                 {
                   size: variant.size,
@@ -480,11 +601,72 @@ const AdminDashboard: React.FC = () => {
                 },
                 { 
                   headers: buildApiHeaders(undefined, token!),
-                  validateStatus: (status) => status < 500 // Don't throw on 4xx errors
+                  validateStatus: (status) => status < 500
                 }
               ).catch(error => {
                 throw error;
               });
+              
+              // Extract variant ID from response
+              variantId = createResponse.data?.variant?.id || createResponse.data?.id;
+            }
+            
+            // Upload variant images if variant was created/updated successfully
+            if (variantId) {
+              // Upload main images
+              if (variant.main_image_files && variant.main_image_files.length > 0) {
+                for (const file of variant.main_image_files) {
+                  await uploadProductImage(id, file, token!, 'main', variantId)
+                }
+              }
+
+              // Upload styling images
+              if (variant.styling_image_files && variant.styling_image_files.length > 0) {
+                for (const file of variant.styling_image_files) {
+                  await uploadProductImage(id, file, token!, 'styling', variantId)
+                }
+              }
+
+              // Upload detailed images
+              if (variant.detailed_image_files && variant.detailed_image_files.length > 0) {
+                for (const file of variant.detailed_image_files) {
+                  await uploadProductImage(id, file, token!, 'detailed', variantId)
+                }
+              }
+
+              // Upload mobile images
+              if (variant.mobile_image_files && variant.mobile_image_files.length > 0) {
+                for (const file of variant.mobile_image_files) {
+                  await uploadProductImage(id, file, token!, 'mobile', variantId)
+                }
+              }
+
+              // Upload video
+              if (variant.video_file) {
+                const formData = new FormData()
+                formData.append('color', variant.color)
+                formData.append('video', variant.video_file)
+                
+                try {
+                  const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || '/api'
+                  const uploadUrl = `${apiBaseUrl}/products/${id}/variant-video`
+                  
+                  const res = await fetch(uploadUrl, {
+                    method: 'POST',
+                    body: formData,
+                    headers: { 
+                      'Authorization': `Bearer ${token}`,
+                      'Accept': 'application/json'
+                    },
+                  })
+                  
+                  if (!res.ok) {
+                    console.error('Video upload failed:', await res.text())
+                  }
+                } catch (err: any) {
+                  console.error('Video upload error:', err)
+                }
+              }
             }
           } catch (error) {
             // Continue with next variant even if one fails
@@ -937,6 +1119,41 @@ const AdminDashboard: React.FC = () => {
             </Button>
           </div>
 
+          {/* Filter Section */}
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex flex-col sm:flex-row gap-3 sm:items-center">
+                <Label className="text-sm font-medium">Filter by Status:</Label>
+                <div className="flex gap-2">
+                  <Button
+                    variant={productStatusFilter === 'all' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setProductStatusFilter('all')}
+                  >
+                    All Products
+                  </Button>
+                  <Button
+                    variant={productStatusFilter === 'active' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setProductStatusFilter('active')}
+                  >
+                    Active
+                  </Button>
+                  <Button
+                    variant={productStatusFilter === 'inactive' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setProductStatusFilter('inactive')}
+                  >
+                    Inactive
+                  </Button>
+                </div>
+                <div className="text-sm text-muted-foreground ml-auto">
+                  Showing {products.length} product{products.length !== 1 ? 's' : ''}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
           {isAddingProduct && (
             <ProductForm
               onSave={handleSaveProduct}
@@ -993,7 +1210,12 @@ const AdminDashboard: React.FC = () => {
                       <div className="flex-1 space-y-2 min-w-0">
                         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2">
                           <div className="min-w-0 flex-1">
-                            <h3 className="font-semibold text-foreground truncate">{product.name}</h3>
+                            <div className="flex items-center gap-2">
+                              <h3 className="font-semibold text-foreground truncate">{product.name}</h3>
+                              <Badge variant={product.is_active ? 'default' : 'secondary'}>
+                                {product.is_active ? 'Active' : 'Inactive'}
+                              </Badge>
+                            </div>
                             <p className="text-sm text-muted-foreground truncate">{product.category.name}</p>
                           </div>
                           <div className="flex gap-2 justify-center sm:justify-end flex-shrink-0">

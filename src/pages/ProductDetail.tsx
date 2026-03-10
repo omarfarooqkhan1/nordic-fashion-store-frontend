@@ -60,10 +60,10 @@ const ProductDetail = () => {
   }, []);
 
   // All useEffect hooks must come before any conditional returns
-  // Scroll to top when component mounts
+  // Scroll to top when component mounts or product ID changes
   useEffect(() => {
     window.scrollTo(0, 0);
-  }, []);
+  }, [id]);
 
   const { data: product, isLoading, isError, error } = useQuery<Product>({
     queryKey: ['product', id],

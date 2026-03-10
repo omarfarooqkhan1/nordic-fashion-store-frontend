@@ -8,6 +8,7 @@ export interface ProductFormData {
   gender: 'male' | 'female' | 'unisex';
   discount?: number; // Add discount field
   category_id: number;
+  is_active?: boolean; // Product status
   variants?: ProductVariantFormData[];
   images?: ProductImageFormData[];
   styling_images?: string[]; // Array of styling image URLs
@@ -57,6 +58,7 @@ export interface Product {
   created_at: string;
   updated_at: string;
   discount?: number; // Add discount field
+  is_active?: boolean; // Product status
   allImages?: ProductImage[]; // Add allImages field
   size_guide_image?: string; // Add size guide image field
 }
@@ -731,8 +733,10 @@ export const updateProductBasicInfo = async (
   productData: {
     name: string;
     description: string;
+    gender: 'male' | 'female' | 'unisex';
     discount?: number;
     category_id: number;
+    is_active?: boolean;
   },
   token: string
 ): Promise<{ message: string; product: any }> => {

@@ -53,7 +53,7 @@ export const VariantForm: React.FC<VariantFormProps> = ({
   const [newStylingImageFile, setNewStylingImageFile] = useState<File | null>(null);
   const [newDetailedImageFile, setNewDetailedImageFile] = useState<File | null>(null);
   const [newMobileDetailedImageFile, setNewMobileDetailedImageFile] = useState<File | null>(null);
-  const [videoFile, setVideoFile] = useState<File | null>(null);
+  const [videoFile, setVideoFile] = useState<File | null>(variant?.video_file || null);
   
   // For new variants, we need to store uploaded images temporarily
   const [tempUploadedImages, setTempUploadedImages] = useState<Record<string, any[]>>({
@@ -62,15 +62,66 @@ export const VariantForm: React.FC<VariantFormProps> = ({
     detailed: [],
     mobile: []
   });
-  // For new image files (multiple)
-  const [newMainImageFiles, setNewMainImageFiles] = useState<File[]>([]);
-  const [newStylingImageFiles, setNewStylingImageFiles] = useState<File[]>([]);
-  const [newDetailedImageFiles, setNewDetailedImageFiles] = useState<File[]>([]);
-  const [newMobileDetailedImageFiles, setNewMobileDetailedImageFiles] = useState<File[]>([]);
+  // For new image files (multiple) - initialize from variant prop if available
+  const [newMainImageFiles, setNewMainImageFiles] = useState<File[]>(variant?.main_image_files || []);
+  const [newStylingImageFiles, setNewStylingImageFiles] = useState<File[]>(variant?.styling_image_files || []);
+  const [newDetailedImageFiles, setNewDetailedImageFiles] = useState<File[]>(variant?.detailed_image_files || []);
+  const [newMobileDetailedImageFiles, setNewMobileDetailedImageFiles] = useState<File[]>(variant?.mobile_image_files || []);
   
   const [previewUrls, setPreviewUrls] = useState<Record<string, string>>({});
   const [isUploading, setIsUploading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  // Auto-save variant data when it changes (for new products only)
+  useEffect(() => {
+    if (isNewProduct && variantData.size && variantData.color && variantData.price) {
+      // Debounce the save to avoid too many calls
+      const timer = setTimeout(() => {
+        // Include image files in the variant data
+        const completeVariantData = {
+          ...variantData,
+          main_image_files: newMainImageFiles,
+          styling_image_files: newStylingImageFiles,
+          detailed_image_files: newDetailedImageFiles,
+          mobile_image_files: newMobileDetailedImageFiles,
+          video_file: videoFile,
+        };
+        onSave(completeVariantData);
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [variantData, newMainImageFiles, newStylingImageFiles, newDetailedImageFiles, newMobileDetailedImageFiles, videoFile, isNewProduct, onSave]);
+
+  // Initialize preview URLs for existing files on mount
+  useEffect(() => {
+    const urls: Record<string, string> = {}
+    
+    // Create preview URLs for image files
+    newMainImageFiles.forEach((file, idx) => {
+      urls[`main-${idx}`] = URL.createObjectURL(file)
+    })
+    newStylingImageFiles.forEach((file, idx) => {
+      urls[`styling-${idx}`] = URL.createObjectURL(file)
+    })
+    newDetailedImageFiles.forEach((file, idx) => {
+      urls[`detailed-${idx}`] = URL.createObjectURL(file)
+    })
+    newMobileDetailedImageFiles.forEach((file, idx) => {
+      urls[`mobile-${idx}`] = URL.createObjectURL(file)
+    })
+    
+    // Create preview URL for video file
+    if (videoFile) {
+      urls['video'] = URL.createObjectURL(videoFile)
+    }
+    
+    setPreviewUrls(urls)
+    
+    // Cleanup function
+    return () => {
+      Object.values(urls).forEach(url => URL.revokeObjectURL(url))
+    }
+  }, []) // Only run on mount
 
   // Clean up object URLs when component unmounts
   useEffect(() => {
@@ -241,6 +292,16 @@ export const VariantForm: React.FC<VariantFormProps> = ({
 
       if (isNewProduct) {
         // For new products, just pass selected files up to ProductForm
+        formattedVariantData = {
+          ...formattedVariantData,
+          main_image_files: newMainImageFiles,
+          styling_image_files: newStylingImageFiles,
+          detailed_image_files: newDetailedImageFiles,
+          mobile_image_files: newMobileDetailedImageFiles,
+          video_file: videoFile,
+        };
+      } else if (!variantData.id) {
+        // For new variants being added to existing products, also pass files
         formattedVariantData = {
           ...formattedVariantData,
           main_image_files: newMainImageFiles,
@@ -916,15 +977,27 @@ export const VariantForm: React.FC<VariantFormProps> = ({
             )}
           </div>
 
-         {/* Action Buttons */}
-         <div className="flex gap-3 pt-4">
-           <Button type="button" onClick={handleSave} disabled={isUploading}>
-             Save Variant
-           </Button>
-           <Button type="button" variant="outline" onClick={onCancel} disabled={isUploading}>
-             Cancel
-           </Button>
-         </div>
+         {/* Action Buttons - Only show for existing products */}
+         {!isNewProduct && (
+           <div className="flex gap-4 pt-4">
+             <Button
+               type="button"
+               onClick={handleSave}
+               disabled={isUploading}
+               className="bg-gold-500 hover:bg-gold-600 text-leather-900 font-semibold"
+             >
+               {isUploading ? "Saving..." : "Save Variant"}
+             </Button>
+             <Button
+               type="button"
+               variant="outline"
+               onClick={onCancel}
+               disabled={isUploading}
+             >
+               Cancel
+             </Button>
+           </div>
+         )}
        </div>
      </CardContent>
    </Card>

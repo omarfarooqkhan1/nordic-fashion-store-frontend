@@ -17,6 +17,22 @@ const PrivacyPolicy = () => {
     (url) => axios.get(url).then((res) => res.data.data)
   );
 
+  // Process content to fix image URLs
+  const processedContent = React.useMemo(() => {
+    if (!data?.content) return '';
+    
+    const backendUrl = import.meta.env.VITE_BACKEND_URL;
+    let content = data.content;
+    
+    // Replace relative image URLs with absolute URLs
+    content = content.replace(
+      /src=["'](\/(storage|images)\/[^"']+)["']/g,
+      `src="${backendUrl}$1"`
+    );
+    
+    return content;
+  }, [data?.content]);
+
   if (isLoading) {
     return <LoadingState message={t('privacy.loading')} />;
   }
@@ -45,9 +61,29 @@ const PrivacyPolicy = () => {
 
       {/* Privacy Policy Content */}
       <div className="max-w-4xl mx-auto">
+        {/* Display images if available */}
+        {data?.images && data.images.length > 0 && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+            {data.images.map((image: any) => (
+              <div key={image.id} className="relative overflow-hidden rounded-lg shadow-lg">
+                <img
+                  src={image.url}
+                  alt={image.alt_text || image.caption}
+                  className="w-full h-64 object-cover"
+                />
+                {image.caption && (
+                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-4">
+                    <p className="text-white text-sm">{image.caption}</p>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+
         <Card className="bg-gradient-to-br from-card to-leather-100/50 dark:from-card dark:to-leather-800/30 border-border shadow-lg">
           <CardContent className="p-6 sm:p-8 prose prose-slate dark:prose-invert max-w-none">
-            <div dangerouslySetInnerHTML={{ __html: data?.content || '' }} />
+            <div dangerouslySetInnerHTML={{ __html: processedContent }} />
           </CardContent>
         </Card>
 

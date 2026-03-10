@@ -46,6 +46,7 @@ export interface Product {
   availability?: Record<string, boolean>; // Added to match API response
   variantPrices?: Record<string, number>; // Added to match API response
   similar_products?: Product[]; // Similar products
+  is_active?: boolean; // Product status
   created_at: string;
   updated_at: string;
   discount?: number;

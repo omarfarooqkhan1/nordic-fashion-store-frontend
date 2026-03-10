@@ -14,10 +14,14 @@ import {
   deleteProductImage,
   type ProductFormData,
   createProductVariant,
-  updateProductVariant
+  updateProductVariant,
+  deleteProductVariant
 } from "@/api/admin"
 import type { Product, Category } from "@/api/admin"
 import { VariantForm } from "./VariantForm"
+import { MultiVariantForm } from "./MultiVariantForm"
+import { ExistingVariantsList } from "./ExistingVariantsList"
+import { DeleteVariantDialog } from "./DeleteVariantDialog"
 
 interface ProductFormProps {
   product?: Product
@@ -40,14 +44,16 @@ export const ProductForm: React.FC<ProductFormProps> = ({
 }) => {
   // --- State and hooks ---
 
-  const [variants, setVariants] = useState<any[]>(product?.variants || []);
-  const [isAddingVariant, setIsAddingVariant] = useState(false);
-  const [editingVariant, setEditingVariant] = useState<any | null>(null);
+  const [variants, setVariants] = useState<any[]>(product?.variants || [])
+  const [isAddingVariant, setIsAddingVariant] = useState(!product) // Expand by default for new products
+  const [editingVariant, setEditingVariant] = useState<any | null>(null)
+  const [deletingVariant, setDeletingVariant] = useState<any | null>(null)
   const [formData, setFormData] = useState<ProductFormData>({
     name: product?.name || "",
     description: product?.description || "",
-  category_id: product?.category?.id ?? 0,
+    category_id: product?.category?.id ?? 0,
     gender: product?.gender || "unisex",
+    is_active: product?.is_active ?? true, // Default to active for new products
     // ...add other fields as needed
   });
   const [sizeGuideFile, setSizeGuideFile] = useState<File | null>(null);
@@ -60,13 +66,30 @@ export const ProductForm: React.FC<ProductFormProps> = ({
 
   // --- Render VariantForm conditionally ---
   function renderVariantForm() {
-    if (!(isAddingVariant || editingVariant)) return null;
-    return (
-      <VariantForm
-        variant={editingVariant}
-        onSave={async (variantData) => {
-          if (editingVariant) {
-            // Update existing variant (only for existing products)
+    if (!(isAddingVariant || editingVariant)) return null
+
+    // For new products, use MultiVariantForm
+    if (!product) {
+      return (
+        <MultiVariantForm
+          variants={variants}
+          onVariantsChange={setVariants}
+          product={product}
+          token={token}
+          isNewProduct={true}
+        />
+      )
+    }
+
+    // For editing existing products, also use MultiVariantForm if adding multiple variants
+    // Otherwise use single VariantForm for editing one variant
+    if (editingVariant) {
+      // Editing a single existing variant
+      return (
+        <VariantForm
+          variant={editingVariant}
+          onSave={async (variantData) => {
+            // Update existing variant
             if (product && token) {
               try {
                 const result = await updateProductVariant(
@@ -76,91 +99,224 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                     size: variantData.size,
                     color: variantData.color,
                     price: Number(variantData.price),
-                    stock: Number(variantData.stock),
                     sku: variantData.sku,
                   },
                   token
-                );
-                setVariants(prev => prev.map(v => 
-                  v.id === variantData.id ? {...variantData, ...result.variant} : v
-                ));
-                setEditingVariant(null);
-                setIsAddingVariant(false);
-                toast.toast({ title: "Variant updated successfully" });
+                )
+
+                setVariants(prev =>
+                  prev.map(v =>
+                    v.id === variantData.id ? { ...variantData, ...result.variant } : v
+                  )
+                )
+
+                setEditingVariant(null)
+                setIsAddingVariant(false)
+                
+                // Invalidate queries to refresh the product data
+                queryClient.invalidateQueries({ queryKey: ["admin-products"] })
+                queryClient.invalidateQueries({ queryKey: ["product", product.id.toString()] })
+                
+                toast.toast({ title: "Variant updated successfully" })
               } catch (error: any) {
                 toast.toast({
                   title: "Error updating variant",
                   description: error.message,
                   variant: "destructive",
-                });
+                })
               }
             }
-          } else {
-            // Add new variant
-            const isDuplicate = variants.some(
-              (v) => 
-                v.size.toLowerCase() === variantData.size.toLowerCase() && 
-                v.color.toLowerCase() === variantData.color.toLowerCase()
-            );
-            if (isDuplicate) {
-              toast.toast({
-                title: "Duplicate Variant",
-                description: `A variant with size \"${variantData.size}\" and color \"${variantData.color}\" already exists.`,
-                variant: "destructive",
-              });
-              return;
-            }
-            // For new products, just add to local state
-            if (!product) {
-              setVariants(prev => [...prev, variantData]);
-              setIsAddingVariant(false);
-              toast.toast({ title: "Variant added successfully" });
-            } else if (product && token) {
-              try {
-                // Prepare variant data for API
-                const variantPayload = {
-                  size: variantData.size,
-                  color: variantData.color,
-                  price: Number(variantData.price),
-                  stock: Number(variantData.stock),
-                  sku: variantData.sku,
-                };
-                if (variantData.temp_image_ids && variantData.temp_image_ids.length > 0) {
-                  (variantPayload as any).temp_image_ids = variantData.temp_image_ids;
+          }}
+          onCancel={() => {
+            setIsAddingVariant(false)
+            setEditingVariant(null)
+          }}
+          isEditing={true}
+          token={token}
+          productId={product?.id}
+        />
+      )
+    }
+
+    // Adding new variant to existing product - use single form with save button
+    return (
+      <VariantForm
+        variant={undefined}
+        onSave={async (variantData) => {
+          // Add new variant
+          const isDuplicate = variants.some(
+            (v) =>
+              v.size.toLowerCase() === variantData.size.toLowerCase() &&
+              v.color.toLowerCase() === variantData.color.toLowerCase()
+          )
+
+          if (isDuplicate) {
+            toast.toast({
+              title: "Duplicate Variant",
+              description: `A variant with size "${variantData.size}" and color "${variantData.color}" already exists.`,
+              variant: "destructive",
+            })
+            return
+          }
+
+          if (product && token) {
+            try {
+              const variantPayload = {
+                size: variantData.size,
+                color: variantData.color,
+                price: Number(variantData.price),
+                sku: variantData.sku,
+              }
+
+              if (variantData.temp_image_ids && variantData.temp_image_ids.length > 0) {
+                (variantPayload as any).temp_image_ids = variantData.temp_image_ids
+              }
+
+              const result = await createProductVariant(
+                product.id,
+                variantPayload,
+                token
+              )
+
+              // Upload variant images if any
+              const variantId = result.variant?.id
+              if (variantId) {
+                // Upload main images
+                if (variantData.main_image_files && variantData.main_image_files.length > 0) {
+                  for (const file of variantData.main_image_files) {
+                    await uploadProductImage(product.id, file, token, 'main', variantId)
+                  }
                 }
-                const result = await createProductVariant(
-                  product.id,
-                  variantPayload,
-                  token
-                );
-                setVariants(prev => [...prev, {...variantData, ...result.variant}]);
-                setIsAddingVariant(false);
-                toast.toast({ title: "Variant added successfully" });
-              } catch (error: any) {
-                toast.toast({
-                  title: "Error creating variant",
-                  description: error.message,
-                  variant: "destructive",
-                });
+
+                // Upload styling images
+                if (variantData.styling_image_files && variantData.styling_image_files.length > 0) {
+                  for (const file of variantData.styling_image_files) {
+                    await uploadProductImage(product.id, file, token, 'styling', variantId)
+                  }
+                }
+
+                // Upload detailed images
+                if (variantData.detailed_image_files && variantData.detailed_image_files.length > 0) {
+                  for (const file of variantData.detailed_image_files) {
+                    await uploadProductImage(product.id, file, token, 'detailed', variantId)
+                  }
+                }
+
+                // Upload mobile images
+                if (variantData.mobile_image_files && variantData.mobile_image_files.length > 0) {
+                  for (const file of variantData.mobile_image_files) {
+                    await uploadProductImage(product.id, file, token, 'mobile', variantId)
+                  }
+                }
+
+                // Upload video
+                if (variantData.video_file) {
+                  const formData = new FormData()
+                  formData.append('color', variantData.color)
+                  formData.append('video', variantData.video_file)
+                  
+                  try {
+                    const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || '/api'
+                    const uploadUrl = `${apiBaseUrl}/products/${product.id}/variant-video`
+                    
+                    const res = await fetch(uploadUrl, {
+                      method: 'POST',
+                      body: formData,
+                      headers: { 
+                        'Authorization': `Bearer ${token}`,
+                        'Accept': 'application/json'
+                      },
+                    })
+                    
+                    if (!res.ok) {
+                      console.error('Video upload failed:', await res.text())
+                    }
+                  } catch (err: any) {
+                    console.error('Video upload error:', err)
+                  }
+                }
               }
+
+              setVariants(prev => [...prev, { ...variantData, ...result.variant }])
+              setIsAddingVariant(false)
+              
+              // Invalidate queries to refresh the product data
+              queryClient.invalidateQueries({ queryKey: ["admin-products"] })
+              queryClient.invalidateQueries({ queryKey: ["product", product.id.toString()] })
+              
+              toast.toast({ title: "Variant added successfully" })
+            } catch (error: any) {
+              toast.toast({
+                title: "Error creating variant",
+                description: error.message,
+                variant: "destructive",
+              })
             }
           }
         }}
         onCancel={() => {
-          setIsAddingVariant(false);
-          setEditingVariant(null);
+          setIsAddingVariant(false)
+          setEditingVariant(null)
         }}
-        isEditing={!!editingVariant}
+        isEditing={false}
         token={token}
         productId={product?.id}
-        isNewProduct={!product}
       />
-    );
+    )
   }
 
   // Variant management functions
-  const handleDeleteVariant = (variantId: number) => {
-    setVariants((prev) => prev.filter((v) => v.id !== variantId));
+  const handleDeleteVariant = async (variantId: number) => {
+    if (!product || !token) {
+      toast.toast({
+        title: "Error",
+        description: "Cannot delete variant: missing product or authentication",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Find the variant to show in confirmation dialog
+    const variantToDelete = variants.find(v => v.id === variantId);
+    if (!variantToDelete) {
+      toast.toast({
+        title: "Error",
+        description: "Variant not found",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Show confirmation dialog
+    setDeletingVariant(variantToDelete);
+  };
+
+  const confirmDeleteVariant = async () => {
+    if (!deletingVariant || !product || !token) return;
+
+    try {
+      await deleteProductVariant(deletingVariant.id, token);
+      
+      // Remove from local state
+      setVariants((prev) => prev.filter((v) => v.id !== deletingVariant.id));
+      
+      // Invalidate queries to refresh the product data
+      queryClient.invalidateQueries({ queryKey: ["admin-products"] });
+      queryClient.invalidateQueries({ queryKey: ["product", product.id.toString()] });
+      
+      toast.toast({ 
+        title: "Variant deleted successfully",
+        description: "The variant has been removed from the product"
+      });
+      
+      setDeletingVariant(null);
+    } catch (error: any) {
+      toast.toast({
+        title: "Error deleting variant",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
   };
 
   // Function to group variants by color
@@ -219,16 +375,23 @@ export const ProductForm: React.FC<ProductFormProps> = ({
     }
 
     // Pass the form data and variants
-    // Ensure all variants have valid prices before sending
+    // Ensure all variants have valid prices and preserve image files
     const formattedVariants = variants.map(variant => ({
       ...variant,
       price: Number(variant.price),
+      // Preserve image files for upload
+      main_image_files: variant.main_image_files || [],
+      styling_image_files: variant.styling_image_files || [],
+      detailed_image_files: variant.detailed_image_files || [],
+      mobile_image_files: variant.mobile_image_files || [],
+      video_file: variant.video_file || null,
     }));
 
     onSave(formData, [], formattedVariants);
   };
 
   return (
+    <>
     <Card>
       <CardHeader>
         <CardTitle>{product ? "Edit Product" : "Add New Product"}</CardTitle>
@@ -298,6 +461,24 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                 Optional: Discount percentage for the product (0-100%)
               </p>
             </div>
+            <div>
+              <Label htmlFor="is_active">Product Status *</Label>
+              <Select
+                value={formData.is_active ? "true" : "false"}
+                onValueChange={(value) => setFormData({ ...formData, is_active: value === "true" })}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="true">Active</SelectItem>
+                  <SelectItem value="false">Inactive</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-sm text-muted-foreground mt-1">
+                {product ? "Set whether this product is visible to customers" : "New products are inactive by default"}
+              </p>
+            </div>
           </div>
 
           <div>
@@ -359,212 +540,28 @@ export const ProductForm: React.FC<ProductFormProps> = ({
           <div className="space-y-4">
             <Label className="text-lg font-semibold">Product Variants & Stock</Label>
 
-            {/* Add New Variant Button */}
-            {!isAddingVariant && !editingVariant && (
-              product ? (
-                <Button
-                  type="button"
-                  onClick={() => setIsAddingVariant(true)}
-                  className="bg-green-600 hover:bg-green-700 text-white"
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add New Variant
-                </Button>
-              ) : (
-                <Button
-                  type="button"
-                  className="bg-green-600 text-white opacity-60 cursor-not-allowed"
-                  disabled
-                  tabIndex={-1}
-                  style={{ pointerEvents: 'auto' }}
-                  title="will be available once you create this product"
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add New Variant
-                </Button>
-              )
-            )}
-
-            {/* Variant Form */}
-            {(isAddingVariant || editingVariant) && (
-              <VariantForm
-                variant={editingVariant}
-                onSave={async (variantData) => {
-                  if (editingVariant) {
-                    // Update existing variant
-                    if (product && token) {
-                      try {
-                        const result = await updateProductVariant(
-                          product.id,
-                          variantData.id,
-                          {
-                            size: variantData.size,
-                            color: variantData.color,
-                            price: Number(variantData.price),
-                            sku: variantData.sku,
-                          },
-                          token
-                        );
-                        
-                        // Update variant in state
-                        setVariants(prev => prev.map(v => 
-                          v.id === variantData.id ? {...variantData, ...result.variant} : v
-                        ));
-                        
-                        setEditingVariant(null);
-                        setIsAddingVariant(false);
-                        toast.toast({ title: "Variant updated successfully" });
-                      } catch (error: any) {
-                        toast.toast({
-                          title: "Error updating variant",
-                          description: error.message,
-                          variant: "destructive",
-                        });
-                      }
-                    }
-                  } else {
-                    // Add new variant
-                    // Check for duplicate variant (same size and color, case-insensitive)
-                    const isDuplicate = variants.some(
-                      (v) => 
-                        v.size.toLowerCase() === variantData.size.toLowerCase() && 
-                        v.color.toLowerCase() === variantData.color.toLowerCase()
-                    );
-
-                    if (isDuplicate) {
-                      toast.toast({
-                        title: "Duplicate Variant",
-                        description: `A variant with size "${variantData.size}" and color "${variantData.color}" already exists.`,
-                        variant: "destructive",
-                      });
-                      return;
-                    }
-
-                    if (product && token) {
-                      try {
-                        // Prepare variant data for API
-                        const variantPayload = {
-                          size: variantData.size,
-                          color: variantData.color,
-                          price: Number(variantData.price),
-                          sku: variantData.sku,
-                        };
-
-                        // If there are temp image IDs, include them
-                        if (variantData.temp_image_ids && variantData.temp_image_ids.length > 0) {
-                          (variantPayload as any).temp_image_ids = variantData.temp_image_ids;
-                        }
-
-                        const result = await createProductVariant(
-                          product.id,
-                          variantPayload,
-                          token
-                        );
-                        
-                        // Add the new variant to state
-                        setVariants(prev => [...prev, {...variantData, ...result.variant}]);
-                        setIsAddingVariant(false);
-                        toast.toast({ title: "Variant added successfully" });
-                      } catch (error: any) {
-                        toast.toast({
-                          title: "Error creating variant",
-                          description: error.message,
-                          variant: "destructive",
-                        });
-                      }
-                    } else {
-                      // Fallback for when product or token is not available
-                      setVariants(prev => [...prev, variantData]);
-                      setIsAddingVariant(false);
-                      toast.toast({ title: "Variant added successfully" });
-                    }
-                  }
-                }}
-                onCancel={() => {
-                  setIsAddingVariant(false);
-                  setEditingVariant(null);
-                }}
-                isEditing={!!editingVariant}
-                token={token}
-                productId={product?.id}
-              />
+            {/* Add New Variant Button - Only show for existing products */}
+            {!isAddingVariant && !editingVariant && product && (
+              <Button
+                type="button"
+                onClick={() => setIsAddingVariant(true)}
+                className="bg-green-600 hover:bg-green-700 text-white"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Add New Variant
+              </Button>
             )}
 
             {/* Existing Variants */}
             <div className="space-y-4">
               <h3 className="text-lg font-semibold text-foreground">Product Variants ({variants.length})</h3>
-              {variants.length === 0 ? (
-                product ? (
-                  <p className="text-muted-foreground">No variants added yet. Add your first variant above.</p>
-                ) : null
-              ) : (
-                <div className="grid gap-4">
-                  {variants.map((variant) => (
-                    <Card key={variant.id} className="border-l-4 border-l-blue-500 dark:border-l-blue-600 bg-card">
-                      <CardContent className="p-4">
-                        <div className="flex items-center justify-between">
-                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 flex-1">
-                            <div>
-                              <Label className="text-sm text-muted-foreground">Size</Label>
-                              <p className="font-medium text-foreground">{variant.size}</p>
-                            </div>
-                            <div>
-                              <Label className="text-sm text-muted-foreground">Color</Label>
-                              <p className="font-medium text-foreground">{variant.color}</p>
-                            </div>
-                            <div>
-                              <Label className="text-sm text-muted-foreground">Price</Label>
-                              <p className="font-medium text-foreground">
-                                €{variant.price !== undefined && variant.price !== null && !isNaN(Number(variant.price)) ?
-                                  Number(variant.price).toFixed(2) : 'Invalid'}
-                              </p>
-                            </div>
-                          </div>
-                          <div className="flex gap-2">
-                            <Button
-                              type="button"
-                              variant="outline"
-                              size="sm"
-                              onClick={() => setEditingVariant(variant)}
-                            >
-                              Edit
-                            </Button>
-                            <Button
-                              type="button"
-                              variant="destructive"
-                              size="sm"
-                              onClick={() => handleDeleteVariant(variant.id)}
-                              className="hover:bg-destructive/90"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </div>
-                        
-                        {/* Show image counts */}
-                        <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700 grid grid-cols-2 md:grid-cols-4 gap-2 text-sm">
-                          <div>
-                            <Label className="text-xs text-muted-foreground">Main Images</Label>
-                            <p className="font-medium">{variant.main_images?.length || 0}</p>
-                          </div>
-                          <div>
-                            <Label className="text-xs text-muted-foreground">Styling Images</Label>
-                            <p className="font-medium">{variant.styling_images?.length || 0}</p>
-                          </div>
-                          <div>
-                            <Label className="text-xs text-muted-foreground">Detailed Images</Label>
-                            <p className="font-medium">{variant.detailed_images?.length || 0}</p>
-                          </div>
-                          <div>
-                            <Label className="text-xs text-muted-foreground">Mobile Images</Label>
-                            <p className="font-medium">{variant.mobile_detailed_images?.length || 0}</p>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              )}
+              {product ? (
+                <ExistingVariantsList
+                  variants={variants}
+                  onEdit={setEditingVariant}
+                  onDelete={handleDeleteVariant}
+                />
+              ) : null}
             </div>
           </div>
 
@@ -582,7 +579,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
               ) : product ? (
                 "Update Product"
               ) : (
-                "Add Product"
+                "Add New Product"
               )}
             </Button>
             <Button type="button" variant="outline" onClick={onCancel} disabled={isCreatingProduct}>
@@ -592,6 +589,16 @@ export const ProductForm: React.FC<ProductFormProps> = ({
         </form>
       </CardContent>
     </Card>
+
+    {/* Delete Variant Confirmation Dialog */}
+    <DeleteVariantDialog
+      open={!!deletingVariant}
+      onOpenChange={(open) => !open && setDeletingVariant(null)}
+      onConfirm={confirmDeleteVariant}
+      variant={deletingVariant}
+      productName={product?.name}
+    />
+  </>
   )
 }
 
