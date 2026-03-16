@@ -3,10 +3,33 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Trash2, Upload, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { Image } from "@/types/Product";
 import { uploadProductImage, deleteProductImage } from "@/api/admin";
+import { DraggableImageList } from "./DraggableImageList";
+
+// Predefined color options
+const PREDEFINED_COLORS = [
+  "Black",
+  "White",
+  "Red",
+  "Blue",
+  "Green",
+  "Yellow",
+  "Orange",
+  "Purple",
+  "Pink",
+  "Brown",
+  "Gray",
+  "Beige",
+  "Navy",
+  "Maroon",
+  "Olive",
+  "Teal",
+  "Custom" // Option to add custom color
+];
 
 interface VariantFormProps {
   variant?: any;
@@ -16,6 +39,7 @@ interface VariantFormProps {
   token?: string | null;
   productId?: number;
   isNewProduct?: boolean;
+  existingVariants?: any[]; // List of existing variants to check for duplicates
 }
 
 export const VariantForm: React.FC<VariantFormProps> = ({
@@ -26,20 +50,26 @@ export const VariantForm: React.FC<VariantFormProps> = ({
   token,
   productId,
   isNewProduct = false,
+  existingVariants = [],
 }) => {
   const { toast } = useToast();
+
+  // Check if variant has a custom color (not in predefined list)
+  const isCustomColor = variant?.color && !PREDEFINED_COLORS.includes(variant.color);
+  
+  const [showCustomColorInput, setShowCustomColorInput] = useState(isCustomColor);
+  const [customColorValue, setCustomColorValue] = useState(isCustomColor ? variant.color : '');
 
   const [variantData, setVariantData] = useState<any>(() => {
     if (variant) {
       return {
-  ...variant,
-  price: variant.price?.toString() || "",
+        ...variant,
+        price: variant.price?.toString() || "",
       };
     }
     return {
-      size: "",
       color: "",
-  price: "",
+      price: "",
       video_url: "",
     };
   });
@@ -74,7 +104,7 @@ export const VariantForm: React.FC<VariantFormProps> = ({
 
   // Auto-save variant data when it changes (for new products only)
   useEffect(() => {
-    if (isNewProduct && variantData.size && variantData.color && variantData.price) {
+    if (isNewProduct && variantData.color && variantData.price) {
       // Debounce the save to avoid too many calls
       const timer = setTimeout(() => {
         // Include image files in the variant data
@@ -247,23 +277,27 @@ export const VariantForm: React.FC<VariantFormProps> = ({
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
     
-    if (!variantData.size.trim()) {
-      newErrors.size = "Size is required";
-    }
-    
     if (!variantData.color.trim()) {
       newErrors.color = "Color is required";
+    } else {
+      // Check for duplicate colors (exclude current variant when editing)
+      const isDuplicate = existingVariants.some(
+        (v) => v.id !== variant?.id && v.color?.toLowerCase() === variantData.color.toLowerCase()
+      );
+      
+      if (isDuplicate) {
+        newErrors.color = `A variant with color "${variantData.color}" already exists`;
+      }
     }
     
     if (!variantData.price) {
       newErrors.price = "Price is required";
     } else {
-    const price = Number.parseFloat(variantData.price);
+      const price = Number.parseFloat(variantData.price);
       if (isNaN(price) || price < 0) {
         newErrors.price = "Please enter a valid price";
       }
     }
-    
     
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -469,6 +503,33 @@ export const VariantForm: React.FC<VariantFormProps> = ({
           video_url: videoPath,
           temp_image_ids: tempImageIds.length > 0 ? tempImageIds : undefined
         };
+        
+        // Save image order if variant exists
+        if (variantData.id && productId && token) {
+          try {
+            const { updateVariantImageOrder } = await import('@/api/admin');
+            
+            // Collect all images with their sort_order
+            const allImages = [
+              ...uploadedImages.main,
+              ...uploadedImages.styling,
+              ...uploadedImages.detailed,
+              ...uploadedImages.mobile
+            ].filter(img => img.id); // Only existing images with IDs
+            
+            if (allImages.length > 0) {
+              const imageUpdates = allImages.map(img => ({
+                id: img.id,
+                sort_order: img.sort_order || 0
+              }));
+              
+              await updateVariantImageOrder(productId, variantData.id, imageUpdates, token);
+            }
+          } catch (err: any) {
+            console.error('Failed to save image order:', err);
+            // Don't block the save if image order update fails
+          }
+        }
       }
 
       // Clean up preview URLs
@@ -495,33 +556,60 @@ export const VariantForm: React.FC<VariantFormProps> = ({
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="variant-size">Size *</Label>
-              <Input
-                id="variant-size"
-                value={variantData.size}
-                onChange={(e) => {
-                  setVariantData({ ...variantData, size: e.target.value });
-                  if (errors.size) setErrors(prev => ({ ...prev, size: '' }));
-                }}
-                placeholder="S, M, L, etc."
-                required
-                className={errors.size ? "border-red-500" : ""}
-              />
-              {errors.size && <p className="text-sm text-red-500 mt-1">{errors.size}</p>}
-            </div>
-            <div>
               <Label htmlFor="variant-color">Color *</Label>
-              <Input
-                id="variant-color"
-                value={variantData.color}
-                onChange={(e) => {
-                  setVariantData({ ...variantData, color: e.target.value });
-                  if (errors.color) setErrors(prev => ({ ...prev, color: '' }));
-                }}
-                placeholder="Red, Blue, etc."
-                required
-                className={errors.color ? "border-red-500" : ""}
-              />
+              {showCustomColorInput ? (
+                <div className="space-y-2">
+                  <Input
+                    id="variant-color-custom"
+                    value={customColorValue}
+                    onChange={(e) => {
+                      setCustomColorValue(e.target.value);
+                      setVariantData({ ...variantData, color: e.target.value });
+                      if (errors.color) setErrors(prev => ({ ...prev, color: '' }));
+                    }}
+                    placeholder="Enter custom color"
+                    required
+                    className={errors.color ? "border-red-500" : ""}
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setShowCustomColorInput(false);
+                      setCustomColorValue('');
+                      setVariantData({ ...variantData, color: '' });
+                    }}
+                  >
+                    Back to dropdown
+                  </Button>
+                </div>
+              ) : (
+                <Select
+                  value={variantData.color}
+                  onValueChange={(value) => {
+                    if (value === 'Custom') {
+                      setShowCustomColorInput(true);
+                      setCustomColorValue('');
+                    } else {
+                      setVariantData({ ...variantData, color: value });
+                      if (errors.color) setErrors(prev => ({ ...prev, color: '' }));
+                    }
+                  }}
+                >
+                  <SelectTrigger className={errors.color ? "border-red-500" : ""}>
+                    <SelectValue placeholder="Select a color" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {PREDEFINED_COLORS.map((color) => (
+                      <SelectItem key={color} value={color}>
+                        {color}
+                      </SelectItem>
+                    ))}
+                    <SelectItem value="Custom">+ Add Custom Color</SelectItem>
+                  </SelectContent>
+                </Select>
+              )}
               {errors.color && <p className="text-sm text-red-500 mt-1">{errors.color}</p>}
             </div>
             <div>
@@ -555,34 +643,37 @@ export const VariantForm: React.FC<VariantFormProps> = ({
               />
               <span className="text-xs text-muted-foreground">You can select multiple images.</span>
             </div>
-            {/* Existing Images */}
+            {/* Existing Images - Draggable */}
             {mainImages.filter(img => img.id).length > 0 && (
               <div className="mt-2">
-                <div className="font-semibold text-xs text-muted-foreground mb-1">Existing Images</div>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                  {mainImages.filter(img => img.id).map((image, index) => (
-                    <div key={image.id} className="relative group">
-                      <img
-                        src={image.url.startsWith('http') ? image.url : `https://backend.nordflex.store${image.url}`}
-                        alt={image.alt_text || `Main image`}
-                        className="w-full h-24 object-cover rounded border"
-                        onError={(e) => {
-                          (e.target as HTMLImageElement).src = '/placeholder.svg';
-                        }}
-                      />
-                      <Button
-                        type="button"
-                        variant="destructive"
-                        size="sm"
-                        className="absolute top-1 right-1 h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
-                        onClick={() => setMainImages(prev => prev.filter((_, i) => i !== index))}
-                        disabled={isUploading}
-                      >
-                        <X className="h-3 w-3" />
-                      </Button>
-                    </div>
-                  ))}
-                </div>
+                <div className="font-semibold text-xs text-muted-foreground mb-1">Existing Images (Drag to reorder)</div>
+                <DraggableImageList
+                  images={mainImages.filter(img => img.id)}
+                  onReorder={(reorderedImages) => {
+                    // Update the images with new sort_order
+                    const updatedImages = reorderedImages.map((img, idx) => ({
+                      ...img,
+                      sort_order: idx
+                    }));
+                    setMainImages(prev => [
+                      ...updatedImages,
+                      ...prev.filter(img => !img.id)
+                    ]);
+                  }}
+                  onDelete={async (index) => {
+                    const existingImages = mainImages.filter(img => img.id);
+                    const image = existingImages[index];
+                    if (image.id && productId && token) {
+                      try {
+                        await deleteProductImage(productId, image.id, token);
+                      } catch (err: any) {
+                        toast({ title: "Failed to delete image", description: err.message, variant: "destructive" });
+                      }
+                    }
+                    setMainImages(prev => prev.filter(img => img.id !== image.id));
+                  }}
+                  isUploading={isUploading}
+                />
               </div>
             )}
             {mainImages.filter(img => !img.id).map((image, index) => (
@@ -660,42 +751,35 @@ export const VariantForm: React.FC<VariantFormProps> = ({
               <span className="text-xs text-muted-foreground">You can select multiple images.</span>
             </div>
             
-            {stylingImages.length > 0 && (
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mt-2">
-                {stylingImages.map((image, index) => (
-                  <div key={index} className="relative group">
-                    <img
-                      src={image.url.startsWith('http') ? image.url : `https://backend.nordflex.store${image.url}`}
-                      alt={image.alt_text || `Styling image ${index + 1}`}
-                      className="w-full h-24 object-cover rounded border"
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).src = '/placeholder.svg';
-                      }}
-                    />
-                    <Button
-                      type="button"
-                      variant="destructive"
-                      size="sm"
-                      className="absolute top-1 right-1 h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
-                      onClick={async () => {
-                        const image = stylingImages[index];
-                        if (image.id && productId && token) {
-                          try {
-                            await deleteProductImage(productId, image.id, token);
-                            toast({ title: "Styling image deleted from server" });
-                          } catch (err: any) {
-                            toast({ title: "Failed to delete image", description: err.message, variant: "destructive" });
-                            return;
-                          }
-                        }
-                        setStylingImages(prev => prev.filter((_, i) => i !== index));
-                      }}
-                      disabled={isUploading}
-                    >
-                      <X className="h-3 w-3" />
-                    </Button>
-                  </div>
-                ))}
+            {stylingImages.filter(img => img.id).length > 0 && (
+              <div className="mt-2">
+                <div className="font-semibold text-xs text-muted-foreground mb-1">Existing Images (Drag to reorder)</div>
+                <DraggableImageList
+                  images={stylingImages.filter(img => img.id)}
+                  onReorder={(reorderedImages) => {
+                    const updatedImages = reorderedImages.map((img, idx) => ({
+                      ...img,
+                      sort_order: idx
+                    }));
+                    setStylingImages(prev => [
+                      ...updatedImages,
+                      ...prev.filter(img => !img.id)
+                    ]);
+                  }}
+                  onDelete={async (index) => {
+                    const existingImages = stylingImages.filter(img => img.id);
+                    const image = existingImages[index];
+                    if (image.id && productId && token) {
+                      try {
+                        await deleteProductImage(productId, image.id, token);
+                      } catch (err: any) {
+                        toast({ title: "Failed to delete image", description: err.message, variant: "destructive" });
+                      }
+                    }
+                    setStylingImages(prev => prev.filter(img => img.id !== image.id));
+                  }}
+                  isUploading={isUploading}
+                />
               </div>
             )}
             
@@ -752,42 +836,35 @@ export const VariantForm: React.FC<VariantFormProps> = ({
               <span className="text-xs text-muted-foreground">You can select multiple images.</span>
             </div>
             
-            {detailedImages.length > 0 && (
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mt-2">
-                {detailedImages.map((image, index) => (
-                  <div key={index} className="relative group">
-                    <img
-                      src={image.url.startsWith('http') ? image.url : `https://backend.nordflex.store${image.url}`}
-                      alt={image.alt_text || `Detailed image ${index + 1}`}
-                      className="w-full h-24 object-cover rounded border"
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).src = '/placeholder.svg';
-                      }}
-                    />
-                    <Button
-                      type="button"
-                      variant="destructive"
-                      size="sm"
-                      className="absolute top-1 right-1 h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
-                      onClick={async () => {
-                        const image = detailedImages[index];
-                        if (image.id && productId && token) {
-                          try {
-                            await deleteProductImage(productId, image.id, token);
-                            toast({ title: "Detailed image deleted from server" });
-                          } catch (err: any) {
-                            toast({ title: "Failed to delete image", description: err.message, variant: "destructive" });
-                            return;
-                          }
-                        }
-                        setDetailedImages(prev => prev.filter((_, i) => i !== index));
-                      }}
-                      disabled={isUploading}
-                    >
-                      <X className="h-3 w-3" />
-                    </Button>
-                  </div>
-                ))}
+            {detailedImages.filter(img => img.id).length > 0 && (
+              <div className="mt-2">
+                <div className="font-semibold text-xs text-muted-foreground mb-1">Existing Images (Drag to reorder)</div>
+                <DraggableImageList
+                  images={detailedImages.filter(img => img.id)}
+                  onReorder={(reorderedImages) => {
+                    const updatedImages = reorderedImages.map((img, idx) => ({
+                      ...img,
+                      sort_order: idx
+                    }));
+                    setDetailedImages(prev => [
+                      ...updatedImages,
+                      ...prev.filter(img => !img.id)
+                    ]);
+                  }}
+                  onDelete={async (index) => {
+                    const existingImages = detailedImages.filter(img => img.id);
+                    const image = existingImages[index];
+                    if (image.id && productId && token) {
+                      try {
+                        await deleteProductImage(productId, image.id, token);
+                      } catch (err: any) {
+                        toast({ title: "Failed to delete image", description: err.message, variant: "destructive" });
+                      }
+                    }
+                    setDetailedImages(prev => prev.filter(img => img.id !== image.id));
+                  }}
+                  isUploading={isUploading}
+                />
               </div>
             )}
             
@@ -845,42 +922,35 @@ export const VariantForm: React.FC<VariantFormProps> = ({
               <span className="text-xs text-muted-foreground">You can select multiple images.</span>
             </div>
             
-            {mobileDetailedImages.length > 0 && (
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mt-2">
-                {mobileDetailedImages.map((image, index) => (
-                  <div key={index} className="relative group">
-                    <img
-                      src={image.url.startsWith('http') ? image.url : `https://backend.nordflex.store${image.url}`}
-                      alt={image.alt_text || `Mobile detailed image ${index + 1}`}
-                      className="w-full h-24 object-cover rounded border"
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).src = '/placeholder.svg';
-                      }}
-                    />
-                    <Button
-                      type="button"
-                      variant="destructive"
-                      size="sm"
-                      className="absolute top-1 right-1 h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
-                      onClick={async () => {
-                        const image = mobileDetailedImages[index];
-                        if (image.id && productId && token) {
-                          try {
-                            await deleteProductImage(productId, image.id, token);
-                            toast({ title: "Mobile detailed image deleted from server" });
-                          } catch (err: any) {
-                            toast({ title: "Failed to delete image", description: err.message, variant: "destructive" });
-                            return;
-                          }
-                        }
-                        setMobileDetailedImages(prev => prev.filter((_, i) => i !== index));
-                      }}
-                      disabled={isUploading}
-                    >
-                      <X className="h-3 w-3" />
-                    </Button>
-                  </div>
-                ))}
+            {mobileDetailedImages.filter(img => img.id).length > 0 && (
+              <div className="mt-2">
+                <div className="font-semibold text-xs text-muted-foreground mb-1">Existing Images (Drag to reorder)</div>
+                <DraggableImageList
+                  images={mobileDetailedImages.filter(img => img.id)}
+                  onReorder={(reorderedImages) => {
+                    const updatedImages = reorderedImages.map((img, idx) => ({
+                      ...img,
+                      sort_order: idx
+                    }));
+                    setMobileDetailedImages(prev => [
+                      ...updatedImages,
+                      ...prev.filter(img => !img.id)
+                    ]);
+                  }}
+                  onDelete={async (index) => {
+                    const existingImages = mobileDetailedImages.filter(img => img.id);
+                    const image = existingImages[index];
+                    if (image.id && productId && token) {
+                      try {
+                        await deleteProductImage(productId, image.id, token);
+                      } catch (err: any) {
+                        toast({ title: "Failed to delete image", description: err.message, variant: "destructive" });
+                      }
+                    }
+                    setMobileDetailedImages(prev => prev.filter(img => img.id !== image.id));
+                  }}
+                  isUploading={isUploading}
+                />
               </div>
             )}
             
@@ -948,7 +1018,7 @@ export const VariantForm: React.FC<VariantFormProps> = ({
             </div>
             
             {variantData.video_url && (
-              <div className="mt-2">
+              <div className="mt-2 relative">
                 <video
                   src={
                     variantData.video_url.startsWith('http') 
@@ -961,6 +1031,42 @@ export const VariantForm: React.FC<VariantFormProps> = ({
                     (e.target as HTMLVideoElement).src = '/placeholder.svg';
                   }}
                 />
+                <Button
+                  type="button"
+                  variant="destructive"
+                  size="sm"
+                  className="absolute top-2 right-2"
+                  onClick={async () => {
+                    if (!productId || !token || !variantData.color) {
+                      toast({
+                        title: "Cannot delete video",
+                        description: "Missing required information",
+                        variant: "destructive"
+                      });
+                      return;
+                    }
+                    
+                    try {
+                      const { deleteVariantVideo } = await import('@/api/admin');
+                      await deleteVariantVideo(productId, variantData.color, token);
+                      setVariantData({ ...variantData, video_url: '' });
+                      toast({
+                        title: "Video deleted",
+                        description: "Video has been removed from all variants of this color"
+                      });
+                    } catch (err: any) {
+                      toast({
+                        title: "Failed to delete video",
+                        description: err.message,
+                        variant: "destructive"
+                      });
+                    }
+                  }}
+                  disabled={isUploading}
+                >
+                  <Trash2 className="h-4 w-4 mr-1" />
+                  Delete Video
+                </Button>
                 <p className="text-xs text-muted-foreground mt-1">Current video</p>
               </div>
             )}

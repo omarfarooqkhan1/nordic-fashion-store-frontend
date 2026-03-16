@@ -64,7 +64,7 @@ export const ExistingVariantsList: React.FC<ExistingVariantsListProps> = ({
                     )}
                   </Button>
                   <div className="font-medium text-foreground">
-                    {variant.size} - {variant.color}
+                    {variant.color}
                     <span className="text-sm text-muted-foreground ml-2">
                       €{variant.price !== undefined && variant.price !== null && !isNaN(Number(variant.price)) ?
                         Number(variant.price).toFixed(2) : 'Invalid'}
@@ -94,11 +94,7 @@ export const ExistingVariantsList: React.FC<ExistingVariantsListProps> = ({
               
               {!isCollapsed && (
                 <>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
-                    <div>
-                      <Label className="text-sm text-muted-foreground">Size</Label>
-                      <p className="font-medium text-foreground">{variant.size}</p>
-                    </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
                     <div>
                       <Label className="text-sm text-muted-foreground">Color</Label>
                       <p className="font-medium text-foreground">{variant.color}</p>

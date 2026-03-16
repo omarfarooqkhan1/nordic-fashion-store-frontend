@@ -39,14 +39,15 @@ export const addOrUpdateCartItem = async (
   productVariantId: number,
   quantity: number,
   sessionId?: string,
-  bearerToken?: string
+  bearerToken?: string,
+  size?: string
 ): Promise<CartItem> => {
   try {
     const headers = getHeaders(sessionId, bearerToken);
     
     const response = await api.post(
         '/cart',
-        { product_variant_id: productVariantId, quantity },
+        { product_variant_id: productVariantId, quantity, size },
         {
         headers: headers,
         }

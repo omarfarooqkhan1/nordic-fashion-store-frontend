@@ -54,18 +54,17 @@ export const MultiVariantForm: React.FC<MultiVariantFormProps> = ({
   }, [])
 
   const handleVariantSave = useCallback((formId: number, variantData: any) => {
-    // Check for duplicate variants
+    // Check for duplicate variants (only check color since size is now at product level)
     const isDuplicate = variants.some(
       (v) =>
         v.id !== formId &&
-        v.size?.toLowerCase() === variantData.size?.toLowerCase() &&
         v.color?.toLowerCase() === variantData.color?.toLowerCase()
     )
 
     if (isDuplicate) {
       toast({
         title: "Duplicate Variant",
-        description: `A variant with size "${variantData.size}" and color "${variantData.color}" already exists.`,
+        description: `A variant with color "${variantData.color}" already exists.`,
         variant: "destructive",
       })
       return
@@ -117,9 +116,9 @@ export const MultiVariantForm: React.FC<MultiVariantFormProps> = ({
                 </Button>
                 <h4 className="font-medium">
                   Variant {index + 1}
-                  {variantData?.size && variantData?.color && (
+                  {variantData?.color && (
                     <span className="text-sm text-muted-foreground ml-2">
-                      ({variantData.size} - {variantData.color})
+                      ({variantData.color})
                     </span>
                   )}
                 </h4>
@@ -140,6 +139,7 @@ export const MultiVariantForm: React.FC<MultiVariantFormProps> = ({
             {!isCollapsed && (
               <VariantForm
                 variant={variantData}
+                existingVariants={variants}
                 onSave={(variantData) => handleVariantSave(form.id, variantData)}
                 onCancel={() => {
                   // Don't cancel, just keep the form open

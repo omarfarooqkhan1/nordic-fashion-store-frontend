@@ -1,17 +1,19 @@
-import React, { useState, useRef } from "react"
+import React, { useState, useRef, useEffect } from "react"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+import { Checkbox } from "@/components/ui/checkbox"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Plus, Trash2 } from "lucide-react"
+import { Plus, Trash2, Upload } from "lucide-react"
 import { useLanguage } from "@/contexts/LanguageContext"
 import { useToast } from "@/hooks/use-toast"
 import {
   uploadProductImage,
   deleteProductImage,
+  deleteSizeGuideImage,
   type ProductFormData,
   createProductVariant,
   updateProductVariant,
@@ -53,8 +55,8 @@ export const ProductForm: React.FC<ProductFormProps> = ({
     description: product?.description || "",
     category_id: product?.category?.id ?? 0,
     gender: product?.gender || "unisex",
-    is_active: product?.is_active ?? true, // Default to active for new products
-    // ...add other fields as needed
+    is_active: product?.is_active ?? true,
+    available_sizes: product?.available_sizes || [],
   });
   const [sizeGuideFile, setSizeGuideFile] = useState<File | null>(null);
   const sizeGuideInputRef = useRef<HTMLInputElement | null>(null);
@@ -62,13 +64,25 @@ export const ProductForm: React.FC<ProductFormProps> = ({
   const toast = useToast();
   const { language, t } = useLanguage();
 
+  // Cleanup object URL when component unmounts or file changes
+  useEffect(() => {
+    return () => {
+      if (sizeGuideFile) {
+        URL.revokeObjectURL(URL.createObjectURL(sizeGuideFile));
+      }
+    };
+  }, [sizeGuideFile]);
+
   // ...other hooks and logic...
 
   // --- Render VariantForm conditionally ---
+  // Architecture:
+  // - MultiVariantForm: For NEW products - allows adding multiple variants with collapse/expand UI
+  // - VariantForm: For EXISTING products - single variant add/edit with immediate save
   function renderVariantForm() {
     if (!(isAddingVariant || editingVariant)) return null
 
-    // For new products, use MultiVariantForm
+    // For new products, use MultiVariantForm to add multiple variants at once
     if (!product) {
       return (
         <MultiVariantForm
@@ -81,13 +95,14 @@ export const ProductForm: React.FC<ProductFormProps> = ({
       )
     }
 
-    // For editing existing products, also use MultiVariantForm if adding multiple variants
-    // Otherwise use single VariantForm for editing one variant
+    // For existing products, use single VariantForm for add/edit
     if (editingVariant) {
       // Editing a single existing variant
       return (
         <VariantForm
+          key={`edit-variant-${editingVariant.id}`}
           variant={editingVariant}
+          existingVariants={variants}
           onSave={async (variantData) => {
             // Update existing variant
             if (product && token) {
@@ -96,7 +111,6 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                   product.id,
                   variantData.id,
                   {
-                    size: variantData.size,
                     color: variantData.color,
                     price: Number(variantData.price),
                     sku: variantData.sku,
@@ -142,18 +156,18 @@ export const ProductForm: React.FC<ProductFormProps> = ({
     return (
       <VariantForm
         variant={undefined}
+        existingVariants={variants}
         onSave={async (variantData) => {
           // Add new variant
           const isDuplicate = variants.some(
             (v) =>
-              v.size.toLowerCase() === variantData.size.toLowerCase() &&
               v.color.toLowerCase() === variantData.color.toLowerCase()
           )
 
           if (isDuplicate) {
             toast.toast({
               title: "Duplicate Variant",
-              description: `A variant with size "${variantData.size}" and color "${variantData.color}" already exists.`,
+              description: `A variant with color "${variantData.color}" already exists.`,
               variant: "destructive",
             })
             return
@@ -162,7 +176,6 @@ export const ProductForm: React.FC<ProductFormProps> = ({
           if (product && token) {
             try {
               const variantPayload = {
-                size: variantData.size,
                 color: variantData.color,
                 price: Number(variantData.price),
                 sku: variantData.sku,
@@ -361,6 +374,16 @@ export const ProductForm: React.FC<ProductFormProps> = ({
     // Upload size guide image if a new file is selected
     if (sizeGuideFile && product && token) {
       try {
+        // If there's an existing size guide, delete it first
+        if (product.size_guide_image) {
+          try {
+            await deleteSizeGuideImage(product.id, token);
+          } catch (error) {
+            // Log but don't fail if delete fails - we'll replace anyway
+            console.warn('Failed to delete old size guide:', error);
+          }
+        }
+        
         await uploadProductImage(product.id, sizeGuideFile, token, 'size_guide');
         queryClient.invalidateQueries({ queryKey: ["admin-products"] });
         // Also invalidate the specific product query to refresh the size guide image
@@ -397,7 +420,6 @@ export const ProductForm: React.FC<ProductFormProps> = ({
         <CardTitle>{product ? "Edit Product" : "Add New Product"}</CardTitle>
       </CardHeader>
       <CardContent>
-        {renderVariantForm()}
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
@@ -491,6 +513,35 @@ export const ProductForm: React.FC<ProductFormProps> = ({
             />
           </div>
 
+          {/* Available Sizes Selection */}
+          <div>
+            <Label>Available Sizes *</Label>
+            <div className="flex flex-wrap gap-2 mt-2">
+              {['XS', 'S', 'M', 'L', 'XL', 'One Size'].map((size) => (
+                <label
+                  key={size}
+                  className="flex items-center gap-2 px-3 py-2 border rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-slate-800"
+                >
+                  <Checkbox
+                    checked={formData.available_sizes?.includes(size) || false}
+                    onCheckedChange={(checked) => {
+                      const currentSizes = formData.available_sizes || [];
+                      if (checked) {
+                        setFormData({ ...formData, available_sizes: [...currentSizes, size] });
+                      } else {
+                        setFormData({ ...formData, available_sizes: currentSizes.filter(s => s !== size) });
+                      }
+                    }}
+                  />
+                  <span className="text-sm font-medium">{size}</span>
+                </label>
+              ))}
+            </div>
+            <p className="text-xs text-muted-foreground mt-2">
+              Select all sizes available for this product. Customers will choose from these sizes.
+            </p>
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <Label htmlFor="size_guide_image_upload">Size Guide Image</Label>
@@ -502,14 +553,45 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                 onChange={(e) => {
                   if (e.target.files && e.target.files[0]) {
                     setSizeGuideFile(e.target.files[0]);
+                    toast.toast({
+                      title: "Image selected",
+                      description: `${e.target.files[0].name} - Click "Save Product" to upload`
+                    });
                   }
                 }}
               />
               <p className="text-xs text-muted-foreground mt-1">
-                Upload a size guide image (JPG, PNG, etc.)
+                {product?.size_guide_image 
+                  ? "Select a new image to replace the current size guide" 
+                  : "Upload a size guide image (JPG, PNG, etc.)"}
               </p>
-              {(product?.size_guide_image || (product?.allImages?.some(img => img.image_type === 'size_guide'))) && (
-                <div className="mt-2">
+              
+              {/* Show selected file preview with image */}
+              {sizeGuideFile && (
+                <div className="mt-2 p-3 bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded">
+                  <div className="flex items-start gap-3">
+                    <img
+                      src={URL.createObjectURL(sizeGuideFile)}
+                      alt="Size Guide Preview"
+                      className="w-32 h-32 object-cover rounded border"
+                    />
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-blue-700 dark:text-blue-300">
+                        ✓ New image selected
+                      </p>
+                      <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
+                        {sizeGuideFile.name}
+                      </p>
+                      <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
+                        Click "Save Product" to upload
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+              
+              {(product?.size_guide_image || (product?.allImages?.some(img => img.image_type === 'size_guide'))) && !sizeGuideFile && (
+                <div className="mt-2 relative inline-block">
                   {(() => {
                     let imageUrl = product.size_guide_image;
                     try {
@@ -521,20 +603,84 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                       imageUrl = product.size_guide_image; // Fallback to original
                     }
                     return (
-                      <img
-                        src={imageUrl}
-                        alt="Size Guide"
-                        className="w-48 border rounded"
-                        onError={(e) => {
-                          (e.target as HTMLImageElement).src = '/placeholder.svg';
-                        }}
-                      />
+                      <>
+                        <img
+                          src={imageUrl}
+                          alt="Size Guide"
+                          className="w-48 border rounded"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).src = '/placeholder.svg';
+                          }}
+                        />
+                        <div className="absolute top-2 right-2 flex gap-1">
+                          <Button
+                            type="button"
+                            variant="secondary"
+                            size="sm"
+                            onClick={() => {
+                              sizeGuideInputRef.current?.click();
+                            }}
+                            title="Replace size guide image"
+                          >
+                            <Upload className="h-4 w-4 mr-1" />
+                            Replace
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="destructive"
+                            size="sm"
+                            onClick={async () => {
+                              if (!product?.id || !token) {
+                                toast.toast({
+                                  title: "Cannot delete image",
+                                  description: "Missing required information",
+                                  variant: "destructive"
+                                });
+                                return;
+                              }
+                              
+                              try {
+                                await deleteSizeGuideImage(product.id, token);
+                                
+                                // Immediately update local state
+                                if (product) {
+                                  product.size_guide_image = null;
+                                  if (product.allImages) {
+                                    product.allImages = product.allImages.filter(img => img.image_type !== 'size_guide');
+                                  }
+                                }
+                                
+                                // Invalidate queries to refresh the product data
+                                await queryClient.invalidateQueries({ queryKey: ["admin-products"] });
+                                await queryClient.invalidateQueries({ queryKey: ["product", product.id.toString()] });
+                                
+                                toast.toast({
+                                  title: "Size guide deleted",
+                                  description: "Size guide image has been removed"
+                                });
+                              } catch (err: any) {
+                                toast.toast({
+                                  title: "Failed to delete size guide",
+                                  description: err.message,
+                                  variant: "destructive"
+                                });
+                              }
+                            }}
+                            title="Delete size guide image"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </>
                     );
                   })()}
                 </div>
               )}
             </div>
           </div>
+
+          {/* Variant Forms - Show inline for new products, or when editing/adding variants for existing products */}
+          {renderVariantForm()}
 
           {/* Product Variants Section */}
           <div className="space-y-4">
@@ -544,7 +690,10 @@ export const ProductForm: React.FC<ProductFormProps> = ({
             {!isAddingVariant && !editingVariant && product && (
               <Button
                 type="button"
-                onClick={() => setIsAddingVariant(true)}
+                onClick={() => {
+                  setIsAddingVariant(true);
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
                 className="bg-green-600 hover:bg-green-700 text-white"
               >
                 <Plus className="h-4 w-4 mr-2" />
@@ -558,7 +707,10 @@ export const ProductForm: React.FC<ProductFormProps> = ({
               {product ? (
                 <ExistingVariantsList
                   variants={variants}
-                  onEdit={setEditingVariant}
+                  onEdit={(variant) => {
+                    setEditingVariant(variant);
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
                   onDelete={handleDeleteVariant}
                 />
               ) : null}

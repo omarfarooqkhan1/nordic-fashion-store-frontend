@@ -13,7 +13,7 @@ interface CartContextType {
   items: CartItem[];
   customItems: CustomJacketItem[];
   isLoading: boolean;
-  addToCart: (product_variant_id: number, quantity: number) => Promise<void>;
+  addToCart: (product_variant_id: number, quantity: number, size?: string) => Promise<void>;
   addCustomJacketToCart: (customJacket: Omit<CustomJacketItem, 'id' | 'createdAt'>) => Promise<CustomJacketItem>;
   updateQuantity: (itemId: number, quantity: number) => Promise<void>;
   updateCustomJacketQuantity: (customItemId: string, quantity: number) => Promise<void>;
@@ -91,11 +91,11 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const customItems: CustomJacketItem[] = customJacketCart || [];
 
   const addMutation = useMutation({
-    mutationFn: ({ product_variant_id, quantity }: { product_variant_id: number; quantity: number; }) => {
+    mutationFn: ({ product_variant_id, quantity, size }: { product_variant_id: number; quantity: number; size?: string }) => {
       // For authenticated users, pass undefined as sessionId
       // For guest users, pass the actual sessionId
       const sessionIdToUse = token ? undefined : getSessionId();
-      return addOrUpdateCartItem(product_variant_id, quantity, sessionIdToUse, token);
+      return addOrUpdateCartItem(product_variant_id, quantity, sessionIdToUse, token, size);
     },
     onSuccess: () => {
       // Invalidate both cart queries to ensure all cart data is refreshed
@@ -278,14 +278,14 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   });
 
-  const addToCart = async (product_variant_id: number, quantity: number) => {
+  const addToCart = async (product_variant_id: number, quantity: number, size?: string) => {
     // For authenticated users, we can proceed without sessionId
     // For guest users, we need sessionId
     if (!token && !getSessionId()) {
       toast({ title: t('error.generic'), description: t('common.loading'), variant: 'destructive' });
       return;
     }
-    await addMutation.mutateAsync({ product_variant_id, quantity });
+    await addMutation.mutateAsync({ product_variant_id, quantity, size });
   };
 
   const updateQuantity = async (itemId: number, quantity: number) => {

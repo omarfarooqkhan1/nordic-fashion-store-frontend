@@ -101,34 +101,25 @@ const ProductDetail = () => {
     if (product && product.variants && product.variants.length > 0) {
       const firstVariant = product.variants[0];
       if (firstVariant) {
-        setSelectedSize(firstVariant.size || '');
+        // Initialize with first available size from product.available_sizes
+        if (product.available_sizes && product.available_sizes.length > 0) {
+          setSelectedSize(product.available_sizes[0]);
+        }
         setSelectedColor(firstVariant.color || '');
       }
     }
   }, [product]); // Only depend on product changes
 
-  // Get selected variant
+  // Get selected variant (now only based on color since size is at product level)
   const getSelectedVariant = () => {
     // Check if product exists and has variants array
     if (!product || !product.variants || !Array.isArray(product.variants) || product.variants.length === 0) {
       return undefined;
     }
     
-    // If both size and color are selected, find exact match
-    if (selectedSize && selectedColor) {
-      const variant = product.variants.find((v) => v.size === selectedSize && v.color === selectedColor);
-      return variant;
-    }
-    
-    // If only color is selected, find by color
+    // If color is selected, find by color
     if (selectedColor) {
       const variant = product.variants.find((v) => v.color === selectedColor);
-      return variant;
-    }
-    
-    // If only size is selected, find by size
-    if (selectedSize) {
-      const variant = product.variants.find((v) => v.size === selectedSize);
       return variant;
     }
     
@@ -148,8 +139,24 @@ const ProductDetail = () => {
   const hasVariants = product?.variants && Array.isArray(product.variants) && product.variants.length > 0;
   
   // Robust, scalable image selection logic with better fallbacks
-  // Main images: Try selected variant -> any variant with images -> product images -> empty
+  // Main images: Try all variants of selected color -> selected variant -> any variant with images -> product images -> empty
   const displayImages = (() => {
+    // If a color is selected, get all main images from all variants of that color
+    if (hasVariants && selectedColor && product?.variants && Array.isArray(product.variants)) {
+      const colorVariants = product.variants.filter(v => v.color === selectedColor);
+      const allColorImages: any[] = [];
+      
+      colorVariants.forEach(variant => {
+        if (variant.main_images && variant.main_images.length > 0) {
+          allColorImages.push(...variant.main_images);
+        }
+      });
+      
+      if (allColorImages.length > 0) {
+        return allColorImages;
+      }
+    }
+    
     // If we have a selected variant with images, use those
     if (hasVariants && selectedVariant && selectedVariant.main_images && selectedVariant.main_images.length > 0) {
       return selectedVariant.main_images;
@@ -173,8 +180,24 @@ const ProductDetail = () => {
     return [];
   })();
 
-  // Detailed images: Try selected variant -> any variant with images -> product detailed images -> empty
+  // Detailed images: Try all variants of selected color -> selected variant -> any variant with images -> product detailed images -> empty
   const detailedImages = (() => {
+    // If a color is selected, get all detailed images from all variants of that color
+    if (hasVariants && selectedColor && product?.variants && Array.isArray(product.variants)) {
+      const colorVariants = product.variants.filter(v => v.color === selectedColor);
+      const allColorImages: any[] = [];
+      
+      colorVariants.forEach(variant => {
+        if (variant.detailed_images && variant.detailed_images.length > 0) {
+          allColorImages.push(...variant.detailed_images);
+        }
+      });
+      
+      if (allColorImages.length > 0) {
+        return allColorImages;
+      }
+    }
+    
     // If we have a selected variant with detailed images, use those
     if (hasVariants && selectedVariant && selectedVariant.detailed_images && selectedVariant.detailed_images.length > 0) {
       return selectedVariant.detailed_images;
@@ -198,8 +221,24 @@ const ProductDetail = () => {
     return [];
   })();
 
-  // Mobile detailed images: Try selected variant -> any variant with images -> product mobile detailed images -> empty
+  // Mobile detailed images: Try all variants of selected color -> selected variant -> any variant with images -> product mobile detailed images -> empty
   const mobileDetailedImages = (() => {
+    // If a color is selected, get all mobile detailed images from all variants of that color
+    if (hasVariants && selectedColor && product?.variants && Array.isArray(product.variants)) {
+      const colorVariants = product.variants.filter(v => v.color === selectedColor);
+      const allColorImages: any[] = [];
+      
+      colorVariants.forEach(variant => {
+        if (variant.mobile_detailed_images && variant.mobile_detailed_images.length > 0) {
+          allColorImages.push(...variant.mobile_detailed_images);
+        }
+      });
+      
+      if (allColorImages.length > 0) {
+        return allColorImages;
+      }
+    }
+    
     // If we have a selected variant with mobile detailed images, use those
     if (hasVariants && selectedVariant && selectedVariant.mobile_detailed_images && selectedVariant.mobile_detailed_images.length > 0) {
       return selectedVariant.mobile_detailed_images;
@@ -223,8 +262,24 @@ const ProductDetail = () => {
     return [];
   })();
 
-  // Styling images: Try selected variant -> any variant with images -> empty
+  // Styling images: Try all variants of selected color -> selected variant -> any variant with images -> empty
   const stylingImages = (() => {
+    // If a color is selected, get all styling images from all variants of that color
+    if (hasVariants && selectedColor && product?.variants && Array.isArray(product.variants)) {
+      const colorVariants = product.variants.filter(v => v.color === selectedColor);
+      const allColorImages: any[] = [];
+      
+      colorVariants.forEach(variant => {
+        if (variant.styling_images && variant.styling_images.length > 0) {
+          allColorImages.push(...variant.styling_images);
+        }
+      });
+      
+      if (allColorImages.length > 0) {
+        return allColorImages;
+      }
+    }
+    
     // If we have a selected variant with styling images, use those
     if (hasVariants && selectedVariant && selectedVariant.styling_images && selectedVariant.styling_images.length > 0) {
       return selectedVariant.styling_images;
@@ -264,8 +319,36 @@ const ProductDetail = () => {
   })();
 
   // Support both video_path and video_url for compatibility
+  // Try selected color variants -> selected variant -> any variant with video
   // @ts-expect-error: video_url may exist in backend data
-  const videoUrl = hasVariants && selectedVariant ? (selectedVariant?.video_url || selectedVariant?.video_path) : undefined;
+  const videoUrl = (() => {
+    if (!hasVariants) return undefined;
+    
+    // If a color is selected, try to find video from any variant of that color
+    if (selectedColor && product?.variants && Array.isArray(product.variants)) {
+      const colorVariants = product.variants.filter(v => v.color === selectedColor);
+      for (const variant of colorVariants) {
+        const url = variant?.video_url || variant?.video_path;
+        if (url) return url;
+      }
+    }
+    
+    // Try selected variant
+    if (selectedVariant) {
+      const url = selectedVariant?.video_url || selectedVariant?.video_path;
+      if (url) return url;
+    }
+    
+    // Fallback to any variant with video
+    if (product?.variants && Array.isArray(product.variants)) {
+      for (const variant of product.variants) {
+        const url = variant?.video_url || variant?.video_path;
+        if (url) return url;
+      }
+    }
+    
+    return undefined;
+  })();
 
   // Carousel navigation state for styling section
   const stylingMedia = videoUrl
@@ -376,8 +459,9 @@ const ProductDetail = () => {
 
 
 
-  const allSizes = hasVariants && Array.isArray(product.variants) 
-    ? Array.from(new Set(product.variants.map((v) => v.size).filter(Boolean))) as string[]
+  // Get sizes from product.available_sizes instead of variants
+  const allSizes = product?.available_sizes && Array.isArray(product.available_sizes) 
+    ? product.available_sizes 
     : [];
   const allColors = hasVariants && Array.isArray(product.variants)
     ? Array.from(new Set(product.variants.map((v) => v.color).filter(Boolean))) as string[]
@@ -423,11 +507,19 @@ const ProductDetail = () => {
       return;
     }
 
+    if (!selectedSize) {
+      toast({ 
+        title: t('product.chooseVariant'), 
+        description: 'Please select a size', 
+        variant: 'destructive' 
+      });
+      return;
+    }
 
     try {
-      // Pass variant.id and quantity (1) directly to addToCart
-      await addToCart(variant.id, 1);
-      toast({ title: t('toast.addedToCart'), description: `${translatedName} (${variant.size}, ${variant.color})`, className: "bg-green-500 text-white" });
+      // Pass variant.id, quantity (1), and selected size to addToCart
+      await addToCart(variant.id, 1, selectedSize);
+      toast({ title: t('toast.addedToCart'), description: `${translatedName} (${selectedSize}, ${variant.color})`, className: "bg-green-500 text-white" });
     } catch (error) {
       toast({ title: t('toast.error'), description: t('toast.cartError'), variant: 'destructive' });
     }

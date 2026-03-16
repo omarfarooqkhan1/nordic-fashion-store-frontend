@@ -1191,21 +1191,30 @@ const AdminDashboard: React.FC = () => {
                   <CardContent className="p-4 sm:p-6">
                     <div className="flex flex-col sm:flex-row gap-4">
                       <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gray-200 rounded-lg flex-shrink-0 overflow-hidden mx-auto sm:mx-0">
-                        {product.allImages?.[0]?.url ? (
-                          <img
-                            src={
-                              product.allImages[0].url.startsWith('http')
-                                ? product.allImages[0].url
-                                : `${import.meta.env.VITE_BACKEND_URL}${product.allImages[0].url.startsWith('/') ? product.allImages[0].url : `/${product.allImages[0].url}`}`
-                            }
-                            alt={product.name}
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center">
-                            <Package className="h-6 w-6 sm:h-8 sm:w-8 text-gray-400" />
-                          </div>
-                        )}
+                        {(() => {
+                          // Get the first image from the first variant
+                          const firstVariant = product.variants?.[0];
+                          const firstImage = firstVariant?.main_images?.[0] 
+                            || firstVariant?.styling_images?.[0] 
+                            || firstVariant?.detailed_images?.[0]
+                            || product.allImages?.[0];
+                          
+                          return firstImage?.url ? (
+                            <img
+                              src={
+                                firstImage.url.startsWith('http')
+                                  ? firstImage.url
+                                  : `${import.meta.env.VITE_BACKEND_URL}${firstImage.url.startsWith('/') ? firstImage.url : `/${firstImage.url}`}`
+                              }
+                              alt={product.name}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center">
+                              <Package className="h-6 w-6 sm:h-8 sm:w-8 text-gray-400" />
+                            </div>
+                          );
+                        })()}
                       </div>
                       <div className="flex-1 space-y-2 min-w-0">
                         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2">
@@ -1219,7 +1228,10 @@ const AdminDashboard: React.FC = () => {
                             <p className="text-sm text-muted-foreground truncate">{product.category.name}</p>
                           </div>
                           <div className="flex gap-2 justify-center sm:justify-end flex-shrink-0">
-                            <Button variant="outline" size="sm" onClick={() => setEditingProduct(product)}>
+                            <Button variant="outline" size="sm" onClick={() => {
+                              setEditingProduct(product);
+                              window.scrollTo({ top: 0, behavior: 'smooth' });
+                            }}>
                               <Edit className="h-4 w-4" />
                               <span className="hidden sm:inline ml-1">Edit</span>
                             </Button>

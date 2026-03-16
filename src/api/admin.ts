@@ -6,21 +6,21 @@ export interface ProductFormData {
   name: string;
   description: string;
   gender: 'male' | 'female' | 'unisex';
-  discount?: number; // Add discount field
+  discount?: number;
   category_id: number;
-  is_active?: boolean; // Product status
+  is_active?: boolean;
+  available_sizes?: string[]; // Available sizes at product level
   variants?: ProductVariantFormData[];
   images?: ProductImageFormData[];
-  styling_images?: string[]; // Array of styling image URLs
-  mobile_detailed_images?: string[]; // Array of mobile detailed image URLs
+  styling_images?: string[];
+  mobile_detailed_images?: string[];
 }
 
 export interface ProductVariantFormData {
   id?: number;
   sku: string;
-  color?: string;
-  size?: string;
-  price?: number;
+  color: string;
+  price: number;
   video_url?: string;
 }
 
@@ -57,18 +57,18 @@ export interface Product {
   images: ProductImage[];
   created_at: string;
   updated_at: string;
-  discount?: number; // Add discount field
-  is_active?: boolean; // Product status
-  allImages?: ProductImage[]; // Add allImages field
-  size_guide_image?: string; // Add size guide image field
+  discount?: number;
+  is_active?: boolean;
+  allImages?: ProductImage[];
+  size_guide_image?: string;
+  available_sizes?: string[]; // Available sizes at product level
 }
 
 export interface ProductVariant {
   id: number;
   product_id?: number;
   sku: string;
-  color?: string;
-  size?: string;
+  color: string;
   price: number;
   created_at?: string;
   updated_at?: string;
@@ -76,6 +76,7 @@ export interface ProductVariant {
   detailed_images?: ProductImage[];
   mobile_detailed_images?: ProductImage[];
   styling_images?: ProductImage[];
+  video_url?: string;
   video_path?: string;
 }
 
@@ -660,9 +661,28 @@ export const updateProductImageOrder = async (
   }
 };
 
+export const updateVariantImageOrder = async (
+  productId: number,
+  variantId: number,
+  imageUpdates: { id: number; sort_order: number }[],
+  token: string
+): Promise<{ message: string; images: ProductImage[] }> => {
+  try {
+    const response = await api.put(
+      `/products/${productId}/variants/${variantId}/images/reorder`,
+      { images: imageUpdates },
+      {
+        headers: buildApiHeaders(undefined, token),
+      }
+    );
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to update variant image order');
+  }
+};
+
 // Variant Management Functions
 export interface VariantFormData {
-  size: string;
   color: string;
   sku?: string;
   price: number;
@@ -803,6 +823,46 @@ export const deleteProductImage = async (
     return response.data;
   } catch (error: any) {
     throw new Error(error.response?.data?.message || 'Failed to delete image');
+  }
+};
+
+// Delete variant video
+export const deleteVariantVideo = async (
+  productId: number,
+  color: string,
+  token: string
+): Promise<{ message: string; variant_count: number }> => {
+  try {
+    const response = await api.delete(
+      `/products/${productId}/variant-video`,
+      {
+        headers: buildApiHeaders(undefined, token),
+        data: { color }
+      }
+    );
+
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to delete variant video');
+  }
+};
+
+// Delete size guide image
+export const deleteSizeGuideImage = async (
+  productId: number,
+  token: string
+): Promise<{ message: string }> => {
+  try {
+    const response = await api.delete(
+      `/products/${productId}/size-guide-image`,
+      {
+        headers: buildApiHeaders(undefined, token),
+      }
+    );
+
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to delete size guide image');
   }
 };
 
